@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "change": "Initial SocRV framework RTL generation",
+  "confirmed_contract": {
+    "hxi": {
+      "address_width": 32,
+      "data_width": 32,
+      "write_strobe_width": 4,
+      "masters": ["instruction", "data"],
+      "outstanding": 1,
+      "response": ["valid", "ready", "rdata", "error"]
+    },
+    "reset_vector": "0x00000000",
+    "clock_hz": 50000000,
+    "uart_baud": 115200
+  },
+  "module_groups": [
+    {
+      "path": "rtl/common",
+      "role": "SoC constants, memory map, common types, reset synchronizer and utility buffering"
+    },
+    {
+      "path": "rtl/cpu",
+      "role": "Stable CPU subsystem contract and replaceable RV32I+Zicsr demo core"
+    },
+    {
+      "path": "rtl/bus",
+      "role": "Two-master HXI crossbar, default error slave, HXI-to-APB bridge and APB decode"
+    },
+    {
+      "path": "rtl/memory",
+      "role": "HXI-to-native adapters plus synchronous generic ROM/RAM backends"
+    },
+    {
+      "path": "rtl/peripheral",
+      "role": "Machine timer, interrupt controller, UART, GPIO and simulation-visible test status"
+    },
+    {
+      "path": "rtl/soc",
+      "role": "Vendor-independent SoC integration and generic-memory top"
+    },
+    {
+      "path": "fpga/common/rtl",
+      "role": "Kintex-7 inferred memory and 200 MHz to 50 MHz MMCM wrappers"
+    },
+    {
+      "path": "fpga/boards/kintex7_competition/rtl",
+      "role": "Board clock/reset, board I/O and FPGA top"
+    }
+  ],
+  "assumptions": [
+    "HXI globally serializes requests; the contract permits one outstanding transaction.",
+    "Code and data memory are each 64 KiB with synchronous response behavior.",
+    "The demo core is verification infrastructure and is not the user's final CPU implementation.",
+    "The prior project supplies board pin facts only; old SoC RTL is not reused."
+  ],
+  "verification": [
+    "WSL Verilator lint",
+    "bare-metal SoC UART/GPIO/Test Status simulation",
+    "RT-Thread 5.2.2 scheduler and interrupt simulation",
+    "Vivado 2023.2 synth/place/route/write_bitstream"
+  ]
+}

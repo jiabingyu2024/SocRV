@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socrv.local/schema/memory_map.schema.json",
+  "title": "SocRV memory map contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "reset_vector", "regions"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "reset_vector": {"type": "string", "pattern": "^0x[0-9a-fA-F]{8}$"},
+    "regions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["base", "size"],
+        "properties": {
+          "base": {"type": "string", "pattern": "^0x[0-9a-fA-F]{8}$"},
+          "size": {"type": "string", "pattern": "^0x[0-9a-fA-F]{8}$"}
+        }
+      }
+    }
+  }
+}

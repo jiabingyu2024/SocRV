@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "name": "smoke",
+  "software": {
+    "profile": "smoke"
+  },
+  "simulation": {
+    "target": "soc",
+    "default_test": "baremetal-smoke"
+  },
+  "fpga": {
+    "board": "kintex7_competition",
+    "profile": "smoke",
+    "debug": false
+  }
+}

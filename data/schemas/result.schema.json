@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socrv.local/schema/result.schema.json",
+  "title": "SocRV run result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "kind",
+    "status",
+    "target"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "kind": {"type": "string"},
+    "target": {"type": "string"},
+    "test": {"type": "string"},
+    "profile": {"type": "string"},
+    "status": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "TIMEOUT",
+        "ASSERTION",
+        "DIFF_MISMATCH",
+        "BUILD_ERROR",
+        "CONFIG_ERROR",
+        "CRASH",
+        "NO_RESULT",
+        "UNSUPPORTED"
+      ]
+    },
+    "seed": {"type": "integer", "minimum": 0},
+    "cycles": {"type": "integer", "minimum": 0},
+    "exit_reason": {"type": "string"},
+    "artifacts": {"type": "object"},
+    "failure": {"type": ["object", "null"]},
+    "reproduce": {"type": "string"}
+  }
+}

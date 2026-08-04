@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socrv.local/schema/image.schema.json",
+  "title": "SocRV software image",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "elf",
+    "entry",
+    "endianness",
+    "regions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "elf": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "entry": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{8}$"
+    },
+    "endianness": {
+      "const": "little"
+    },
+    "regions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "base", "size", "file", "sha256"],
+        "properties": {
+          "name": {"type": "string"},
+          "base": {"type": "string", "pattern": "^0x[0-9a-fA-F]{8}$"},
+          "size": {"type": "integer", "minimum": 1},
+          "used": {"type": "integer", "minimum": 0},
+          "file": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["region", "address", "file_size", "memory_size", "flags"],
+        "properties": {
+          "region": {"type": "string"},
+          "address": {"type": "string", "pattern": "^0x[0-9a-fA-F]{8}$"},
+          "file_size": {"type": "integer", "minimum": 0},
+          "memory_size": {"type": "integer", "minimum": 1},
+          "flags": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "symbols": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^0x[0-9a-fA-F]{8}$"
+      }
+    }
+  }
+}

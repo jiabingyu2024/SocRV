@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "tests": [
+    {
+      "name": "baremetal-smoke",
+      "target": "soc",
+      "suite": ["smoke", "baremetal"],
+      "image": "smoke",
+      "checker": "test-status-and-uart",
+      "max_cycles": 200000,
+      "seed": 1
+    },
+    {
+      "name": "rtthread-smoke",
+      "target": "soc",
+      "suite": ["smoke", "rtthread"],
+      "image": "rtthread",
+      "checker": "test-status-and-uart",
+      "max_cycles": 2000000,
+      "seed": 1
+    }
+  ]
+}

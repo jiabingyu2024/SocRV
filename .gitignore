@@ -1,0 +1,35 @@
+# Generated build products
+/build/*
+!/build/.gitkeep
+
+# Reproducibly fetched external source (pinned by dependency.lock.json)
+/software/rt-thread/upstream/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Verilator
+obj_dir/
+*.fst
+*.vcd
+
+# Vivado / XSim
+*.jou
+*.log
+*.wdb
+*.xpr
+*.runs/
+*.cache/
+*.gen/
+*.hw/
+*.ip_user_files/
+.Xil/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store

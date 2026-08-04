@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socrv.local/schema/profile.schema.json",
+  "title": "SocRV system profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "name", "software", "simulation", "fpga"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$"},
+    "software": {
+      "type": "object",
+      "required": ["profile"],
+      "properties": {
+        "profile": {"type": "string"}
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "required": ["target"],
+      "properties": {
+        "target": {"enum": ["cpu", "soc"]},
+        "default_test": {"type": "string"}
+      }
+    },
+    "fpga": {
+      "type": "object",
+      "required": ["board"],
+      "properties": {
+        "board": {"type": "string"},
+        "profile": {"type": "string"},
+        "debug": {"type": "boolean"}
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "name": "rtthread",
+  "software": {
+    "profile": "rtthread"
+  },
+  "simulation": {
+    "target": "soc",
+    "default_test": "rtthread-smoke"
+  },
+  "fpga": {
+    "board": "kintex7_competition",
+    "profile": "rtthread",
+    "debug": false
+  }
+}
