@@ -7,10 +7,27 @@
 主要链路：
 
 ```text
+fetch_dependencies.py
+  -> RT-Thread / riscv-tests / CoreMark dependency.lock.json
+  -> software/<dependency>/upstream
+
+generate_soc_contract.py
+  -> data/soc/{memory_map,software_contract}.json
+  -> generated C headers and linker/memory.ldh
+
 build_software.py
+  -> software/profiles/<profile>.mk
   -> WSL riscv64-unknown-elf-gcc
   -> elf2mem.py
   -> build/images/<profile>/image.json
+
+generate_isa_data.py
+  -> locked official riscv-tests + env/socrv
+  -> data/isa/<suite>/<test>/
+
+run_isa_tests.py
+  -> every selected data/isa image
+  -> build/regression/isa/<suite>/summary.json
 
 run_verilator.py
   -> WSL Verilator build

@@ -2,8 +2,10 @@
 /build/*
 !/build/.gitkeep
 
-# Reproducibly fetched external source (pinned by dependency.lock.json)
+# Reproducibly fetched external sources (pinned by dependency.lock.json)
 /software/rt-thread/upstream/
+/software/riscv-tests/upstream/
+/software/coremark/upstream/
 
 # Python
 __pycache__/

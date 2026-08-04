@@ -1,63 +1,68 @@
 include toolchain/riscv_gcc.mk
+
+PROFILE ?= smoke
+OUT ?= ../build/software/$(PROFILE)
+LINKER := linker/socrv_code_data.ld
+PROFILE_FILE := profiles/$(PROFILE).mk
+
+ifeq ($(wildcard $(PROFILE_FILE)),)
+$(error unknown software PROFILE '$(PROFILE)')
+endif
+
+include $(PROFILE_FILE)
 include toolchain/common_flags.mk
 
-APP ?= smoke
-OUT ?= ../build/software/baremetal-$(APP)
-LINKER := linker/socrv_code_data.ld
-INCLUDES := -Ibsp/include
+INCLUDES := -Iruntime/include -Ibsp/include -Ibsp/trap $(PROFILE_INCLUDES)
+CFLAGS += $(PROFILE_CFLAGS)
+ASFLAGS += $(PROFILE_ASFLAGS)
+LDLIBS += -lgcc
 
-ifeq ($(APP),rtthread)
-RT_ROOT := rt-thread/upstream
-RT_COMMON := $(RT_ROOT)/libcpu/risc-v/common
-INCLUDES += -Irt-thread/port -I$(RT_ROOT)/include -I$(RT_COMMON)
-CFLAGS := $(filter-out -Werror,$(CFLAGS)) -Wno-unused-parameter -Wno-sign-compare \
-	-D__RTTHREAD__ -D__RT_KERNEL_SOURCE__ -std=gnu11
-SOURCES := rt-thread/port/start_rtthread.S rt-thread/port/trap_gcc.S \
-	$(RT_COMMON)/context_gcc.S $(RT_COMMON)/interrupt_gcc.S \
-	$(RT_COMMON)/cpuport.c $(RT_COMMON)/trap_common.c \
-	$(RT_ROOT)/src/clock.c $(RT_ROOT)/src/components.c \
-	$(RT_ROOT)/src/cpu_up.c $(RT_ROOT)/src/defunct.c \
-	$(RT_ROOT)/src/idle.c $(RT_ROOT)/src/ipc.c $(RT_ROOT)/src/irq.c \
-	$(RT_ROOT)/src/kservice.c $(RT_ROOT)/src/mem.c \
-	$(RT_ROOT)/src/mempool.c $(RT_ROOT)/src/object.c \
-	$(RT_ROOT)/src/scheduler_comm.c $(RT_ROOT)/src/scheduler_up.c \
-	$(RT_ROOT)/src/thread.c $(RT_ROOT)/src/timer.c \
-	$(RT_ROOT)/src/klibc/kerrno.c $(RT_ROOT)/src/klibc/kstdio.c \
-	$(RT_ROOT)/src/klibc/kstring.c $(RT_ROOT)/src/klibc/rt_vsnprintf_tiny.c \
-	rt-thread/port/board.c bsp/drivers/drv_uart.c runtime/minilibc.c \
-	rt-thread/app/main.c
-LDLIBS := -lgcc
-else
-SOURCES := startup/start.S startup/trap_entry.S startup/crt0.c \
-	bsp/trap/trap.c bsp/drivers/drv_uart.c bsp/drivers/drv_gpio.c \
-	runtime/platform.c baremetal/$(APP)/main.c
-endif
-OBJECTS := $(addprefix $(OUT)/obj/,$(SOURCES:=.o))
-ELF := $(OUT)/socrv-$(APP).elf
+OBJECTS := $(addprefix $(OUT)/objects/,$(SOURCES:=.o))
+DEPFILES := $(OBJECTS:.o=.d)
+ELF := $(OUT)/firmware.elf
+MAP := $(OUT)/firmware.map
+DIS := $(OUT)/firmware.dis
+BIN := $(OUT)/firmware.bin
+SIZE_TXT := $(OUT)/size.txt
 
-.PHONY: all clean
-all: $(ELF) $(OUT)/socrv-$(APP).bin $(OUT)/socrv-$(APP).dis $(OUT)/socrv-$(APP).size
+.PHONY: all clean print-sources print-flags print-kind
+all: $(ELF) $(BIN) $(DIS) $(SIZE_TXT)
 
-$(OUT)/obj/%.S.o: %.S
+$(OUT)/objects/%.S.o: %.S
 	@mkdir -p $(dir $@)
-	$(CC) $(ASFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(ASFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
 
-$(OUT)/obj/%.c.o: %.c
+$(OUT)/objects/%.c.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
 
-$(ELF): $(OBJECTS) $(LINKER)
+$(OUT)/objects/coremark/upstream/core_main.c.o: coremark/upstream/core_main.c
 	@mkdir -p $(dir $@)
-	$(CC) $(LDFLAGS) -T$(LINKER) -Wl,-Map,$(OUT)/socrv-$(APP).map $(OBJECTS) $(LDLIBS) -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -Dmain=coremark_main -MMD -MP -c $< -o $@
 
-$(OUT)/socrv-$(APP).bin: $(ELF)
+$(ELF): $(OBJECTS) $(LINKER) linker/memory.ldh
+	@mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) -T$(LINKER) -Wl,-Map,$(MAP) $(OBJECTS) $(LDLIBS) -o $@
+
+$(BIN): $(ELF)
 	$(OBJCOPY) -O binary $< $@
 
-$(OUT)/socrv-$(APP).dis: $(ELF)
+$(DIS): $(ELF)
 	$(OBJDUMP) -d -S $< > $@
 
-$(OUT)/socrv-$(APP).size: $(ELF)
-	$(SIZE) $< | tee $@
+$(SIZE_TXT): $(ELF)
+	$(SIZE) -A $< | tee $@
 
 clean:
 	rm -rf $(OUT)
+
+print-sources:
+	@printf '%s\n' $(SOURCES)
+
+print-flags:
+	@printf '%s\n' '$(CFLAGS)'
+
+print-kind:
+	@printf '%s\n' '$(PROFILE_KIND)'
+
+-include $(DEPFILES)

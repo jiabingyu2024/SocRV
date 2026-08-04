@@ -1,0 +1,58 @@
+{
+  "elf": {
+    "path": "data/isa/rv32ui/sub/firmware.elf",
+    "sha256": "9a990afd74225a7ee82d5516b0a8462e1d4ce98c968800bb92757a8ba2850d0e"
+  },
+  "endianness": "little",
+  "entry": "0x00000000",
+  "isa": {
+    "mabi": "ilp32",
+    "march": "rv32i_zicsr",
+    "xlen": 32
+  },
+  "kind": "software_image",
+  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "profile": "riscv-tests/rv32ui/sub",
+  "regions": [
+    {
+      "base": "0x00000000",
+      "file": "data/isa/rv32ui/sub/code.mem",
+      "fill": "0x00000000",
+      "name": "CODE",
+      "sha256": "a352ca685166303adf507e272cb8ed97f67af95c684e7bad44b24e1a0c0bd27c",
+      "size": 65536,
+      "stored_words": 328,
+      "used": 1312
+    },
+    {
+      "base": "0x10000000",
+      "file": "data/isa/rv32ui/sub/data.mem",
+      "fill": "0x00000000",
+      "name": "DATA",
+      "sha256": "22dbe6b7b70a64966e31813e597db3e863492d341bee2fb05c0e8864773387af",
+      "size": 65536,
+      "stored_words": 1,
+      "used": 0
+    }
+  ],
+  "schema_version": 2,
+  "segments": [
+    {
+      "address": "0x00000000",
+      "file_size": 1312,
+      "flags": 5,
+      "memory_size": 1312,
+      "region": "CODE"
+    }
+  ],
+  "test_status": {
+    "base": "0x30002000",
+    "fail_magic": "0x4641494c",
+    "pass_magic": "0x50415353"
+  },
+  "word_format": {
+    "address_unit": "word",
+    "bits": 32,
+    "hex_digits": 8
+  }
+}

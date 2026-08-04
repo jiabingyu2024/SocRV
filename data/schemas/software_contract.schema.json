@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socrv.local/schema/software_contract.schema.json",
+  "title": "SocRV software-visible hardware contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "cpu",
+    "clocks",
+    "interrupts",
+    "peripherals",
+    "test_status"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "cpu": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "xlen",
+        "privilege",
+        "march",
+        "mabi",
+        "misaligned",
+        "atomic",
+        "compressed"
+      ],
+      "properties": {
+        "xlen": {"const": 32},
+        "privilege": {"const": "machine"},
+        "march": {"type": "string"},
+        "mabi": {"type": "string"},
+        "misaligned": {"enum": ["unsupported", "hardware", "software"]},
+        "atomic": {"type": "boolean"},
+        "compressed": {"type": "boolean"}
+      }
+    },
+    "clocks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["soc_hz", "timer_hz", "uart_baud"],
+      "properties": {
+        "soc_hz": {"type": "integer", "minimum": 1},
+        "timer_hz": {"type": "integer", "minimum": 1},
+        "uart_baud": {"type": "integer", "minimum": 1}
+      }
+    },
+    "interrupts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["machine_causes", "external_sources"],
+      "properties": {
+        "machine_causes": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 0, "maximum": 31}
+        },
+        "external_sources": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 0, "maximum": 31}
+        }
+      }
+    },
+    "peripherals": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/peripheral"
+      }
+    },
+    "test_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pass_magic", "fail_magic", "status_register", "code_register"],
+      "properties": {
+        "pass_magic": {"$ref": "#/$defs/hex32"},
+        "fail_magic": {"$ref": "#/$defs/hex32"},
+        "status_register": {"type": "string"},
+        "code_register": {"type": "string"}
+      }
+    }
+  },
+  "$defs": {
+    "hex32": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{8}$"
+    },
+    "register": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["offset", "access", "reset", "side_effect"],
+      "properties": {
+        "offset": {"$ref": "#/$defs/hex32"},
+        "access": {"enum": ["RO", "RW", "WO", "W1C"]},
+        "reset": {"$ref": "#/$defs/hex32"},
+        "side_effect": {"type": "string"}
+      }
+    },
+    "peripheral": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["region", "registers"],
+      "properties": {
+        "region": {"type": "string"},
+        "registers": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/register"}
+        }
+      }
+    }
+  }
+}

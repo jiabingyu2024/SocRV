@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "name": "coremark",
+  "url": "https://github.com/eembc/coremark.git",
+  "ref": "v1.01",
+  "commit": "cfa9ab377835911f23d9b0831c7be302ed1f58de",
+  "required_paths": [
+    "core_list_join.c",
+    "core_main.c",
+    "core_matrix.c",
+    "core_state.c",
+    "core_util.c",
+    "coremark.h",
+    "LICENSE.md"
+  ]
+}

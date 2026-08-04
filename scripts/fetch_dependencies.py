@@ -3,14 +3,40 @@ from __future__ import annotations
 import argparse
 import shutil
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 
 from lib.manifest import read_json, write_json_atomic
 from lib.repo import build_path, repo_path
 
 
-LOCK_PATH = repo_path("software", "rt-thread", "dependency.lock.json")
-DESTINATION = repo_path("software", "rt-thread", "upstream")
+@dataclass(frozen=True)
+class Dependency:
+    name: str
+    lock_path: Path
+    destination: Path
+
+
+DEPENDENCIES = {
+    dependency.name: dependency
+    for dependency in (
+        Dependency(
+            "rt-thread",
+            repo_path("software", "rt-thread", "dependency.lock.json"),
+            repo_path("software", "rt-thread", "upstream"),
+        ),
+        Dependency(
+            "riscv-tests",
+            repo_path("software", "riscv-tests", "dependency.lock.json"),
+            repo_path("software", "riscv-tests", "upstream"),
+        ),
+        Dependency(
+            "coremark",
+            repo_path("software", "coremark", "dependency.lock.json"),
+            repo_path("software", "coremark", "upstream"),
+        ),
+    )
+}
 
 
 def git(*args: str, cwd: Path | None = None, timeout: int = 300) -> subprocess.CompletedProcess[str]:
@@ -26,120 +52,194 @@ def git(*args: str, cwd: Path | None = None, timeout: int = 300) -> subprocess.C
     )
 
 
-def load_lock() -> dict[str, object]:
-    lock = read_json(LOCK_PATH)
+def load_lock(dependency: Dependency) -> dict[str, object]:
+    lock = read_json(dependency.lock_path)
     if lock.get("schema_version") != 1:
-        raise SystemExit(f"unsupported dependency lock version: {lock.get('schema_version')!r}")
-    for field in ("url", "tag", "commit", "sparse_paths"):
+        raise SystemExit(
+            f"{dependency.name}: unsupported lock version {lock.get('schema_version')!r}"
+        )
+    for field in ("name", "url", "commit", "required_paths"):
         if field not in lock:
-            raise SystemExit(f"missing dependency lock field: {field}")
+            raise SystemExit(f"{dependency.name}: missing lock field {field}")
+    if lock["name"] != dependency.name:
+        raise SystemExit(
+            f"{dependency.name}: lock name is {lock['name']!r}"
+        )
+    if not isinstance(lock["required_paths"], list):
+        raise SystemExit(f"{dependency.name}: required_paths must be an array")
+    sparse_paths = lock.get("sparse_paths")
+    if sparse_paths is not None and not isinstance(sparse_paths, list):
+        raise SystemExit(f"{dependency.name}: sparse_paths must be an array")
     return lock
 
 
-def current_commit() -> str | None:
-    if not (DESTINATION / ".git").exists():
+def current_commit(dependency: Dependency) -> str | None:
+    if not (dependency.destination / ".git").exists():
         return None
-    result = git("rev-parse", "HEAD", cwd=DESTINATION)
+    result = git("rev-parse", "HEAD", cwd=dependency.destination)
     return result.stdout.strip() if result.returncode == 0 else None
 
 
-def verify() -> None:
-    lock = load_lock()
-    actual = current_commit()
-    expected = str(lock["commit"])
-    if actual != expected:
-        raise SystemExit(
-            f"RT-Thread dependency mismatch: expected {expected}, got {actual or 'missing'}"
-        )
-    missing = [
-        str(path)
-        for path in lock["sparse_paths"]
-        if not (DESTINATION / str(path)).exists()
-    ]
-    if missing:
-        raise SystemExit(
-            "RT-Thread sparse checkout is incomplete; missing:\n"
-            + "\n".join(f"  {path}" for path in missing)
-        )
-    print(f"RT-Thread dependency verified: {actual}")
+def current_remote(dependency: Dependency) -> str | None:
+    if not (dependency.destination / ".git").exists():
+        return None
+    result = git("remote", "get-url", "origin", cwd=dependency.destination)
+    return result.stdout.strip() if result.returncode == 0 else None
 
 
-def configure_sparse(lock: dict[str, object]) -> list[str]:
-    sparse_paths = [str(path) for path in lock["sparse_paths"]]
+def configure_sparse(
+    dependency: Dependency,
+    lock: dict[str, object],
+) -> list[str]:
+    sparse_paths = [str(path) for path in lock.get("sparse_paths", [])]
+    if not sparse_paths:
+        disable = git("sparse-checkout", "disable", cwd=dependency.destination)
+        if disable.returncode not in (0, 128):
+            raise SystemExit(
+                f"{dependency.name}: cannot disable sparse checkout:\n"
+                f"{disable.stdout}{disable.stderr}"
+            )
+        return []
     sparse = git(
         "sparse-checkout",
         "set",
         "--no-cone",
         *sparse_paths,
-        cwd=DESTINATION,
+        cwd=dependency.destination,
     )
     if sparse.returncode != 0:
-        raise SystemExit(f"RT-Thread sparse checkout failed:\n{sparse.stdout}{sparse.stderr}")
+        raise SystemExit(
+            f"{dependency.name}: sparse checkout failed:\n"
+            f"{sparse.stdout}{sparse.stderr}"
+        )
     return sparse_paths
 
 
-def write_dependency_manifest(lock: dict[str, object], sparse_paths: list[str]) -> None:
+def verify_one(dependency: Dependency) -> dict[str, object]:
+    lock = load_lock(dependency)
+    actual = current_commit(dependency)
+    expected = str(lock["commit"])
+    if actual != expected:
+        raise SystemExit(
+            f"{dependency.name}: expected commit {expected}, "
+            f"got {actual or 'missing'}"
+        )
+    expected_url = str(lock["url"]).rstrip("/")
+    actual_url = (current_remote(dependency) or "").rstrip("/")
+    if actual_url != expected_url:
+        raise SystemExit(
+            f"{dependency.name}: expected origin {expected_url}, "
+            f"got {actual_url or 'missing'}"
+        )
+    missing = [
+        str(path)
+        for path in lock["required_paths"]
+        if not (dependency.destination / str(path)).exists()
+    ]
+    if missing:
+        raise SystemExit(
+            f"{dependency.name}: checkout is incomplete; missing:\n"
+            + "\n".join(f"  {path}" for path in missing)
+        )
     manifest = {
         "schema_version": 1,
         "kind": "external_dependency",
-        "name": "rt-thread",
+        "name": dependency.name,
         "url": lock["url"],
-        "tag": lock["tag"],
-        "commit": current_commit(),
-        "sparse_paths": sparse_paths,
+        "ref": lock.get("ref"),
+        "commit": actual,
+        "sparse_paths": [str(path) for path in lock.get("sparse_paths", [])],
     }
-    write_json_atomic(build_path("manifest", "rt-thread.json"), manifest)
+    write_json_atomic(build_path("manifest", f"{dependency.name}.json"), manifest)
+    print(f"{dependency.name} dependency verified: {actual}")
+    return lock
 
 
-def fetch() -> None:
-    lock = load_lock()
-    actual = current_commit()
-    if actual == lock["commit"]:
-        sparse_paths = configure_sparse(lock)
-        verify()
-        write_dependency_manifest(lock, sparse_paths)
-        print(f"RT-Thread dependency already present and configured: {actual}")
-        return
-    if DESTINATION.exists():
-        if any(DESTINATION.iterdir()):
+def initialize_checkout(
+    dependency: Dependency,
+    lock: dict[str, object],
+) -> None:
+    destination = dependency.destination
+    if destination.exists():
+        if any(destination.iterdir()):
             raise SystemExit(
-                f"dependency destination is non-empty but not the locked revision: {DESTINATION}"
+                f"{dependency.name}: destination is non-empty and not the locked "
+                f"checkout: {destination}"
             )
-        DESTINATION.rmdir()
-    DESTINATION.parent.mkdir(parents=True, exist_ok=True)
+        destination.rmdir()
+    destination.mkdir(parents=True)
 
-    clone = git(
-        "clone",
+    commands = (
+        ("init",),
+        ("remote", "add", "origin", str(lock["url"])),
+    )
+    for command in commands:
+        result = git(*command, cwd=destination)
+        if result.returncode != 0:
+            raise SystemExit(
+                f"{dependency.name}: git {' '.join(command)} failed:\n"
+                f"{result.stdout}{result.stderr}"
+            )
+
+    configure_sparse(dependency, lock)
+    fetch = git(
+        "fetch",
         "--depth",
         "1",
-        "--filter=blob:none",
-        "--sparse",
-        "--branch",
-        str(lock["tag"]),
-        "--single-branch",
-        str(lock["url"]),
-        str(DESTINATION),
+        "origin",
+        str(lock["commit"]),
+        cwd=destination,
         timeout=600,
     )
-    if clone.returncode != 0:
-        raise SystemExit(f"RT-Thread clone failed:\n{clone.stdout}{clone.stderr}")
+    if fetch.returncode != 0:
+        raise SystemExit(
+            f"{dependency.name}: fetch failed:\n{fetch.stdout}{fetch.stderr}"
+        )
+    checkout = git("checkout", "--detach", "FETCH_HEAD", cwd=destination)
+    if checkout.returncode != 0:
+        raise SystemExit(
+            f"{dependency.name}: checkout failed:\n"
+            f"{checkout.stdout}{checkout.stderr}"
+        )
 
-    sparse_paths = configure_sparse(lock)
-    verify()
-    write_dependency_manifest(lock, sparse_paths)
-    print(f"Fetched RT-Thread {lock['tag']} into {DESTINATION}")
+
+def fetch_one(dependency: Dependency) -> None:
+    lock = load_lock(dependency)
+    actual = current_commit(dependency)
+    if actual == lock["commit"]:
+        configure_sparse(dependency, lock)
+        verify_one(dependency)
+        print(f"{dependency.name} already present at the locked revision")
+        return
+    initialize_checkout(dependency, lock)
+    verify_one(dependency)
+    print(f"Fetched {dependency.name} into {dependency.destination}")
+
+
+def selected_dependencies(name: str) -> list[Dependency]:
+    if name == "all":
+        return list(DEPENDENCIES.values())
+    return [DEPENDENCIES[name]]
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Fetch pinned SocRV external dependencies.")
+    parser = argparse.ArgumentParser(
+        description="Fetch and verify pinned SocRV external dependencies."
+    )
+    parser.add_argument(
+        "--dependency",
+        choices=["all", *sorted(DEPENDENCIES)],
+        default="all",
+    )
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
     if not shutil.which("git"):
         raise SystemExit("git executable not found")
-    if args.verify:
-        verify()
-    else:
-        fetch()
+    for dependency in selected_dependencies(args.dependency):
+        if args.verify:
+            verify_one(dependency)
+        else:
+            fetch_one(dependency)
     return 0
 
 

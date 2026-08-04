@@ -4,6 +4,7 @@ import argparse
 import shutil
 from pathlib import Path
 
+from build_software import PROFILES
 from lib.hashing import sha256_file
 from lib.manifest import write_json_atomic
 from lib.repo import repo_path
@@ -11,13 +12,23 @@ from lib.repo import repo_path
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Package verified SocRV artifacts into build/release.")
-    parser.add_argument("--profile", choices=["smoke", "rtthread"], default="smoke")
+    parser.add_argument("--profile", choices=sorted(PROFILES), default="smoke")
     args = parser.parse_args()
-    software_name = "baremetal-smoke" if args.profile == "smoke" else "rtthread"
-    app_name = "smoke" if args.profile == "smoke" else "rtthread"
     inputs = {
-        f"software/socrv-{app_name}.elf": repo_path(
-            "build", "software", software_name, f"socrv-{app_name}.elf"
+        "software/firmware.elf": repo_path(
+            "build", "software", args.profile, "firmware.elf"
+        ),
+        "software/firmware.map": repo_path(
+            "build", "software", args.profile, "firmware.map"
+        ),
+        "software/firmware.dis": repo_path(
+            "build", "software", args.profile, "firmware.dis"
+        ),
+        "software/size.json": repo_path(
+            "build", "software", args.profile, "size.json"
+        ),
+        "software/build_manifest.json": repo_path(
+            "build", "software", args.profile, "build_manifest.json"
         ),
         "image/code.mem": repo_path("build", "images", args.profile, "code.mem"),
         "image/data.mem": repo_path("build", "images", args.profile, "data.mem"),

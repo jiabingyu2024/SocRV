@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import json
 import struct
 from dataclasses import dataclass
 from pathlib import Path
 
 from lib.hashing import sha256_file
 from lib.manifest import write_json_atomic
+from lib.repo import repo_path
 
 
 ELF_HEADER = struct.Struct("<16sHHIIIIIHHHHHH")
@@ -30,6 +32,7 @@ class Region:
     output: Path
     image: bytearray
     used_end: int = 0
+    stored_words: int = 0
 
     @classmethod
     def parse(cls, value: str) -> "Region":
@@ -113,18 +116,41 @@ def parse_elf32_little(path: Path) -> tuple[int, list[Segment]]:
     return entry, segments
 
 
-def write_word_mem(region: Region) -> None:
+def manifest_path(path: Path) -> str:
+    resolved = path.resolve()
+    root = repo_path().resolve()
+    if resolved == root or root in resolved.parents:
+        return resolved.relative_to(root).as_posix()
+    return resolved.as_posix()
+
+
+def write_word_mem(region: Region, *, trim: bool) -> None:
     region.output.parent.mkdir(parents=True, exist_ok=True)
-    padded_size = (region.size + 3) & ~3
+    output_size = region.size
+    if trim:
+        output_size = max(4, (region.used_end + 3) & ~3)
+    padded_size = (output_size + 3) & ~3
     if padded_size != len(region.image):
-        region.image.extend(bytes(padded_size - len(region.image)))
+        if padded_size > len(region.image):
+            region.image.extend(bytes(padded_size - len(region.image)))
+    region.stored_words = padded_size // 4
     with region.output.open("w", encoding="ascii", newline="\n") as stream:
         for offset in range(0, padded_size, 4):
             word = int.from_bytes(region.image[offset : offset + 4], "little")
             stream.write(f"{word:08x}\n")
 
 
-def convert(elf: Path, regions: list[Region], manifest_path: Path) -> None:
+def convert(
+    elf: Path,
+    regions: list[Region],
+    output_manifest: Path,
+    *,
+    profile: str = "unspecified",
+    contract: dict[str, object] | None = None,
+    memory_map_hash: str | None = None,
+    test_status_base: int | None = None,
+    trim: bool = False,
+) -> None:
     entry, segments = parse_elf32_little(elf)
     placement: list[dict[str, object]] = []
     for segment in segments:
@@ -148,29 +174,53 @@ def convert(elf: Path, regions: list[Region], manifest_path: Path) -> None:
 
     region_entries = []
     for region in regions:
-        write_word_mem(region)
+        write_word_mem(region, trim=trim)
         region_entries.append(
             {
                 "name": region.name,
                 "base": f"0x{region.base:08x}",
                 "size": region.size,
                 "used": region.used_end,
-                "file": region.output.as_posix(),
+                "stored_words": region.stored_words,
+                "file": manifest_path(region.output),
                 "sha256": sha256_file(region.output),
+                "fill": "0x00000000",
             }
         )
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
+        "kind": "software_image",
+        "profile": profile,
         "elf": {
-            "path": elf.as_posix(),
+            "path": manifest_path(elf),
             "sha256": sha256_file(elf),
         },
         "entry": f"0x{entry:08x}",
         "endianness": "little",
+        "word_format": {
+            "bits": 32,
+            "hex_digits": 8,
+            "address_unit": "word",
+        },
         "regions": region_entries,
         "segments": placement,
     }
-    write_json_atomic(manifest_path, manifest)
+    if contract is not None:
+        cpu = contract["cpu"]
+        test_status = contract["test_status"]
+        manifest["isa"] = {
+            "xlen": cpu["xlen"],
+            "march": cpu["march"],
+            "mabi": cpu["mabi"],
+        }
+        manifest["test_status"] = {
+            "base": f"0x{test_status_base:08x}",
+            "pass_magic": test_status["pass_magic"],
+            "fail_magic": test_status["fail_magic"],
+        }
+    if memory_map_hash is not None:
+        manifest["memory_map_sha256"] = memory_map_hash
+    write_json_atomic(output_manifest, manifest)
 
 
 def main() -> int:
@@ -184,9 +234,35 @@ def main() -> int:
         help="NAME:BASE:SIZE:OUTPUT; repeat for every allowed load region",
     )
     parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--profile", default="unspecified")
+    parser.add_argument(
+        "--contract",
+        type=Path,
+        default=repo_path("data", "soc", "software_contract.json"),
+    )
+    parser.add_argument(
+        "--memory-map",
+        type=Path,
+        default=repo_path("data", "soc", "memory_map.json"),
+    )
+    parser.add_argument("--trim", action="store_true")
     args = parser.parse_args()
     try:
-        convert(args.elf.resolve(), args.region, args.manifest.resolve())
+        contract = json.loads(args.contract.read_text(encoding="utf-8"))
+        memory_map = json.loads(args.memory_map.read_text(encoding="utf-8"))
+        convert(
+            args.elf.resolve(),
+            args.region,
+            args.manifest.resolve(),
+            profile=args.profile,
+            contract=contract,
+            memory_map_hash=sha256_file(args.memory_map),
+            test_status_base=int(
+                memory_map["regions"]["TEST_STATUS"]["base"],
+                0,
+            ),
+            trim=args.trim,
+        )
     except (OSError, ValueError) as error:
         parser.error(str(error))
     print(f"Image manifest: {args.manifest.resolve()}")

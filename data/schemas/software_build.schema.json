@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socrv.local/schema/software_build.schema.json",
+  "title": "SocRV software build manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "profile",
+    "profile_kind",
+    "score_candidate",
+    "toolchain",
+    "linker",
+    "elf",
+    "dependencies",
+    "sources",
+    "repository_dirty"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "kind": {"const": "software_build"},
+    "profile": {"type": "string"},
+    "profile_kind": {"type": "string"},
+    "score_candidate": {"type": "boolean"},
+    "toolchain": {"type": "object"},
+    "linker": {"type": "string"},
+    "elf": {"type": "object"},
+    "dependencies": {"type": "array"},
+    "sources": {"type": "array", "minItems": 1},
+    "repository_dirty": {"type": "boolean"}
+  }
+}

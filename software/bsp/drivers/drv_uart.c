@@ -2,24 +2,33 @@
 #include "soc.h"
 #include "drv_uart.h"
 
-enum {
-    UART_TXDATA = 0x00,
-    UART_STATUS = 0x08,
-    UART_DIVISOR = 0x0c,
-    UART_STATUS_TX_READY = 1u << 8,
-    UART_STATUS_TX_EMPTY = 1u << 9
-};
-
 void uart_init(void)
 {
-    mmio_write32(SOCRV_UART_BASE + UART_DIVISOR, 434u);
+    mmio_write32(
+        SOCRV_UART_BASE + SOCRV_UART_DIVISOR_OFFSET,
+        SOCRV_UART_DIVISOR
+    );
+    mmio_write32(
+        SOCRV_UART_BASE + SOCRV_UART_CONTROL_OFFSET,
+        0u
+    );
+}
+
+void uart_early_putc(char character)
+{
+    while ((mmio_read32(
+                SOCRV_UART_BASE + SOCRV_UART_STATUS_OFFSET
+            ) & SOCRV_UART_STATUS_TX_READY) == 0u) {
+    }
+    mmio_write32(
+        SOCRV_UART_BASE + SOCRV_UART_TXDATA_OFFSET,
+        (uint8_t)character
+    );
 }
 
 void uart_putc(char character)
 {
-    while ((mmio_read32(SOCRV_UART_BASE + UART_STATUS) & UART_STATUS_TX_READY) == 0u) {
-    }
-    mmio_write32(SOCRV_UART_BASE + UART_TXDATA, (uint8_t)character);
+    uart_early_putc(character);
 }
 
 void uart_puts(const char *text)
@@ -29,8 +38,40 @@ void uart_puts(const char *text)
     }
 }
 
+int uart_getc_nonblocking(char *character)
+{
+    uint32_t status = mmio_read32(
+        SOCRV_UART_BASE + SOCRV_UART_STATUS_OFFSET
+    );
+    if ((status & SOCRV_UART_STATUS_RX_VALID) == 0u) {
+        return 0;
+    }
+    *character = (char)mmio_read32(
+        SOCRV_UART_BASE + SOCRV_UART_RXDATA_OFFSET
+    );
+    return 1;
+}
+
+char uart_getc(void)
+{
+    char character;
+    while (!uart_getc_nonblocking(&character)) {
+    }
+    return character;
+}
+
+void uart_enable_rx_irq(int enable)
+{
+    mmio_write32(
+        SOCRV_UART_BASE + SOCRV_UART_CONTROL_OFFSET,
+        enable ? SOCRV_UART_CONTROL_RX_IRQ_ENABLE : 0u
+    );
+}
+
 void uart_flush(void)
 {
-    while ((mmio_read32(SOCRV_UART_BASE + UART_STATUS) & UART_STATUS_TX_EMPTY) == 0u) {
+    while ((mmio_read32(
+                SOCRV_UART_BASE + SOCRV_UART_STATUS_OFFSET
+            ) & SOCRV_UART_STATUS_TX_EMPTY) == 0u) {
     }
 }

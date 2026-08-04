@@ -6,10 +6,14 @@ TRACE ?= 0
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env-check doctor deps deps-check data-isa-import data-isa-check \
-	validate-schemas test-scripts check-generated-tree check-filelists \
-	check-memory-map rtl-lint check software software-smoke software-rtthread \
-	sim sim-smoke sim-rtthread regression fpga-bitstream fpga-check fpga-program \
+.PHONY: help env-check doctor deps deps-check soc-contract soc-contract-check \
+	isa-data isa-data-check isa-regression data-isa-import data-isa-check \
+	data-isa-legacy-import data-isa-legacy-check validate-schemas test-scripts \
+	check-generated-tree check-filelists check-memory-map rtl-lint check \
+	software software-smoke software-trap-timer software-rtthread \
+	software-coremark coremark-smoke coremark-rtthread \
+	sim sim-smoke sim-trap-timer sim-rtthread sim-coremark-smoke \
+	sim-coremark-rtthread regression fpga-bitstream fpga-check fpga-program \
 	check-images release release-check clean-software clean-images clean-sim \
 	clean-regression clean-fpga clean
 
@@ -28,10 +32,31 @@ deps:
 deps-check:
 	@$(PYTHON) scripts/fetch_dependencies.py --verify
 
-data-isa-import:
+soc-contract:
+	@$(PYTHON) scripts/generate_soc_contract.py
+
+soc-contract-check:
+	@$(PYTHON) scripts/generate_soc_contract.py --check
+
+isa-data: deps-check
+	@$(PYTHON) scripts/generate_isa_data.py
+
+isa-data-check:
+	@$(PYTHON) scripts/generate_isa_data.py --verify
+
+isa-regression: isa-data-check
+	@$(PYTHON) scripts/run_isa_tests.py
+
+# Compatibility aliases. The authoritative dataset is generated from the
+# locked official riscv-tests checkout, not copied from the previous project.
+data-isa-import: isa-data
+
+data-isa-check: isa-data-check
+
+data-isa-legacy-import:
 	@$(PYTHON) scripts/import_legacy_isa.py
 
-data-isa-check:
+data-isa-legacy-check:
 	@$(PYTHON) scripts/import_legacy_isa.py --verify
 
 validate-schemas:
@@ -52,26 +77,47 @@ check-memory-map:
 rtl-lint:
 	@$(PYTHON) scripts/lint_rtl.py
 
-check: env-check data-isa-check validate-schemas test-scripts check-generated-tree check-filelists check-memory-map rtl-lint
+check: env-check deps-check soc-contract-check isa-data-check validate-schemas test-scripts check-generated-tree check-filelists check-memory-map rtl-lint
 	@$(PYTHON) scripts/project_cli.py message "static and foundational checks passed"
 
-software:
+software: deps-check
 	@$(PYTHON) scripts/build_software.py --profile $(PROFILE)
 
 software-smoke:
 	@$(PYTHON) scripts/build_software.py --profile smoke
 
+software-trap-timer:
+	@$(PYTHON) scripts/build_software.py --profile trap-timer
+
 software-rtthread: deps-check
 	@$(PYTHON) scripts/build_software.py --profile rtthread
 
-sim:
+software-coremark: deps-check
+	@$(PYTHON) scripts/build_software.py --profile coremark-baremetal
+
+coremark-smoke: deps-check
+	@$(PYTHON) scripts/build_software.py --profile coremark-smoke
+
+coremark-rtthread: deps-check
+	@$(PYTHON) scripts/build_software.py --profile coremark-rtthread
+
+sim: deps-check
 	@$(PYTHON) scripts/run_verilator.py --profile $(PROFILE) $(if $(filter 1,$(TRACE)),--trace,)
 
 sim-smoke:
 	@$(PYTHON) scripts/run_verilator.py --profile smoke $(if $(filter 1,$(TRACE)),--trace,)
 
+sim-trap-timer:
+	@$(PYTHON) scripts/run_verilator.py --profile trap-timer $(if $(filter 1,$(TRACE)),--trace,)
+
 sim-rtthread: deps-check
 	@$(PYTHON) scripts/run_verilator.py --profile rtthread $(if $(filter 1,$(TRACE)),--trace,)
+
+sim-coremark-smoke: deps-check
+	@$(PYTHON) scripts/run_verilator.py --profile coremark-smoke $(if $(filter 1,$(TRACE)),--trace,)
+
+sim-coremark-rtthread: deps-check
+	@$(PYTHON) scripts/run_verilator.py --profile coremark-rtthread $(if $(filter 1,$(TRACE)),--trace,)
 
 regression: deps-check
 	@$(PYTHON) scripts/run_regression.py --suite $(SUITE)
@@ -79,7 +125,7 @@ regression: deps-check
 check-images:
 	@$(PYTHON) scripts/check_images.py
 
-fpga-bitstream:
+fpga-bitstream: deps-check
 	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --jobs $(JOBS)
 
 fpga-check:

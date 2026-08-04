@@ -2,7 +2,117 @@
 
 > 适用项目：`SocRV` RV32 SoC、裸机程序、BSP、RT-Thread、FinSH、CoreMark、Verilator SoC 仿真与 FPGA。  
 > 本文说明 `software/` 的目录、启动链、链接布局、Trap/中断、驱动、RT-Thread Port、应用和镜像边界。  
-> Memory Map、IRQ 编号、时钟频率和寄存器复位值尚未全部冻结，文中只规定 Owner 和更新关系，不虚构具体数值。
+> 本轮实现已经冻结第一版 ISA/ABI、Memory Map、IRQ、时钟和软件可见寄存器合同；权威值位于 `data/soc/`，本文件后续章节仍保留架构原则与变更方法。
+
+---
+
+## 当前落地基线（2026-08）
+
+本节记录已经实现并由构建/仿真验证的工程事实。后续章节中的“推荐”“待冻结”
+表示通用设计要求；若与本节冲突，以受控 JSON、生成器和实际 Profile 为准。
+
+### 唯一事实源与生成物
+
+```text
+data/soc/memory_map.json
+data/soc/software_contract.json
+        │
+        └─ scripts/generate_soc_contract.py
+             ├─ software/bsp/include/soc_memory_map.h
+             ├─ software/bsp/include/soc_config.h
+             ├─ software/bsp/include/soc_irq.h
+             ├─ software/bsp/include/soc_registers.h
+             └─ software/linker/memory.ldh
+```
+
+生成文件禁止手工维护。修改硬件合同后执行：
+
+```text
+make soc-contract
+make check
+make isa-data
+make isa-regression
+```
+
+第一版 CPU 合同为 RV32I + Zicsr、`ilp32`、Machine Mode，不支持
+misaligned、A、C。CODE 为 `0x0000_0000/64 KiB`，DATA 为
+`0x1000_0000/64 KiB`；详细外设地址、寄存器访问属性、复位值和副作用均在
+上述受控 JSON 中，不在本文重复复制。
+
+### 固定上游依赖
+
+三个第三方项目采用相同的 `dependency.lock.json + upstream/` 模式，
+`upstream/` 不提交且不写入 SocRV 私有修改：
+
+| Dependency | Locked revision | Project-owned adaptation |
+| --- | --- | --- |
+| RT-Thread | v5.2.2, `ddf52e2cdd977f14fc04035c88672ac204aec713` | `software/rt-thread/port/`、`rtconfig.h` |
+| riscv-tests | `447a5fcb8253627ddb5f6a226f64e43463afcdd5` | `software/riscv-tests/env/socrv/`、`tests.json` |
+| CoreMark | v1.01, `cfa9ab377835911f23d9b0831c7be302ed1f58de` | `software/coremark/port/` |
+
+`make deps` clone/checkout，`make deps-check` 同时校验 commit 与必需文件。
+
+### 已实现 Profile
+
+| Profile | 用途 | 是否可报告正式分数 |
+| --- | --- | --- |
+| `smoke` | `.data/.bss`、UART、GPIO、Test Status | 不适用 |
+| `trap-timer` | M-mode `ecall` 返回、完整 Trap Frame、Timer IRQ | 不适用 |
+| `rtthread` | heap、scheduler、tick、FinSH/MSH、线程运行 | 不适用 |
+| `coremark-smoke` | 裸机 CoreMark 短迭代与官方 CRC 功能门 | 否 |
+| `coremark-baremetal` | FPGA 上正式裸机测量候选镜像 | 满足官方条件后才可 |
+| `coremark-rtthread` | RT-Thread 集成与单独报告 | 不与裸机分数混用 |
+
+所有 Profile 统一生成：
+
+```text
+build/software/<profile>/firmware.{elf,map,dis,bin}
+build/software/<profile>/{size.json,build_manifest.json}
+build/images/<profile>/{code.mem,data.mem,image.json}
+```
+
+### riscv-tests 与 `data/isa`
+
+`data/isa` 不再从旧工程复制。`scripts/generate_isa_data.py` 使用锁定的官方
+riscv-tests 源码和 SocRV 自有 test environment，按当前 CODE/DATA Map
+编译 40 个 RV32UI 用例。`fence_i` 因未冻结 Zifencei、`ma_data` 因
+misaligned 不支持而在 `tests.json` 中显式排除。生成目录中的每个用例均保留
+ELF、MAP、DIS、CODE/DATA MEM 与 hash manifest。
+
+```text
+make isa-data
+make isa-data-check
+make isa-regression
+```
+
+历史数据仅可通过 `data-isa-legacy-*` 入口审计，不再是默认回归输入。
+
+### 与原规划的受控差异
+
+- 内部构建 Owner 已选定为 Make，`software/profiles/*.mk` 负责源文件与 flags；
+  没有并行维护 SCons/CMake。
+- 轻量 freestanding 运行库使用 `runtime/minilibc.c` 与最小头文件，而不是
+  引入 newlib；只实现固件和 FinSH 实际需要的符号。
+- 统一镜像目录采用已有工程约定 `build/images/`（复数）。
+- RT-Thread 复用上游 RISC-V context/trap 源，SocRV 只维护启动、Board/BSP
+  适配；FinSH 符号表和组件初始化段由链接脚本显式 `KEEP`。
+- CoreMark 短仿真仅验证参考 CRC。正式 `coremark-baremetal` 使用 50 MHz
+  硬件 Timer、2000 iterations，并面向 FPGA 测量。
+
+### 本轮验证记录
+
+```text
+make check                         PASS
+make check-images                  6/6 PASS
+smoke regression                  3/3 PASS
+CoreMark functional regression    2/2 PASS，crcfinal = 0xe714
+RV32UI ISA regression             40/40 PASS
+coremark-baremetal Vivado         timing met，DRC 0 error
+```
+
+正式 CoreMark bitstream 已生成并打入可校验 release 包。当前记录只证明软件、
+镜像和 FPGA 构建路径可用；尚未在实体板上运行 2000 iterations，因此不记录
+CoreMark 分数。
 
 ---
 
@@ -145,7 +255,7 @@ build/software/<profile>/
 ├─ build_manifest.json
 └─ objects/
 
-build/image/<profile>/
+build/images/<profile>/
 ├─ code.mem
 ├─ data.mem
 ├─ image.json

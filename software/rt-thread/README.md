@@ -13,4 +13,7 @@ make deps
 make deps-check
 ```
 
-SocRV 自己的 CPU Port、Board Port 和配置文件放在 `software/rt-thread/` 的受控目录中，不直接修改 `upstream/`。
+SocRV 自己的启动、Board/BSP 适配和 `rtconfig.h` 位于
+`software/rt-thread/port/`，不直接修改 `upstream/`。当前配置启用 heap、
+machine timer tick、software interrupt、components init 与 FinSH/MSH；
+应用和命令位于 `software/applications/rtthread/`。

@@ -4,13 +4,14 @@ import argparse
 import json
 from pathlib import Path
 
+from build_software import PROFILES
 from lib.hashing import sha256_file
 from lib.repo import repo_path
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--profile", choices=["smoke", "rtthread"], default="smoke")
+    parser.add_argument("--profile", choices=sorted(PROFILES), default="smoke")
     args = parser.parse_args()
     release_dir = repo_path("build", "release", f"socrv-{args.profile}")
     manifest_path = release_dir / "manifest.json"

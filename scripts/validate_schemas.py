@@ -21,6 +21,14 @@ def main() -> int:
     instances = [
         ("board.schema.json", repo_path("fpga", "boards", "kintex7_competition", "board.json")),
         ("memory_map.schema.json", repo_path("data", "soc", "memory_map.json")),
+        (
+            "software_contract.schema.json",
+            repo_path("data", "soc", "software_contract.json"),
+        ),
+        (
+            "isa_dataset.schema.json",
+            repo_path("data", "isa", "manifest.json"),
+        ),
         *[
             ("profile.schema.json", path)
             for path in sorted(repo_path("data", "profiles").glob("*.json"))
@@ -28,6 +36,12 @@ def main() -> int:
         *[
             ("testlist.schema.json", path)
             for path in sorted(repo_path("data", "tests").glob("*.json"))
+        ],
+        *[
+            ("software_build.schema.json", path)
+            for path in sorted(
+                repo_path("build", "software").glob("*/build_manifest.json")
+            )
         ],
     ]
     loaded = {

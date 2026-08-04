@@ -18,16 +18,26 @@ SocRV 是一套面向 RV32 CPU、HXI SoC、Verilator 和 Xilinx FPGA 的工程�
 make help
 make deps
 make check
+make isa-data
+make isa-regression
 make sim-smoke
+make sim-trap-timer
 make sim-rtthread
 make regression
+make sim-coremark-smoke
 make fpga-bitstream PROFILE=smoke
 make fpga-check PROFILE=smoke
 ```
 
 `sim-smoke` 会编译裸机程序、生成 CODE/DATA 镜像、在 WSL 中构建
-Verilator，并运行完整 SoC。`sim-rtthread` 使用固定到 commit
-`ddf52e2cdd977f14fc04035c88672ac204aec713` 的 RT-Thread v5.2.2。
+Verilator，并运行完整 SoC。`sim-trap-timer` 验证 M-mode ecall 返回和
+Timer IRQ。`sim-rtthread` 使用固定到 commit
+`ddf52e2cdd977f14fc04035c88672ac204aec713` 的 RT-Thread v5.2.2，并启用
+FinSH/MSH。`isa-data` 从锁定官方 riscv-tests 源码按当前 Memory Map
+重新生成 40 个 RV32UI 镜像；不再复用上一轮地址布局的二进制。
+
+CoreMark v1.01 同时提供短仿真功能 Profile、裸机 FPGA 正式测量候选 Profile
+和 RT-Thread Profile。短仿真结果仅用于 CRC 正确性，不能作为性能分数。
 
 FPGA 默认目标是 `xc7k325tffg900-2`，输入差分时钟 200 MHz，SoC 时钟
 50 MHz。Vivado 的工程、报告与 bitstream 全部进入

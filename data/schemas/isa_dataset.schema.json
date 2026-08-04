@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socrv.local/schema/isa_dataset.schema.json",
+  "title": "SocRV generated ISA dataset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "suite",
+    "march",
+    "mabi",
+    "upstream",
+    "memory_map_sha256",
+    "tests",
+    "excluded"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "kind": {"const": "generated_isa_dataset"},
+    "suite": {"type": "string"},
+    "march": {"type": "string"},
+    "mabi": {"type": "string"},
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "commit"],
+      "properties": {
+        "url": {"type": "string"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "memory_map_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "source",
+          "source_sha256",
+          "elf",
+          "elf_sha256",
+          "image_manifest"
+        ],
+        "properties": {
+          "name": {"type": "string"},
+          "source": {"type": "string"},
+          "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "elf": {"type": "string"},
+          "elf_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "image_manifest": {"type": "string"}
+        }
+      }
+    },
+    "excluded": {"type": "array"}
+  }
+}

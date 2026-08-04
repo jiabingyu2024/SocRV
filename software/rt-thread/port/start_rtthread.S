@@ -3,10 +3,16 @@
     .type _start, @function
 _start:
     csrci mstatus, 8
-    la sp, _stack_top
+    csrw mie, zero
+    csrw mscratch, zero
+    .option push
+    .option norelax
+    la gp, __global_pointer$
+    .option pop
+    la sp, __stack_top
     la t0, SW_handler
     csrw mtvec, t0
-    call rtthread_startup
+    call rtthread_crt0
 1:
     j 1b
     .size _start, . - _start

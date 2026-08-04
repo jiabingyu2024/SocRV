@@ -1,1375 +1,344 @@
 {
-  "files": [
+  "excluded": [
     {
-      "bytes": 13804,
-      "path": "rv32mi/rv32mi-p-csr",
-      "sha256": "6c29815d3ea67781b9429dc27829239e94f189308b255e85d5f8250a1b8c2835"
+      "reason": "Zifencei is not part of the frozen rv32i_zicsr CPU contract",
+      "test": "fence_i"
     },
     {
-      "bytes": 14515,
-      "path": "rv32mi/rv32mi-p-csr.dump",
-      "sha256": "80b36971b15d8cf5f0ad0c8f1b838984825944ed1ccde1d94bf1a1e7e13b53a9"
-    },
-    {
-      "bytes": 20520,
-      "path": "rv32mi/rv32mi-p-csr.hex",
-      "sha256": "4077433d55b669f0aca95d04df017fd7d3a91c9e068492596c88080915cf7335"
-    },
-    {
-      "bytes": 9280,
-      "path": "rv32mi/rv32mi-p-sbreak",
-      "sha256": "9f687d9afc4eadd87eb39bbc398ff6cb4a655d8007a55176214ecc6c7a81064c"
-    },
-    {
-      "bytes": 7507,
-      "path": "rv32mi/rv32mi-p-sbreak.dump",
-      "sha256": "cea8c38a87e69fd30d2a1ad9f5cb9d51a51b92979fadcceb538cdb1d34cacd0f"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32mi/rv32mi-p-sbreak.hex",
-      "sha256": "5d84f7dd0f341d1ade9777178842782b251a24b7057773e62ba659bea7fa5eaf"
-    },
-    {
-      "bytes": 9280,
-      "path": "rv32mi/rv32mi-p-scall",
-      "sha256": "c8bf81ce5ef42885f45c501a460c97513b06f7d96b242436918557041deb181c"
-    },
-    {
-      "bytes": 8346,
-      "path": "rv32mi/rv32mi-p-scall.dump",
-      "sha256": "a25b408f888a1516badeab0e73e0dab44c110d3ca39a7be0bc75bdef8f2c51b0"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32mi/rv32mi-p-scall.hex",
-      "sha256": "832449678fafb44155f64b203a581bc847d6315faf48e9357a07c285e10a2319"
-    },
-    {
-      "bytes": 9604,
-      "path": "rv32mi/rv32mi-p-zicntr",
-      "sha256": "2e85db0beca266f7365175e8b7262b4cdb99a22963ed4614c4aec872c3ff29e1"
-    },
-    {
-      "bytes": 9854,
-      "path": "rv32mi/rv32mi-p-zicntr.dump",
-      "sha256": "1acf305f88879b25c2a7a7b5eba620c1ce6b677cdd77d27b86df596b7e4e5d12"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32mi/rv32mi-p-zicntr.hex",
-      "sha256": "84d7bcb4c5af193e66d2776af596da0e285231b2335530c4107f6d3c4da0114e"
-    },
-    {
-      "bytes": 10080,
-      "path": "rv32ui/rv32ui-p-add",
-      "sha256": "2787a6c58fe9d936e3a51775c55b8e673a3ba92b5960bb942dc0c3c0ba88ac3b"
-    },
-    {
-      "bytes": 20899,
-      "path": "rv32ui/rv32ui-p-add.dump",
-      "sha256": "11befc3b6f58cb9b6a8e46966f0679d6468aa4241829d5973547213862a934b2"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-add.hex",
-      "sha256": "cd87c144c0d2983119b723dee12df0c9a67ed9a0b2784e69750b048bab60388f"
-    },
-    {
-      "bytes": 9768,
-      "path": "rv32ui/rv32ui-p-addi",
-      "sha256": "35f9ea52cd1f485154e851ddb4a32c98661486c9ba97ffb432193b4e5bb27c63"
-    },
-    {
-      "bytes": 14566,
-      "path": "rv32ui/rv32ui-p-addi.dump",
-      "sha256": "3bede275473d58077c4c91e20ab745fc7834c4a2df73fbfdace71f1a9613366a"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-addi.hex",
-      "sha256": "aa97cb96a2dc9ac2dec7a60fcd4fbad8be307d164870ccbb4b49543ec99628a0"
-    },
-    {
-      "bytes": 9816,
-      "path": "rv32ui/rv32ui-p-and",
-      "sha256": "c26e6eac94e753cbbceeea8c1b5491c29e5043defc346d2678e0bf4d590d6882"
-    },
-    {
-      "bytes": 21798,
-      "path": "rv32ui/rv32ui-p-and.dump",
-      "sha256": "1c4eb88e8cfcdc0b1b03a500867c670141f102e95cea1977177ebbf13d9e3ba8"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-and.hex",
-      "sha256": "da1591bb8d72a4fa6ffd6ea8965f0e20d9f1803b329a4704a71030b4eae5dc8b"
-    },
-    {
-      "bytes": 9504,
-      "path": "rv32ui/rv32ui-p-andi",
-      "sha256": "ca1feb16e3bd042eccc06f1f8e06dd37fdafbf4042d2bff5e4f584a54af04dad"
-    },
-    {
-      "bytes": 12492,
-      "path": "rv32ui/rv32ui-p-andi.dump",
-      "sha256": "ccae703edbe6a94a49ca8fd6cdf5bad0402af0460a07b3c627c96f7002325006"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-andi.hex",
-      "sha256": "63b5ee75da17cada91ee0b196d3da5c9d2c8c4f3a1a10d521e1857b6f32880a7"
-    },
-    {
-      "bytes": 9244,
-      "path": "rv32ui/rv32ui-p-auipc",
-      "sha256": "649cd40cc635ea819689bdb40da8e03bcdbc5ae8518cbd6f6a241391635a1573"
-    },
-    {
-      "bytes": 7377,
-      "path": "rv32ui/rv32ui-p-auipc.dump",
-      "sha256": "d94c028b9daf01684c585546bbf3c7af09304ef30bc64ff9409930a2c95e8a06"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-auipc.hex",
-      "sha256": "e006b4ac3c1d4f00461f0afd005d94e3fe494989a248a6dc1e8ae377ada7a062"
-    },
-    {
-      "bytes": 9672,
-      "path": "rv32ui/rv32ui-p-beq",
-      "sha256": "d784d55c85163ea1296977b0820c04b81ca207b039efe090b2f90a512cce437b"
-    },
-    {
-      "bytes": 15459,
-      "path": "rv32ui/rv32ui-p-beq.dump",
-      "sha256": "f86589b3a3414fb0ae03461a2d4911e33cb1ad95216c975824f94746b8ad9c76"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-beq.hex",
-      "sha256": "389a33711031e04004a63211f325015a043342f9791978eb35248a430a8fd41f"
-    },
-    {
-      "bytes": 9744,
-      "path": "rv32ui/rv32ui-p-bge",
-      "sha256": "f592144a1de51988dee8057279c9c739056b82bb5ba4e586bd8f0302ff9b0436"
-    },
-    {
-      "bytes": 16085,
-      "path": "rv32ui/rv32ui-p-bge.dump",
-      "sha256": "0535a68d7ab7784c41ca7b437ef80c2b0a9695356ef33400326e877b29da5450"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-bge.hex",
-      "sha256": "3f49521fca125d55f2a09283cf44b535b73ddefe87aaa4054b201fcfeaffda8b"
-    },
-    {
-      "bytes": 9744,
-      "path": "rv32ui/rv32ui-p-bgeu",
-      "sha256": "d3cebf0e6d12d9cb05ee2197a13a5b24aeb33f1342a5c821544e92c295022655"
-    },
-    {
-      "bytes": 17500,
-      "path": "rv32ui/rv32ui-p-bgeu.dump",
-      "sha256": "0bc6151757292c9917eeaf81f20b1509c4c6a31f383229e2635b5c0b0afcfc84"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-bgeu.hex",
-      "sha256": "531d93242b5f08aaadd0181ed5abba5d69787b981a69f6bfd43f50ae64cd759c"
-    },
-    {
-      "bytes": 9672,
-      "path": "rv32ui/rv32ui-p-blt",
-      "sha256": "4259d4069d5d3e96a79161f9ab3d9203047790378deae02bed2781f2e567e19b"
-    },
-    {
-      "bytes": 15460,
-      "path": "rv32ui/rv32ui-p-blt.dump",
-      "sha256": "67d1b649de48aa868bd3c0a392cc27c79bfe4d3872d95c34dcd5e0ed72ee2a95"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-blt.hex",
-      "sha256": "f68747154bb4e872341c314b250ba0dc6659cf0faf6b700ebf2c7394990d5ca0"
-    },
-    {
-      "bytes": 9672,
-      "path": "rv32ui/rv32ui-p-bltu",
-      "sha256": "a9d58eadc13b6eccf1c817cbb892c37e7ca4ce50f93325f42ae45c6d9f4e65e1"
-    },
-    {
-      "bytes": 15490,
-      "path": "rv32ui/rv32ui-p-bltu.dump",
-      "sha256": "5a833e82161e21120bd904a2d895ad2ccf86d43ccaa5ee78c1e12a6534031ae3"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-bltu.hex",
-      "sha256": "3e0a84563bc93bb74f4e39af70e4d752d10bc592bf8e1f5db8646bf2106b91ce"
-    },
-    {
-      "bytes": 9672,
-      "path": "rv32ui/rv32ui-p-bne",
-      "sha256": "679d7f603eed32472aa5be99c9e22c290f7ef7bc959dd0df833fcfc92bfa792f"
-    },
-    {
-      "bytes": 15410,
-      "path": "rv32ui/rv32ui-p-bne.dump",
-      "sha256": "405c53b541d3fa8303ee9c32ec77fe9eaabfbe7a233297e49cbc9da27051400c"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-bne.hex",
-      "sha256": "f9cbe5073612baf33ec2c2daf570e2b02c866f1fa084454421b7147d5ab65622"
-    },
-    {
-      "bytes": 9296,
-      "path": "rv32ui/rv32ui-p-jal",
-      "sha256": "f189fb40e72527d538f918ff8f28488c1c925fe63735e33d366641776514a877"
-    },
-    {
-      "bytes": 7286,
-      "path": "rv32ui/rv32ui-p-jal.dump",
-      "sha256": "de84ef6aaf0baff71c178a215b921cbbedcbfcc9b6e7092b8df165252314f881"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-jal.hex",
-      "sha256": "4024f49b0d41f6c26f720f35b6b433a743efb639f53349874b739d4aa6637887"
-    },
-    {
-      "bytes": 9440,
-      "path": "rv32ui/rv32ui-p-jalr",
-      "sha256": "4ad839a8d6d9cd2aed3be52ba20d3e05a8c4801586a814737a9680dcac1925d8"
-    },
-    {
-      "bytes": 8709,
-      "path": "rv32ui/rv32ui-p-jalr.dump",
-      "sha256": "84a31e9293c5f75df797ec992ea48a9a24fc382673da26631dc467aa64d78799"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-jalr.hex",
-      "sha256": "b7274f9326b92f2944b1acb75572b7367cdeaca90e3596c5cac85f9a89dfcd9b"
-    },
-    {
-      "bytes": 13832,
-      "path": "rv32ui/rv32ui-p-lb",
-      "sha256": "b4d1631b7c97a084235e0487ab725ab257655885e2e14d4f8c0672b7c25ffc91"
-    },
-    {
-      "bytes": 13985,
-      "path": "rv32ui/rv32ui-p-lb.dump",
-      "sha256": "2f57d6298d3bf1f7c945ebca9b9cd162b28ebb7fe7f639c36a3e342e834ac23e"
-    },
-    {
-      "bytes": 20520,
-      "path": "rv32ui/rv32ui-p-lb.hex",
-      "sha256": "dc78c1728785c3373fd22d25668a6d9bb010ce7fe894f01a8b4c8dcc30312ae7"
-    },
-    {
-      "bytes": 13832,
-      "path": "rv32ui/rv32ui-p-lbu",
-      "sha256": "b3e3d722ce741d8d9ac34b0b969385c20303251a56c8c5959ad69d3c3ca477e1"
-    },
-    {
-      "bytes": 14009,
-      "path": "rv32ui/rv32ui-p-lbu.dump",
-      "sha256": "5f28f0bad59ca11be853e919632aa15ee8f0d30a923b5ad0601a139d45837185"
-    },
-    {
-      "bytes": 20520,
-      "path": "rv32ui/rv32ui-p-lbu.hex",
-      "sha256": "38487155fecf2bdeab75d4e73f610716f1414eb2fdcd75ea4a8e5abf906fc6bf"
-    },
-    {
-      "bytes": 18624,
-      "path": "rv32ui/rv32ui-p-ld_st",
-      "sha256": "778c589a41474b8054fed43e87fcdb227f991fa3860e68c694060d025345cae0"
-    },
-    {
-      "bytes": 56164,
-      "path": "rv32ui/rv32ui-p-ld_st.dump",
-      "sha256": "89b6c158074248c2323d45915985d31c122ddb996cb1660e8a93c1f83e49938d"
-    },
-    {
-      "bytes": 30920,
-      "path": "rv32ui/rv32ui-p-ld_st.hex",
-      "sha256": "8ac74d132a1c90198b63a7fbe6c2eeb7bfba1f7e6579c360df43a4e2888d0fb0"
-    },
-    {
-      "bytes": 13832,
-      "path": "rv32ui/rv32ui-p-lh",
-      "sha256": "6e103cfb3bd801ad85cfbfc6caf49e9d50c0b1db5ade28a8d0619d696d729fad"
-    },
-    {
-      "bytes": 15191,
-      "path": "rv32ui/rv32ui-p-lh.dump",
-      "sha256": "9b7dcfef5ff78dfa81538a9e4b877c638e4b9383dc97409cc34c8b1b418985da"
-    },
-    {
-      "bytes": 20520,
-      "path": "rv32ui/rv32ui-p-lh.hex",
-      "sha256": "4ee56b4d1c79758668f27aad21e6c6336338d714533c6279c356d4dbf71ccd22"
-    },
-    {
-      "bytes": 13832,
-      "path": "rv32ui/rv32ui-p-lhu",
-      "sha256": "0a42268d4a11236ba51931e17bba95cacdd7f03fbda4b111c77b45cd9efe7a06"
-    },
-    {
-      "bytes": 15076,
-      "path": "rv32ui/rv32ui-p-lhu.dump",
-      "sha256": "3df701c0155bb1242e88897d1a892ef485c8b699bb491a78f1a4532161b5e852"
-    },
-    {
-      "bytes": 20520,
-      "path": "rv32ui/rv32ui-p-lhu.hex",
-      "sha256": "172c2b0f1b9b3ad775cf2b3ce8160bfb59664ac2114f50b19e3277c59f1abe22"
-    },
-    {
-      "bytes": 9312,
-      "path": "rv32ui/rv32ui-p-lui",
-      "sha256": "bec31a07275367db073b68e64792e84acc4768a9ba07a2aae84f53c765ecb9b0"
-    },
-    {
-      "bytes": 7171,
-      "path": "rv32ui/rv32ui-p-lui.dump",
-      "sha256": "fd1aea244c7bc46c716ba035562a3c273a9a42c8a2f7f23cb018e33c3413d08c"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-lui.hex",
-      "sha256": "0524f11227021be11e4d590e1d18562bcd566e6565924c30681de0ca9eaf3a10"
-    },
-    {
-      "bytes": 13832,
-      "path": "rv32ui/rv32ui-p-lw",
-      "sha256": "d733aac9f3df176e9a7aaab7ef34cc304b65024cf55872304169648af4d7a008"
-    },
-    {
-      "bytes": 16502,
-      "path": "rv32ui/rv32ui-p-lw.dump",
-      "sha256": "c9518d6abee1b40f1e8c3b1b1134a191c20200748c50ab117be97641d7df15a2"
-    },
-    {
-      "bytes": 20520,
-      "path": "rv32ui/rv32ui-p-lw.hex",
-      "sha256": "e5988e88f07b77748a7d14f14badce4cb3825a6cb093d01605cc1db249fc94b7"
-    },
-    {
-      "bytes": 9816,
-      "path": "rv32ui/rv32ui-p-or",
-      "sha256": "83e71459c53ef596636b9120b466e56c70cb2e309a0bae5e3bfb5a2a89344dac"
-    },
-    {
-      "bytes": 23191,
-      "path": "rv32ui/rv32ui-p-or.dump",
-      "sha256": "cdceba1b4b52874afa03d0867860dcb01152ccd5ff4944974a6364a59e3628be"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-or.hex",
-      "sha256": "75eee6e7b530bdd41de2be401ccf92fddb4f52b340aa132d6ee2fdc15e11dbbf"
-    },
-    {
-      "bytes": 9504,
-      "path": "rv32ui/rv32ui-p-ori",
-      "sha256": "7899fb8908aabee56b1f059f537723508f6c67e6e9551418cdf38c6dd6a4e887"
-    },
-    {
-      "bytes": 12417,
-      "path": "rv32ui/rv32ui-p-ori.dump",
-      "sha256": "51d22d874ddad93ff19d26da485d3a29bc87c356beb78af8cb4e2cc6b73788af"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-ori.hex",
-      "sha256": "db08ff767583c968a33e3d8bd9fab610f8c75b8308d6b6a2725ce7257630d87a"
-    },
-    {
-      "bytes": 14064,
-      "path": "rv32ui/rv32ui-p-sb",
-      "sha256": "b6d89d41b83858643a968912fa409b48fb0cf620e467b0a42a32101325421af0"
-    },
-    {
-      "bytes": 20582,
-      "path": "rv32ui/rv32ui-p-sb.dump",
-      "sha256": "f6f865e92333091a78d44771980877b78715bb38db5edcf16e5aefd91367c7c6"
-    },
-    {
-      "bytes": 20520,
-      "path": "rv32ui/rv32ui-p-sb.hex",
-      "sha256": "226bd29fcdaeee27f4d83206f3e90e663e2d70de641d01e05c557d5b3b5435e2"
-    },
-    {
-      "bytes": 14080,
-      "path": "rv32ui/rv32ui-p-sh",
-      "sha256": "1c81589496708c4c9edfe14b0f6d15d37b2b3b91e95fc9c56ae435214d3c13f0"
-    },
-    {
-      "bytes": 23244,
-      "path": "rv32ui/rv32ui-p-sh.dump",
-      "sha256": "c8b399d23b34a3290c5598ba41997700e53e2cdc86ae2b50e0a43fb855ce23d3"
-    },
-    {
-      "bytes": 20560,
-      "path": "rv32ui/rv32ui-p-sh.hex",
-      "sha256": "716a3f5e13446ffe545861ecc90e8c6e06951ec7398e70eecf6a3117f417804c"
-    },
-    {
-      "bytes": 9156,
-      "path": "rv32ui/rv32ui-p-simple",
-      "sha256": "28d04dc77cd15a26358721e037f1dd9983559de3406f683b73e8c568c3d6a33a"
-    },
-    {
-      "bytes": 5562,
-      "path": "rv32ui/rv32ui-p-simple.dump",
-      "sha256": "0ef4bf5137de6cfb00aeeaf01dc6ff22ae30ca7171c6fe6e5c8414b927e85e20"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-simple.hex",
-      "sha256": "c04ecd7b63b5f40bfbaa44f790f1cbd92f1f5e890b0a9405cdae51d2261bb91c"
-    },
-    {
-      "bytes": 10176,
-      "path": "rv32ui/rv32ui-p-sll",
-      "sha256": "9277561554123c7c0038dcc4621b0dc41e180ef78ae3290f3176b159a08327b5"
-    },
-    {
-      "bytes": 22785,
-      "path": "rv32ui/rv32ui-p-sll.dump",
-      "sha256": "0772115a06d33b6605a63facf2322bfd9676a7fcc504524c24bcd64eb933860f"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-sll.hex",
-      "sha256": "d139188f6b98e04d83c2e8ab1733e942c3bc080a9d0f9361b30764f90a773898"
-    },
-    {
-      "bytes": 9768,
-      "path": "rv32ui/rv32ui-p-slli",
-      "sha256": "482643abf94228e437f7e4605c42004473c6040b2d4008c18419a9a13418c3f8"
-    },
-    {
-      "bytes": 14636,
-      "path": "rv32ui/rv32ui-p-slli.dump",
-      "sha256": "1fe04cf9d5dc31c6aaf4bd6bda116ce0c0ff7984138478a18287bf0be8a4c794"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-slli.hex",
-      "sha256": "7ae618e98769b968b8c142c2a5815dc751cba11708979aeae2c933320ef6e0f5"
-    },
-    {
-      "bytes": 10080,
-      "path": "rv32ui/rv32ui-p-slt",
-      "sha256": "182cec7f8dcd538b68846f3b493fc10b806f69d49d99040d575b615ab2b95f55"
-    },
-    {
-      "bytes": 20906,
-      "path": "rv32ui/rv32ui-p-slt.dump",
-      "sha256": "dd3acab0991335d1ee67d03b9b1e82e28197b9ab1d3f7bb7ff96c2eb5dba1b26"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-slt.hex",
-      "sha256": "58c9a8b47a90ef47973873d72b2043f45f2aecbd0708d61a1ebe7e32fa31dbbd"
-    },
-    {
-      "bytes": 9768,
-      "path": "rv32ui/rv32ui-p-slti",
-      "sha256": "7e0748fccfe9d0bd95c44862a42118bc72147bbed98ac774097d459898e93bd8"
-    },
-    {
-      "bytes": 13150,
-      "path": "rv32ui/rv32ui-p-slti.dump",
-      "sha256": "ec1b0f25b2925bd00ca76d630fa4a1777182ac50eaf0d66c9f5c0714aae2fbfc"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-slti.hex",
-      "sha256": "230863e69a20721a2d0a968d3d1839320516be02fafdc67b995a189793208c4b"
-    },
-    {
-      "bytes": 9768,
-      "path": "rv32ui/rv32ui-p-sltiu",
-      "sha256": "1b69c1198729e725d7d198a64dc41044e8cc76918070bc669371925b754d66bc"
-    },
-    {
-      "bytes": 13169,
-      "path": "rv32ui/rv32ui-p-sltiu.dump",
-      "sha256": "1bb293a18c164a3cbc278e22d4ce241823fee3e384d532939d6d6d264944200b"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-sltiu.hex",
-      "sha256": "4b1485bc5742b7259060b0d497aa4cefab168e836f30f2939a15f4c0007ddcc8"
-    },
-    {
-      "bytes": 10080,
-      "path": "rv32ui/rv32ui-p-sltu",
-      "sha256": "035b80219831e605abfbc317e9ecc4e20437967a286c91879a9bcabd193263f7"
-    },
-    {
-      "bytes": 20946,
-      "path": "rv32ui/rv32ui-p-sltu.dump",
-      "sha256": "c82c9feadb26c56fcfa63e2709ce48ec2e96626eab161c8a0f2361c501a2165a"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-sltu.hex",
-      "sha256": "7a21da20947b098d97876898ceaa4950ac8caa182427f769f73c150c6527f69e"
-    },
-    {
-      "bytes": 10200,
-      "path": "rv32ui/rv32ui-p-sra",
-      "sha256": "df72c12972cd372fad3a24d560f27efdbe686858175a13bdabf1ec85a9faac30"
-    },
-    {
-      "bytes": 23909,
-      "path": "rv32ui/rv32ui-p-sra.dump",
-      "sha256": "8e51a06cbc2d9b6d214f2f1da84f60d7490e83c67206c616bcd67aa4a783f89f"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-sra.hex",
-      "sha256": "012fed3ef39c361d8335f38b1af7ccfb348ca3fca372fef7905a647046cb6ac9"
-    },
-    {
-      "bytes": 9768,
-      "path": "rv32ui/rv32ui-p-srai",
-      "sha256": "f5ce85ecf7b012298d183c6a2d991fc4617196b4ac572ac6aeaf8edde8336d3c"
-    },
-    {
-      "bytes": 14501,
-      "path": "rv32ui/rv32ui-p-srai.dump",
-      "sha256": "40c3464e9caccd4252bf68f6c3a6fb6454231f6bcd63abf0ef6ff2de5dc87ceb"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-srai.hex",
-      "sha256": "2ab6d55b4196658502b77b84ebbbafec9f467dd22104a499cfa1c175cac5f3f9"
-    },
-    {
-      "bytes": 10200,
-      "path": "rv32ui/rv32ui-p-srl",
-      "sha256": "de36cc4116a5fd469bbeeb7b749e9b6dc8fdaf124d01d0b7f8447380199bc4bf"
-    },
-    {
-      "bytes": 23975,
-      "path": "rv32ui/rv32ui-p-srl.dump",
-      "sha256": "66e96e496d09b000c296702aaf7ab89114856495ba79e790ab49a63f6266529c"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-srl.hex",
-      "sha256": "9dfeecbf4c4256b7f6fabd4abd22c9356bd004d4cfe5fc7ca45060f59f74cda2"
-    },
-    {
-      "bytes": 9768,
-      "path": "rv32ui/rv32ui-p-srli",
-      "sha256": "6c6efbb207830501afc8fc0c01de5c324ce0dabab3c26fc9eeba35ac7cc42903"
-    },
-    {
-      "bytes": 14588,
-      "path": "rv32ui/rv32ui-p-srli.dump",
-      "sha256": "e1b14938ad595e14aa1f36d608f35cb11ca2052b6b11175a3a391edde35ba3f5"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-srli.hex",
-      "sha256": "429f092de990b9450bdb063148a03531368cdba321ef4f97d976f133ccc53101"
-    },
-    {
-      "bytes": 14528,
-      "path": "rv32ui/rv32ui-p-st_ld",
-      "sha256": "b71e97f298b41812f55126e30cfbd25100390d11f2d6f3fffd0eb412fc14bbb9"
-    },
-    {
-      "bytes": 30683,
-      "path": "rv32ui/rv32ui-p-st_ld.dump",
-      "sha256": "9ceb46a8c48e3bdc8390c037e8c34b4399cdd99ca0fb6beb8d22dc83a9cccfca"
-    },
-    {
-      "bytes": 20680,
-      "path": "rv32ui/rv32ui-p-st_ld.hex",
-      "sha256": "4ad6eb90162829fc2e36cc761fbb77472fcb7a127d764b0950d9c6068daf54c1"
-    },
-    {
-      "bytes": 10056,
-      "path": "rv32ui/rv32ui-p-sub",
-      "sha256": "447f65ebe91d0d8b87c38ac61b59f060cda4e4ff9e12880ff8e7d47de52924a2"
-    },
-    {
-      "bytes": 21149,
-      "path": "rv32ui/rv32ui-p-sub.dump",
-      "sha256": "4fe08a8a9ee3cd70cefe938bb8cdbe512784d61551425cf6b26e317749386a61"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-sub.hex",
-      "sha256": "24a5f941149eac42588f0791acb3e477408fb097d0c47deebc9a6360704922cb"
-    },
-    {
-      "bytes": 14096,
-      "path": "rv32ui/rv32ui-p-sw",
-      "sha256": "544ce3692d4b6d6dd68ff19b3874a46482b2cb0134f7218bec4ae10d0a892c1d"
-    },
-    {
-      "bytes": 24892,
-      "path": "rv32ui/rv32ui-p-sw.dump",
-      "sha256": "2980fc58ac24834930d00444349c3737e0513bde1336d11c97327152530c3ab0"
-    },
-    {
-      "bytes": 20600,
-      "path": "rv32ui/rv32ui-p-sw.hex",
-      "sha256": "e5c2090178b441891ee5bc935d5d63f333058d597f171b8d44166d696e66c9bf"
-    },
-    {
-      "bytes": 9816,
-      "path": "rv32ui/rv32ui-p-xor",
-      "sha256": "2aeca410f80c98165ae57aeb3af7a5776b179a4d03f2c13932da4c4d9fe2246b"
-    },
-    {
-      "bytes": 23218,
-      "path": "rv32ui/rv32ui-p-xor.dump",
-      "sha256": "788559fdf322e11551c0d54162d973a89d66be8fd1823d162ccca29682ba4e2d"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-xor.hex",
-      "sha256": "cf360cc65e1118170336d8d9410a081158fde457eeaf192d8290ef7167d2e010"
-    },
-    {
-      "bytes": 9504,
-      "path": "rv32ui/rv32ui-p-xori",
-      "sha256": "0fac4f8be2522e99498d7e6efbcb941bd75b5390c7fef89fa4fa453d6ced7896"
-    },
-    {
-      "bytes": 12410,
-      "path": "rv32ui/rv32ui-p-xori.dump",
-      "sha256": "0f58ee9875701b90be2cb7be7a4ee2455bf27a4d7e8d15019876bc2b6413d957"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32ui/rv32ui-p-xori.hex",
-      "sha256": "7e901d0d9d412eb8cb64b3f3981c512e64673786448b8b8789c5bf86915d02ca"
-    },
-    {
-      "bytes": 9408,
-      "path": "rv32um/rv32um-p-div",
-      "sha256": "f943772705e2bcd210360cacb77676c8622380db12d60189a2f636c84287fc92"
-    },
-    {
-      "bytes": 8624,
-      "path": "rv32um/rv32um-p-div.dump",
-      "sha256": "570006064aab7356f1d78480e77b39c2cba7d0f79957e8a31ef00714ba13ea03"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32um/rv32um-p-div.hex",
-      "sha256": "09f77f520790cf8f59262fbc88966f02e07ff5f2f8838c9366a1077b7497c508"
-    },
-    {
-      "bytes": 9408,
-      "path": "rv32um/rv32um-p-divu",
-      "sha256": "b6f0b02e8ba66be11a2a3b1985cfe41c57282dbe0be2c258dc80e8432d78a8fd"
-    },
-    {
-      "bytes": 8622,
-      "path": "rv32um/rv32um-p-divu.dump",
-      "sha256": "76ebe2bef11ba01893205619e6a6ec90efb570d081d2e53e4b441b1d580653c1"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32um/rv32um-p-divu.hex",
-      "sha256": "3ac70356b271eb1c6772439010f151b5d86d3114290d0c4c3fe1aaba5c58b10e"
-    },
-    {
-      "bytes": 10056,
-      "path": "rv32um/rv32um-p-mul",
-      "sha256": "1a85687586c341c565eb30bc9f5ba44f1eea4b4cc014b1aa6c01f6a10d6c4def"
-    },
-    {
-      "bytes": 21181,
-      "path": "rv32um/rv32um-p-mul.dump",
-      "sha256": "943298ec55c500dbb293369b4eae7130791b608eda474fa02df5ecec149fac38"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32um/rv32um-p-mul.hex",
-      "sha256": "fb21ac5cb5e8afb6d31d601b7b7dc7e816d09d23e733245cf3090395cdc23aa4"
-    },
-    {
-      "bytes": 10008,
-      "path": "rv32um/rv32um-p-mulh",
-      "sha256": "18fe97209a4c35798c7fe7cf7f6186c7268e77c9ca47800d95454b7c11e9ccc6"
-    },
-    {
-      "bytes": 21715,
-      "path": "rv32um/rv32um-p-mulh.dump",
-      "sha256": "0cb8efdb792b29bfafc4a37da7771c4018bdc86efbc242b368887b2b40c6a2a4"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32um/rv32um-p-mulh.hex",
-      "sha256": "041c14ad7b524230d18521e91eaa18259467f0d38393b8f39a6a72ae949481a2"
-    },
-    {
-      "bytes": 10008,
-      "path": "rv32um/rv32um-p-mulhsu",
-      "sha256": "0edfeee878f4a2809b7ebfec4fae6a8699fbdb81fcf7043aa0c37d3c34894b5c"
-    },
-    {
-      "bytes": 21789,
-      "path": "rv32um/rv32um-p-mulhsu.dump",
-      "sha256": "39383a6b22f756c9415be7c1830bf0b1e8913327372630c30593f2d6af19d112"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32um/rv32um-p-mulhsu.hex",
-      "sha256": "1a9f72b4859c817f5adfee3557c7c13aad4d5865f4515e75b586c79187189649"
-    },
-    {
-      "bytes": 10008,
-      "path": "rv32um/rv32um-p-mulhu",
-      "sha256": "3dbabde6067af4d07cca9bb257217805762b07b7daf0dea46d0b9abba2089f64"
-    },
-    {
-      "bytes": 21750,
-      "path": "rv32um/rv32um-p-mulhu.dump",
-      "sha256": "0aedd08e1d59adf826c23d792ea04562e5899aae3fc0de2eaf24bb56e350d08c"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32um/rv32um-p-mulhu.hex",
-      "sha256": "4725ae9308f76c72de5cb125526c70a2e53b91f2bd0c04229f4cc44b6d6254c9"
-    },
-    {
-      "bytes": 9408,
-      "path": "rv32um/rv32um-p-rem",
-      "sha256": "dd97ef37694748e39f492fa07b3e54183307245f620761bd97546bf61882dcee"
-    },
-    {
-      "bytes": 8614,
-      "path": "rv32um/rv32um-p-rem.dump",
-      "sha256": "a3efd7f463cca3091cbc599fa27c86bac179bd4acd7be1cf04f49e2918199b84"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32um/rv32um-p-rem.hex",
-      "sha256": "4529e36ee7f3d70067aa6ec5560e1cf3616ebb3b052f44cef62bb5627d752192"
-    },
-    {
-      "bytes": 9408,
-      "path": "rv32um/rv32um-p-remu",
-      "sha256": "3a4befc4b7df1228cad3b5a564d05cb3c8b7f9aeb336a84cf3d5dc0c3f203756"
-    },
-    {
-      "bytes": 8632,
-      "path": "rv32um/rv32um-p-remu.dump",
-      "sha256": "678a392285c523f4973bd81d98c50c8cca9504c207697e64cc1f933750a7b466"
-    },
-    {
-      "bytes": 10420,
-      "path": "rv32um/rv32um-p-remu.hex",
-      "sha256": "70568bbd68df79b0a76736781de7de109aa439b4965470222aeac3e2069d3073"
-    },
-    {
-      "bytes": 10092,
-      "path": "rv32uzba/rv32uzba-p-sh1add",
-      "sha256": "11523764e943a2021c1c14aa644d03af6d1d5c49e0520782bc9922d34422531d"
-    },
-    {
-      "bytes": 20469,
-      "path": "rv32uzba/rv32uzba-p-sh1add.dump",
-      "sha256": "a73cdb27551cac3e98569e7e08e0bae56dabbd612807fd903baa4f1cf462573c"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzba/rv32uzba-p-sh1add.hex",
-      "sha256": "bd18c362471ce5c5285bddd8721839585d94bf829b2142258e34fa13e42178bc"
-    },
-    {
-      "bytes": 10092,
-      "path": "rv32uzba/rv32uzba-p-sh2add",
-      "sha256": "916f5dc45e687fbb4293cddeb1e1742e5910c1103b66b46c3350c74ab4d50807"
-    },
-    {
-      "bytes": 20470,
-      "path": "rv32uzba/rv32uzba-p-sh2add.dump",
-      "sha256": "93f88ef50471c302ce389df99ad2415838d46b6656633122f7f9ef17ebb754e6"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzba/rv32uzba-p-sh2add.hex",
-      "sha256": "029c8380232dcef71af00dfa63b80d8d9831634fee2709cce39c66ef4df816e5"
-    },
-    {
-      "bytes": 10092,
-      "path": "rv32uzba/rv32uzba-p-sh3add",
-      "sha256": "13176a953cb6d61c0b2b15bc68f3137bdca2adbff183267cc994a6224264173e"
-    },
-    {
-      "bytes": 20493,
-      "path": "rv32uzba/rv32uzba-p-sh3add.dump",
-      "sha256": "04734c534775caba0977d108d51f9def8fde96c7b9b6b54a531a6ac6372909b1"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzba/rv32uzba-p-sh3add.hex",
-      "sha256": "78a82159496f4fcfc1a03208fb53e0d61d6c8934f50ce30351cbde7f54ab3060"
-    },
-    {
-      "bytes": 9828,
-      "path": "rv32uzbb/rv32uzbb-p-andn",
-      "sha256": "1a6e0b2669b553cc989bbc8d4d73a6a42ad8b8986a08b7d1aea68534ad62ad40"
-    },
-    {
-      "bytes": 21442,
-      "path": "rv32uzbb/rv32uzbb-p-andn.dump",
-      "sha256": "3b46a21416aa3c069beed8e5f68e165a5cc7cbc5edcbd12762647916d682d420"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-andn.hex",
-      "sha256": "a9462e1150114240211aebdae0b889cb01033bf0dea267c73b2ca14cea32a655"
-    },
-    {
-      "bytes": 9804,
-      "path": "rv32uzbb/rv32uzbb-p-clz",
-      "sha256": "db87329e27a57edac9606d0cd191493526c0b04c5834c68f357092605010ec46"
-    },
-    {
-      "bytes": 13051,
-      "path": "rv32uzbb/rv32uzbb-p-clz.dump",
-      "sha256": "cac00ba4a2284498e71869a996dfb3811ce9a6ae121aea29756ec310554e4cc3"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-clz.hex",
-      "sha256": "71a76cfc234ee7b319669e9beb6756038d26a224c89fd2aec98d5e6545212e35"
-    },
-    {
-      "bytes": 9804,
-      "path": "rv32uzbb/rv32uzbb-p-cpop",
-      "sha256": "f65c71f825f56177a288fb75e4adecca72626e6acbd54b285595e59b2c6dd40f"
-    },
-    {
-      "bytes": 13077,
-      "path": "rv32uzbb/rv32uzbb-p-cpop.dump",
-      "sha256": "67bf4eb04ec19dca6496ec94f49ced029173b49c5202a8f90281b5897cea6e35"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-cpop.hex",
-      "sha256": "9cd78f1bdbaa4d021bc8360d78610f847cf9d56eb28d724a0efc22da8ceeae0b"
-    },
-    {
-      "bytes": 9804,
-      "path": "rv32uzbb/rv32uzbb-p-ctz",
-      "sha256": "4a5ee96f859357b88112f008e6f21203170effed554fd36e23fffbc72168207b"
-    },
-    {
-      "bytes": 13046,
-      "path": "rv32uzbb/rv32uzbb-p-ctz.dump",
-      "sha256": "7390495233519209f6fca22ad590e902259a953d35ad5d340e041fcb03598158"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-ctz.hex",
-      "sha256": "036615d46cd4686ff8a0409057257b3b233b18c040590e471c6625f78dddab33"
-    },
-    {
-      "bytes": 10092,
-      "path": "rv32uzbb/rv32uzbb-p-max",
-      "sha256": "6dd184aedc06dae240dbdb7201be28f24fad381e101546c151c6785f22fcfee0"
-    },
-    {
-      "bytes": 20347,
-      "path": "rv32uzbb/rv32uzbb-p-max.dump",
-      "sha256": "e3ed79b9c68e29f1990642fb30c812f9e6eed565df9436921dd689bad79ae899"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-max.hex",
-      "sha256": "677e9b255f04c46b63d694427e15852ce5d3057ce8aeaa525cb54017cbf4176f"
-    },
-    {
-      "bytes": 10092,
-      "path": "rv32uzbb/rv32uzbb-p-maxu",
-      "sha256": "1df28c17d00c4454c7e06c611b93d41b1531463b3788aca190b4143177955af1"
-    },
-    {
-      "bytes": 20442,
-      "path": "rv32uzbb/rv32uzbb-p-maxu.dump",
-      "sha256": "e71ac4c1cf3743429f83a088109e76095191934efd162a881a8b9a6acfe66331"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-maxu.hex",
-      "sha256": "d4acb1e00f6190675e4ed3062a3553858a01bd0e5bee017d05623d077d0e866b"
-    },
-    {
-      "bytes": 10092,
-      "path": "rv32uzbb/rv32uzbb-p-min",
-      "sha256": "7e0e38d80173c0a55ed2bd9b0557b3966dd73f9bf4d145b707d1c762658bd3de"
-    },
-    {
-      "bytes": 20424,
-      "path": "rv32uzbb/rv32uzbb-p-min.dump",
-      "sha256": "83af49347a77b993db682d4b2d5aaf8f744a2f26cb74e631d58bc9d3778a2d00"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-min.hex",
-      "sha256": "31c0b750e02aa504302f5a97dc5c94c529d79851f65880f0f0c151d79a2c4817"
-    },
-    {
-      "bytes": 10092,
-      "path": "rv32uzbb/rv32uzbb-p-minu",
-      "sha256": "f463b8c61ed4632631c625d24e55315cb97b620fbec2fe614acecd681e250f43"
-    },
-    {
-      "bytes": 20405,
-      "path": "rv32uzbb/rv32uzbb-p-minu.dump",
-      "sha256": "87870c82226b7ab971c5af308aa04596d24b9f41d13cb58c2c55e6a724a27a30"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-minu.hex",
-      "sha256": "c97e8ac043c92197adc922a9b8e00f5b62e74b9c82ee87a6e1597177895947c4"
-    },
-    {
-      "bytes": 9804,
-      "path": "rv32uzbb/rv32uzbb-p-orc_b",
-      "sha256": "572139cc821ec9b5ae30a349c2ecebb8a4194ecef5a74ea1c3083adeebf48001"
-    },
-    {
-      "bytes": 13072,
-      "path": "rv32uzbb/rv32uzbb-p-orc_b.dump",
-      "sha256": "09ca90c8cf18a0f3eebf05ed7de1cae5263bf8003c6a11b063a2603292ad4c4f"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-orc_b.hex",
-      "sha256": "decfed6d3f9626f56d1dd29abe456f170adc0d1b732cb847d0bb2a8be30b4cfc"
-    },
-    {
-      "bytes": 9828,
-      "path": "rv32uzbb/rv32uzbb-p-orn",
-      "sha256": "cae83a2bf1f02be431de7a58d121b5c561ddab8b3e123a31c235e9b9a4b7ef0e"
-    },
-    {
-      "bytes": 21334,
-      "path": "rv32uzbb/rv32uzbb-p-orn.dump",
-      "sha256": "70055cb696db42a4eea92a8f934f83f00fa34f7786bfd6ce56ef71f3ed8d0497"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-orn.hex",
-      "sha256": "40cac9b3e31b322dca617edb253ec5e8bdb2baa67c66b037e79809ffddf165b8"
-    },
-    {
-      "bytes": 9804,
-      "path": "rv32uzbb/rv32uzbb-p-rev8",
-      "sha256": "9e4a04034d7c1bf70125d22776b5e397882af0c0b650e04580e32f733fd06d2c"
-    },
-    {
-      "bytes": 13078,
-      "path": "rv32uzbb/rv32uzbb-p-rev8.dump",
-      "sha256": "d69ffca037a399fb6ccc964c9f7c56a7a775c028aa49c86b3289693ef3b463a6"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-rev8.hex",
-      "sha256": "ff14ede59b8ce9caa37a7c88a6a7fe308fe86b9b26c6c1b6c27bfa31cb74544b"
-    },
-    {
-      "bytes": 10308,
-      "path": "rv32uzbb/rv32uzbb-p-rol",
-      "sha256": "89838ce00fb8dfee27e038ee50fcf464fb173757550460efa2fa66653c6f145b"
-    },
-    {
-      "bytes": 23633,
-      "path": "rv32uzbb/rv32uzbb-p-rol.dump",
-      "sha256": "dd9b5f3ea79d4e0546ea4294a14af02d25e391420d737a869d15d46d49430e34"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-rol.hex",
-      "sha256": "8561f3797beb34524df91a57e5c0c1220421021593b4da37464b32ad82d336a4"
-    },
-    {
-      "bytes": 10212,
-      "path": "rv32uzbb/rv32uzbb-p-ror",
-      "sha256": "efdf570398edb1c3eff11e1b9d3c8859332bbd68864c3e2818071fafc09a2531"
-    },
-    {
-      "bytes": 21911,
-      "path": "rv32uzbb/rv32uzbb-p-ror.dump",
-      "sha256": "26b6a6230441f00037c9dba7bef85dd88a020c9486590c60493f62cd721d3e87"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-ror.hex",
-      "sha256": "1b385517efbccd34400a82f1a4f044a81c3db921a8f069564a441bdab286860b"
-    },
-    {
-      "bytes": 9780,
-      "path": "rv32uzbb/rv32uzbb-p-rori",
-      "sha256": "a97d8a3b259a8e615044447b96f2defcc1fc9b3ccd51d458b0fafccb0d96df00"
-    },
-    {
-      "bytes": 14237,
-      "path": "rv32uzbb/rv32uzbb-p-rori.dump",
-      "sha256": "3474b7ad8af63db2a30cb4ddc6653c07d270d14796fbf36ce747ab1c825c6000"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-rori.hex",
-      "sha256": "ce5f1009763a078bf89fb33a8c91359e2be06b62849172ba2b8bcaa5d2d3d1ed"
-    },
-    {
-      "bytes": 9804,
-      "path": "rv32uzbb/rv32uzbb-p-sext_b",
-      "sha256": "94a70a6d363289ecbd58b11cb670fdf3b33bb0b80a7d2bf968e23d70142ab51b"
-    },
-    {
-      "bytes": 13123,
-      "path": "rv32uzbb/rv32uzbb-p-sext_b.dump",
-      "sha256": "248b49cd6522127a559365238f7939cb986b675bce872951b39d04f1e2e5d693"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-sext_b.hex",
-      "sha256": "33ddb62ca925aef1e59cfd7cabfe8b837499b7c944f9b2e531aa33688e7c7f5f"
-    },
-    {
-      "bytes": 9804,
-      "path": "rv32uzbb/rv32uzbb-p-sext_h",
-      "sha256": "068e6e39f8cb50af49457aa2edefd1ab7759f6bdcdc02aca405c66f99cff6570"
-    },
-    {
-      "bytes": 13120,
-      "path": "rv32uzbb/rv32uzbb-p-sext_h.dump",
-      "sha256": "cf3f1aeb6cbfd1d4c870d550bd4f41b0163b46c71a3bd06034c7dbdb0d369e89"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-sext_h.hex",
-      "sha256": "5f5decfadbe59239ffe9cb470c92638625a6c94181e8cbff9a3df0d22275df88"
-    },
-    {
-      "bytes": 9828,
-      "path": "rv32uzbb/rv32uzbb-p-xnor",
-      "sha256": "5dc3af2c5843f3bc7894e93bf8b54501991ae96da4856f679a0e7d8a8931229a"
-    },
-    {
-      "bytes": 22719,
-      "path": "rv32uzbb/rv32uzbb-p-xnor.dump",
-      "sha256": "db26b08a256317e39b19a4cd6ad74942ccf5894bf76bf68e953a8d230a52e552"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-xnor.hex",
-      "sha256": "0e9ee004db0bfe03baf5ec3f690fa30ad05db41f29dbbdfc3d91ab05b8981249"
-    },
-    {
-      "bytes": 9804,
-      "path": "rv32uzbb/rv32uzbb-p-zext_h",
-      "sha256": "c4069b3bf440148de004c5d3d4a658f14f7b2037e675e0766ceea813800ab69c"
-    },
-    {
-      "bytes": 13048,
-      "path": "rv32uzbb/rv32uzbb-p-zext_h.dump",
-      "sha256": "22457052cef4ccfffe8b6bdeb081b07ae4c08fc62ec0ca0622b7501ba0b7db4f"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbb/rv32uzbb-p-zext_h.hex",
-      "sha256": "b8408ec5363a926857769b1fd073f89494fa123938d510dfb407be59318832b8"
-    },
-    {
-      "bytes": 10068,
-      "path": "rv32uzbc/rv32uzbc-p-clmul",
-      "sha256": "454ba6f9d8a3107ae6e6dac68cf11f45f489eecd482924d90200924980413de7"
-    },
-    {
-      "bytes": 20723,
-      "path": "rv32uzbc/rv32uzbc-p-clmul.dump",
-      "sha256": "62012295fac0728224f2f42c9f2791e2381895aaec265b04d4b0efa7291c964b"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbc/rv32uzbc-p-clmul.hex",
-      "sha256": "91b5d839fa3e8a273c66654f197dfa8f7452bd52c2ec2f151c2b6bb24c5f6b59"
-    },
-    {
-      "bytes": 10068,
-      "path": "rv32uzbc/rv32uzbc-p-clmulh",
-      "sha256": "f2a8c99ed445c6157586b6b62d2c35268b92a1f3b1b074405154b7a22763701e"
-    },
-    {
-      "bytes": 20733,
-      "path": "rv32uzbc/rv32uzbc-p-clmulh.dump",
-      "sha256": "8ba6fd746e305a9b43146a8354e45b31bf7257ccbdc5fb32496139e5cea8a379"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbc/rv32uzbc-p-clmulh.hex",
-      "sha256": "58f47a9d5db4a2d1efed196d9226b2f1fd6016fb335e9eaa6c5be0845a55266e"
-    },
-    {
-      "bytes": 10068,
-      "path": "rv32uzbc/rv32uzbc-p-clmulr",
-      "sha256": "b1133c29238046395d75694d0899303aa8cff9515219dc601f2594bca5e1ceb5"
-    },
-    {
-      "bytes": 20735,
-      "path": "rv32uzbc/rv32uzbc-p-clmulr.dump",
-      "sha256": "85baba31d82619a89d1eb446b2244e8fb91484cfb81dc5c3cb6333df407c22f3"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbc/rv32uzbc-p-clmulr.hex",
-      "sha256": "32211236b95dfce01c4cdd50cf4787c91241d3b9e92ea3da9bcc3e30d2466132"
-    },
-    {
-      "bytes": 9448,
-      "path": "rv32uzbkb/rv32uzbkb-p-brev8",
-      "sha256": "0d6b0de936717970d8c60866d9fe4c82bcf3353b2d16621030b445669898ea6d"
-    },
-    {
-      "bytes": 10548,
-      "path": "rv32uzbkb/rv32uzbkb-p-brev8.dump",
-      "sha256": "178eda91ae66f43027a3d84af79eafccbcf5cd59c03861dade4b3a7251eb7af2"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbkb/rv32uzbkb-p-brev8.hex",
-      "sha256": "e22d538099fa5216e2f9193aa596071f0b2b28cf99dc8803c16f334c4ef16fae"
-    },
-    {
-      "bytes": 9856,
-      "path": "rv32uzbkb/rv32uzbkb-p-pack",
-      "sha256": "b0bf4466c94f314deefdb470218ea010df8997deb132d60c55ffcdefa3db75fa"
-    },
-    {
-      "bytes": 21229,
-      "path": "rv32uzbkb/rv32uzbkb-p-pack.dump",
-      "sha256": "166b2e611d0429b8342994c929377fb057c3504fa480d64f928647a47480f6ad"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbkb/rv32uzbkb-p-pack.hex",
-      "sha256": "c8a9d0ea17b5a261c68097a7a60224998de2327440bbcaf7d9aaad3e45a493b6"
-    },
-    {
-      "bytes": 9856,
-      "path": "rv32uzbkb/rv32uzbkb-p-packh",
-      "sha256": "03967517b0a2666333c31849ae555f35a7c67cfb0f8e2babbafe423b2d5d5eff"
-    },
-    {
-      "bytes": 19920,
-      "path": "rv32uzbkb/rv32uzbkb-p-packh.dump",
-      "sha256": "d8a90d46b643355a66bb888c6fb5e5519be8c0dd897871c5d6cb7a73890ae724"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbkb/rv32uzbkb-p-packh.hex",
-      "sha256": "73d7969776378a0bb2ac33b9c3498121b1ccb6e2de5d229479830369a71d60db"
-    },
-    {
-      "bytes": 9712,
-      "path": "rv32uzbkb/rv32uzbkb-p-unzip",
-      "sha256": "0366b23221142ac8c01744025e404a01a9177c7e7e501b2e79259d71f737a49b"
-    },
-    {
-      "bytes": 16769,
-      "path": "rv32uzbkb/rv32uzbkb-p-unzip.dump",
-      "sha256": "027ac72404851ac5da634e503bd5c6ffbf77dd51c8198f3057fb65d6c8ea094a"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbkb/rv32uzbkb-p-unzip.hex",
-      "sha256": "8e7052b7840b419a15fb6369758ef619c0f927cd0507b18de8d4deac45fa8ba6"
-    },
-    {
-      "bytes": 9712,
-      "path": "rv32uzbkb/rv32uzbkb-p-zip",
-      "sha256": "49d81b830c5a93dd10fa27c7ac2aadd243e8493b4553a8fccc9c0fecad38ae17"
-    },
-    {
-      "bytes": 16725,
-      "path": "rv32uzbkb/rv32uzbkb-p-zip.dump",
-      "sha256": "530607963ab95f1797ae4ea689c9336eb345add7e0b5a47d5a3bc323802b2fb6"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbkb/rv32uzbkb-p-zip.hex",
-      "sha256": "08361a781d16fcd2724554cf5a42ef2fb4d278b919d1e6f979637e9a31ce49ed"
-    },
-    {
-      "bytes": 9976,
-      "path": "rv32uzbkx/rv32uzbkx-p-xperm4",
-      "sha256": "5034dcd7f71a22d3312dd247d7f05ea2fb5c6e0b5a5f208646be8d1510ffea14"
-    },
-    {
-      "bytes": 22904,
-      "path": "rv32uzbkx/rv32uzbkx-p-xperm4.dump",
-      "sha256": "3e6e88b2d2a0f379761139af6aae0eba85235496783792a8f209ddff4489c06f"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbkx/rv32uzbkx-p-xperm4.hex",
-      "sha256": "eb887f8b4b13c7022c5e394522cd7f3d7aee978142206a0bf9474aabefed8277"
-    },
-    {
-      "bytes": 9928,
-      "path": "rv32uzbkx/rv32uzbkx-p-xperm8",
-      "sha256": "76026984fd52b6b723a0bc5868976a40c9b0fcedabcd278dbb13c56d56508427"
-    },
-    {
-      "bytes": 24479,
-      "path": "rv32uzbkx/rv32uzbkx-p-xperm8.dump",
-      "sha256": "caba1b3a83cbc19f6bc86fe9d6997265aa5fbb1eaa2ee0fa8303a52c3d658294"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbkx/rv32uzbkx-p-xperm8.hex",
-      "sha256": "1a2f8211ff658892646aa7b0cc8626f2fdb1551c902a0d232465e23a352f02e8"
-    },
-    {
-      "bytes": 10188,
-      "path": "rv32uzbs/rv32uzbs-p-bclr",
-      "sha256": "0620d981c0b8199aabe21573b61a600cd094a56b1ad318280c8cbd0f7067a9c6"
-    },
-    {
-      "bytes": 25976,
-      "path": "rv32uzbs/rv32uzbs-p-bclr.dump",
-      "sha256": "34f9e98fc5da98257091644c6d3dfe46b09f48232146fd23a650d31fea1787f1"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbs/rv32uzbs-p-bclr.hex",
-      "sha256": "69437c075c255fc4dfd7f434ad070790808318a7606ce474edeaef038f01f6e9"
-    },
-    {
-      "bytes": 9780,
-      "path": "rv32uzbs/rv32uzbs-p-bclri",
-      "sha256": "752812e7fd0c896d392f687430f3afa5c902546e1c6e014104039e85ddc5b051"
-    },
-    {
-      "bytes": 15454,
-      "path": "rv32uzbs/rv32uzbs-p-bclri.dump",
-      "sha256": "3b132943a7f1ce342c1b2d9c93b0b0492e685e7a52c6cf883f95c1f66b42830f"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbs/rv32uzbs-p-bclri.hex",
-      "sha256": "46469e0fc3a4d1a1f50831e280da30bd4282450c464448cf30adf52b1be0d2b6"
-    },
-    {
-      "bytes": 10188,
-      "path": "rv32uzbs/rv32uzbs-p-bext",
-      "sha256": "4dfae32251a2c5914d072789fa2ab52786d4f57665c243435b576020398f235c"
-    },
-    {
-      "bytes": 23400,
-      "path": "rv32uzbs/rv32uzbs-p-bext.dump",
-      "sha256": "d928d397a59dd38c8199b233394714d24ce8aa691ecea4fee0f630d9c5d9e2b8"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbs/rv32uzbs-p-bext.hex",
-      "sha256": "bd3032a321fe2e6afbfa8b885d15e65f606f1f9d8b4ccbc382d7278e92c097b6"
-    },
-    {
-      "bytes": 9780,
-      "path": "rv32uzbs/rv32uzbs-p-bexti",
-      "sha256": "67cb53ac8ee3cae8803e430ed416920d2e3f4489b934ea3e074223cfaf061512"
-    },
-    {
-      "bytes": 14172,
-      "path": "rv32uzbs/rv32uzbs-p-bexti.dump",
-      "sha256": "d1aca70a85d0ea0f63c7a155f4c73debe6509635e1b6c4631c07be7f41046fc3"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbs/rv32uzbs-p-bexti.hex",
-      "sha256": "f05e2e302602b7e4a04cae99793d180aa7a98266bd88ba85c22c70b851bba396"
-    },
-    {
-      "bytes": 10188,
-      "path": "rv32uzbs/rv32uzbs-p-binv",
-      "sha256": "5dee02e34b30135121bd3da0ef02e3b44cb799d0110f7d3f1397cd3470519404"
-    },
-    {
-      "bytes": 23330,
-      "path": "rv32uzbs/rv32uzbs-p-binv.dump",
-      "sha256": "b49bb4c246a45791dd351c2c35a07a5386f27b6ae42fe86d428fb81d8de4fdbd"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbs/rv32uzbs-p-binv.hex",
-      "sha256": "e3e75243b30fda49282ef1e6e95e75c1f3b676264d28bdc99c1e06ac8505c936"
-    },
-    {
-      "bytes": 9780,
-      "path": "rv32uzbs/rv32uzbs-p-binvi",
-      "sha256": "83db29325f2e9066b7e0613830585e6c6157fca8a90d393ab837e5bffbc64ff1"
-    },
-    {
-      "bytes": 14132,
-      "path": "rv32uzbs/rv32uzbs-p-binvi.dump",
-      "sha256": "14454c12ba299d5065eed2eeafba9b289cc72b679e709858b82506e336135d86"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbs/rv32uzbs-p-binvi.hex",
-      "sha256": "2141e69b5c6ccb58b1e2ebfeb564d09a671004a636a03a10b24cae6b5b1e897d"
-    },
-    {
-      "bytes": 10188,
-      "path": "rv32uzbs/rv32uzbs-p-bset",
-      "sha256": "b61783116cdd4f9652dea3d48bca25f7dd93bb71443ab212a7853fbdf1925597"
-    },
-    {
-      "bytes": 25960,
-      "path": "rv32uzbs/rv32uzbs-p-bset.dump",
-      "sha256": "8a72b108eb9721c75b6a651d416672febf43430fa2e84662fc4611dcf42c3bce"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbs/rv32uzbs-p-bset.hex",
-      "sha256": "0f569b7265972ab493be8d8f5772802999d22a499a2d293e195dd0ea3c1fb9d1"
-    },
-    {
-      "bytes": 9780,
-      "path": "rv32uzbs/rv32uzbs-p-bseti",
-      "sha256": "8baa2a83794de1e8cabed4d62fe94dbfeae516ac211f05f4a6a90785af145baa"
-    },
-    {
-      "bytes": 15434,
-      "path": "rv32uzbs/rv32uzbs-p-bseti.dump",
-      "sha256": "2f689568db6c3dff02ff2bb8b29d7301483f55831f9c554e41794099f30e7be0"
-    },
-    {
-      "bytes": 9378,
-      "path": "rv32uzbs/rv32uzbs-p-bseti.hex",
-      "sha256": "8e5e2977bc3d5e8f9d862f54acee14dff37680b87bbe4dc849856ce395a95659"
+      "reason": "The frozen CPU contract declares misaligned accesses unsupported",
+      "test": "ma_data"
     }
   ],
-  "kind": "legacy_isa_import",
+  "kind": "generated_isa_dataset",
+  "mabi": "ilp32",
+  "march": "rv32i_zicsr",
+  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
   "schema_version": 1,
-  "source": {
-    "description": "2607round/superScalar ISA test data",
-    "git_commit": "7789ca11147eb6e9c99fd0a0e80d4440e6971fd2"
+  "suite": "rv32ui",
+  "tests": [
+    {
+      "elf": "rv32ui/simple/firmware.elf",
+      "elf_sha256": "18c623f55b4b6f3ac8792b78d9f8e523bb49fdde0710a3785ce4c9c6c967a367",
+      "image_manifest": "rv32ui/simple/image.json",
+      "name": "simple",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/simple.S",
+      "source_sha256": "4b80ead0309195eae9723189274d54a8cf478d3922ba928c7c3c9bfe2a283def"
+    },
+    {
+      "elf": "rv32ui/add/firmware.elf",
+      "elf_sha256": "6e864012ffebe7e20df4c8e5cee3e2e941a88e0023d1f3ae165899043d1805e6",
+      "image_manifest": "rv32ui/add/image.json",
+      "name": "add",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/add.S",
+      "source_sha256": "fc58a191fe5c59f95a6a7d28313e6ac43d30cd14683c5e12cf7c36f5afaf7e19"
+    },
+    {
+      "elf": "rv32ui/addi/firmware.elf",
+      "elf_sha256": "ea66837154b5b0c98ce13c6bd9f8f9019166fec4a8c1fcef6921966aa4d9155a",
+      "image_manifest": "rv32ui/addi/image.json",
+      "name": "addi",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/addi.S",
+      "source_sha256": "329cf3f4f9dd85ca49dfa3995f8124e5b88fcd2e1d5a60f048748d996d7a214a"
+    },
+    {
+      "elf": "rv32ui/and/firmware.elf",
+      "elf_sha256": "ce521bccb43d2779ff8aa9e1492aa633bb9ab0cdf83f0fa1951ee95dc4cfcfeb",
+      "image_manifest": "rv32ui/and/image.json",
+      "name": "and",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/and.S",
+      "source_sha256": "530f0e60cddba6e71057284899a5abf3e2215e4839b54fc30665ebd6cdb970f6"
+    },
+    {
+      "elf": "rv32ui/andi/firmware.elf",
+      "elf_sha256": "dc6c67978df5c3a89a465c5ac74893d0e6cab7bed11c297ee337bdaf11268eaf",
+      "image_manifest": "rv32ui/andi/image.json",
+      "name": "andi",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/andi.S",
+      "source_sha256": "152e3675938460bb1e151c7106db8b5b37c9d1504371d4486920699990b77b08"
+    },
+    {
+      "elf": "rv32ui/auipc/firmware.elf",
+      "elf_sha256": "6f48d7180bff9e01538a9acf404f4271e74c091e1e5c73d7accf2d413ee96579",
+      "image_manifest": "rv32ui/auipc/image.json",
+      "name": "auipc",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/auipc.S",
+      "source_sha256": "6ff9ffb624b5cb9ba09abc984e65db6a0ef21249c282f3075aae397fc0d0651b"
+    },
+    {
+      "elf": "rv32ui/beq/firmware.elf",
+      "elf_sha256": "41c651f5d7fdd740f98fd769b2f823c6b6d8d0b68c987a38c046e9dd479d6ca5",
+      "image_manifest": "rv32ui/beq/image.json",
+      "name": "beq",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/beq.S",
+      "source_sha256": "6ac569afb793b0ef9a2b761f50c29ba62c58d2555471e198c5cc7eae37ecda78"
+    },
+    {
+      "elf": "rv32ui/bge/firmware.elf",
+      "elf_sha256": "d99bf2a01bd73197daf8bbe120a6ae897e091d0318e66c51cb6a2b4f1218292d",
+      "image_manifest": "rv32ui/bge/image.json",
+      "name": "bge",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/bge.S",
+      "source_sha256": "30aab0162b243fc5e1452ee797741b29ba67cd6b7d948c8f14a13593a89e92c6"
+    },
+    {
+      "elf": "rv32ui/bgeu/firmware.elf",
+      "elf_sha256": "8b9042f8fe9e0caaea3c070043de0b9cec5af7374e0ddf5c35bbd381e1aa6ad2",
+      "image_manifest": "rv32ui/bgeu/image.json",
+      "name": "bgeu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/bgeu.S",
+      "source_sha256": "f1eaaba930d3ddb6ad9a6e1f7b5b5d11589768d1a2f3f8a8562a7525a0465825"
+    },
+    {
+      "elf": "rv32ui/blt/firmware.elf",
+      "elf_sha256": "c3ac795fa23a50c1a9f9aa7f214d44fcbed49114257da81fd15624383d85e9d2",
+      "image_manifest": "rv32ui/blt/image.json",
+      "name": "blt",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/blt.S",
+      "source_sha256": "94bfeef39f85b4d2efea6d090d35ebea078f7435902279dbed069797a0939a44"
+    },
+    {
+      "elf": "rv32ui/bltu/firmware.elf",
+      "elf_sha256": "d6b0a11687b4eebf4dd8b409537cb75ffa90e632b547576b27cec2fa554bdbc7",
+      "image_manifest": "rv32ui/bltu/image.json",
+      "name": "bltu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/bltu.S",
+      "source_sha256": "48aa29dde0e9b93ef7443b0cc447ce7e0ee5f012125b362bf999d6bb26dab2e7"
+    },
+    {
+      "elf": "rv32ui/bne/firmware.elf",
+      "elf_sha256": "e10915628afa47c0b83452831575e04aa9a0e72f4206385c0aa2a1f8a44b84f0",
+      "image_manifest": "rv32ui/bne/image.json",
+      "name": "bne",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/bne.S",
+      "source_sha256": "31009cea25fc08d7f28e8050a172b952eccb0d70c1a76037cec7fb75fecb6e99"
+    },
+    {
+      "elf": "rv32ui/jal/firmware.elf",
+      "elf_sha256": "ff204fc3a60b3f943fa65436ec064f85f14123ea732fe3995f8450e275df6d32",
+      "image_manifest": "rv32ui/jal/image.json",
+      "name": "jal",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/jal.S",
+      "source_sha256": "c1363aaaa68a41629d7452e7d425b26310b5ce258c4eba0f3303be0006bf151f"
+    },
+    {
+      "elf": "rv32ui/jalr/firmware.elf",
+      "elf_sha256": "09145a59e686239e72f193304e1e2564486c9c71c31ca7d8431b77c39fb7f56a",
+      "image_manifest": "rv32ui/jalr/image.json",
+      "name": "jalr",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/jalr.S",
+      "source_sha256": "7692a49f51472947d4a88ee820f7e61115e86ab874db09079447893d9535817f"
+    },
+    {
+      "elf": "rv32ui/lb/firmware.elf",
+      "elf_sha256": "df585f6a97bd4dd3dfe81f73079570f94d7f1c563aea7e3a4ae2fe530b80ccc4",
+      "image_manifest": "rv32ui/lb/image.json",
+      "name": "lb",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lb.S",
+      "source_sha256": "3553f2d59de9e1496b17f135469597245105ab1a1bd2adeee6bf6e1e1c8a8055"
+    },
+    {
+      "elf": "rv32ui/lbu/firmware.elf",
+      "elf_sha256": "c52a81280142524ee68ec8d4011d1aa04f1c6f06f6fd7a39015880641cfb1fa9",
+      "image_manifest": "rv32ui/lbu/image.json",
+      "name": "lbu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lbu.S",
+      "source_sha256": "1dff517dd2c33cc26678302a0d3949232faeb84222a8edf97bd0411d0b774542"
+    },
+    {
+      "elf": "rv32ui/ld_st/firmware.elf",
+      "elf_sha256": "b51e2214bd474147c907932741abc969cbef211bc486e1ca3946281b4e11fd2b",
+      "image_manifest": "rv32ui/ld_st/image.json",
+      "name": "ld_st",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/ld_st.S",
+      "source_sha256": "afe2a6812b4b695e3e9e5ea36726d8c1de7982539eee22dc9312bf481cd1b911"
+    },
+    {
+      "elf": "rv32ui/lh/firmware.elf",
+      "elf_sha256": "1b04df2aa1150d90eb4e3ce735439034f8562b980800c80fdcdeeae99e9fd80b",
+      "image_manifest": "rv32ui/lh/image.json",
+      "name": "lh",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lh.S",
+      "source_sha256": "e7ae579858cec3b2b2f2d1cabbd48908a1fe862a8dfc5c7cd75eb418f14a05d4"
+    },
+    {
+      "elf": "rv32ui/lhu/firmware.elf",
+      "elf_sha256": "84f5118ed8f2d82ab92b2fe0af2118f09932dfd84f1862058f10fb2ac2dcfea4",
+      "image_manifest": "rv32ui/lhu/image.json",
+      "name": "lhu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lhu.S",
+      "source_sha256": "95c1c2f0b76abaeb77602ba5f6d1e1fafd538986f7ed68eeaacf5418f4e2270a"
+    },
+    {
+      "elf": "rv32ui/lui/firmware.elf",
+      "elf_sha256": "89c95eaf814c8f3e53d2b8ae8470a45b1a6b97497c098fcc71b453d245996f0c",
+      "image_manifest": "rv32ui/lui/image.json",
+      "name": "lui",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lui.S",
+      "source_sha256": "fe8dae76f1cd388b5d3b8b7e952205dfd2fc8fadf057f16de48ecda6eb1fe1ad"
+    },
+    {
+      "elf": "rv32ui/lw/firmware.elf",
+      "elf_sha256": "86f1043f2609b460761943845494e529f6d77e2782c4bc9b601abd5f68fa6297",
+      "image_manifest": "rv32ui/lw/image.json",
+      "name": "lw",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lw.S",
+      "source_sha256": "45287aaa4e0ca4962d15837e41255bd11e69da8477126f921132e6243fdc7824"
+    },
+    {
+      "elf": "rv32ui/or/firmware.elf",
+      "elf_sha256": "d01a0a28a38ea7f56c712a9c4a06fc18d61135b90fb4d51c6d3523d8d4cdd8e7",
+      "image_manifest": "rv32ui/or/image.json",
+      "name": "or",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/or.S",
+      "source_sha256": "12ccc0ebfa7a47738944e64a7789f8807b6d51619a705268e0d302049c2bb256"
+    },
+    {
+      "elf": "rv32ui/ori/firmware.elf",
+      "elf_sha256": "086252030c2d24c4a59320544ffbdc16f2378919faaa7cb527f5cb9de71eb1fe",
+      "image_manifest": "rv32ui/ori/image.json",
+      "name": "ori",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/ori.S",
+      "source_sha256": "64aa0e98ababcde5bb9666138b9b9ac361293b0cb030a046f2eb9eeb5d959910"
+    },
+    {
+      "elf": "rv32ui/sb/firmware.elf",
+      "elf_sha256": "9a00afcf6ebe83713b044366ddba4e0d16a565d8f5cbdc1c0ff69c7ca76881ba",
+      "image_manifest": "rv32ui/sb/image.json",
+      "name": "sb",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sb.S",
+      "source_sha256": "57856776ad67d8bd1f568077b9ec16d67fd5de9a84000b16dce5aedba5a01f0d"
+    },
+    {
+      "elf": "rv32ui/sh/firmware.elf",
+      "elf_sha256": "19b75ed4f46b30ded9861d879531990e1284fff024bd934b3d1d610fbc44c8a0",
+      "image_manifest": "rv32ui/sh/image.json",
+      "name": "sh",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sh.S",
+      "source_sha256": "ce218a82fe2d04d8ffb256bfae30ddc0caa0f5dc392e2b3d8fcd8f87f9a490a8"
+    },
+    {
+      "elf": "rv32ui/sll/firmware.elf",
+      "elf_sha256": "6fc95983c631ac346ae343e10287befe6361faecc8c68dd7a277506bb08b2f04",
+      "image_manifest": "rv32ui/sll/image.json",
+      "name": "sll",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sll.S",
+      "source_sha256": "2d976803efe03ab56944a44d472c05d78e066690cb6d7b5d394d7d1378b5f3ce"
+    },
+    {
+      "elf": "rv32ui/slli/firmware.elf",
+      "elf_sha256": "620c19b14b57d0cad13ceee544e97f62333b6bf190cc9921469e2fb843aa518f",
+      "image_manifest": "rv32ui/slli/image.json",
+      "name": "slli",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/slli.S",
+      "source_sha256": "20ff3262292d98ef1810c944bcd0cc3d35f8e5b5f204f1d9cfc1eb7b8e1b52ff"
+    },
+    {
+      "elf": "rv32ui/slt/firmware.elf",
+      "elf_sha256": "589c693709c00cecc4c445eb123c4e4971fe7ada7cc164b3fde31811fc62fcf4",
+      "image_manifest": "rv32ui/slt/image.json",
+      "name": "slt",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/slt.S",
+      "source_sha256": "3d084fc64d2547d35d8a26dd634b1815fafee80e7e2b06fe17e9ca2d01bb03d6"
+    },
+    {
+      "elf": "rv32ui/slti/firmware.elf",
+      "elf_sha256": "7ec8db422b3c043a0db76a8e42f0a354d020ecacb13ab15f305874ed1cc2cae7",
+      "image_manifest": "rv32ui/slti/image.json",
+      "name": "slti",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/slti.S",
+      "source_sha256": "00d0b78142738211b57b54f9dd0969336ae27bc3cc60adc2f06fa771dfb26134"
+    },
+    {
+      "elf": "rv32ui/sltiu/firmware.elf",
+      "elf_sha256": "89218f80ed3d2431430c3fa8e34aa71b9634107b674cf78b2c3846b9ff3e6a5a",
+      "image_manifest": "rv32ui/sltiu/image.json",
+      "name": "sltiu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sltiu.S",
+      "source_sha256": "421c938784d370c8d59d81c24e0660f6d58c7c289f3a1f9512b1a56bf938de65"
+    },
+    {
+      "elf": "rv32ui/sltu/firmware.elf",
+      "elf_sha256": "aa863c67ee4fde18b23b26e3a41f67aa8e78a5375f5ce22d77ae3a9d895e0c37",
+      "image_manifest": "rv32ui/sltu/image.json",
+      "name": "sltu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sltu.S",
+      "source_sha256": "369112e43406e17e6c4f27b6f400f7ae98f0d63a1229db1d38a13ca31bf219e9"
+    },
+    {
+      "elf": "rv32ui/sra/firmware.elf",
+      "elf_sha256": "fac1280e032199afbc876940c05f603d7e28a289ee1f7cbc85e3f62757f3b1cb",
+      "image_manifest": "rv32ui/sra/image.json",
+      "name": "sra",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sra.S",
+      "source_sha256": "0decaa9cbdde1029bd5c2b9e78cf9b28900c93c6be0fea5adedbcd940ef1cc83"
+    },
+    {
+      "elf": "rv32ui/srai/firmware.elf",
+      "elf_sha256": "4886ccdc167dd6bbbd48a70d092a6d634bd4f2baa13cfe1424723fed0d28f873",
+      "image_manifest": "rv32ui/srai/image.json",
+      "name": "srai",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/srai.S",
+      "source_sha256": "b9c078bd267a6c78f3b1a6931b9a35b4dd451eccaec3b4672aa42478b8d46e69"
+    },
+    {
+      "elf": "rv32ui/srl/firmware.elf",
+      "elf_sha256": "68dc63b755969f40b08c0bd3053a32f19658df4c5c6cd2bb217de0f29094bac7",
+      "image_manifest": "rv32ui/srl/image.json",
+      "name": "srl",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/srl.S",
+      "source_sha256": "4b84f36d5293e440c00939a40eb5c90119dbef475d3d284fae8d116986a09c5c"
+    },
+    {
+      "elf": "rv32ui/srli/firmware.elf",
+      "elf_sha256": "7bbb444f5149a70c6770186837aa0f8539858838f7387c01bf31a9fa51fb813f",
+      "image_manifest": "rv32ui/srli/image.json",
+      "name": "srli",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/srli.S",
+      "source_sha256": "c06d33bbbd85fcd017836c0b316520908ee032b4edd2c69a867f0e85c7af219a"
+    },
+    {
+      "elf": "rv32ui/st_ld/firmware.elf",
+      "elf_sha256": "93c8f433a7f2a9d7c949230101394fa895b5f83e26879180b83e2535b35b756a",
+      "image_manifest": "rv32ui/st_ld/image.json",
+      "name": "st_ld",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/st_ld.S",
+      "source_sha256": "d3c2fefeb4277882e87c282ebb99f64498ed75fec549478d9c070b92510d6616"
+    },
+    {
+      "elf": "rv32ui/sub/firmware.elf",
+      "elf_sha256": "9a990afd74225a7ee82d5516b0a8462e1d4ce98c968800bb92757a8ba2850d0e",
+      "image_manifest": "rv32ui/sub/image.json",
+      "name": "sub",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sub.S",
+      "source_sha256": "0f701137fef9db64b2b866dbfdb43f8f91d6368fb7f175a8bb5c20d52635d3c6"
+    },
+    {
+      "elf": "rv32ui/sw/firmware.elf",
+      "elf_sha256": "d4d548cd1b35ffedbb83984c1e7180d2c05bdb0139638e2de0d2a0bf6f8aed1e",
+      "image_manifest": "rv32ui/sw/image.json",
+      "name": "sw",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sw.S",
+      "source_sha256": "0733c0630599f5eec4e91f53959e5f21f13f28b323feaef9e809f75194066da1"
+    },
+    {
+      "elf": "rv32ui/xor/firmware.elf",
+      "elf_sha256": "409652bbbeb6ba2a1704f505937c66be07bb87f25ee2e07f9b64534b84b98a63",
+      "image_manifest": "rv32ui/xor/image.json",
+      "name": "xor",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/xor.S",
+      "source_sha256": "8db2b3215ab1915856e5ef48b91f78e0f40be39de7e51acd125749f4cea765d9"
+    },
+    {
+      "elf": "rv32ui/xori/firmware.elf",
+      "elf_sha256": "573bbd066daaed763027bb1b4626fbe4f5eee21ed30b2748e420d82c987386a4",
+      "image_manifest": "rv32ui/xori/image.json",
+      "name": "xori",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/xori.S",
+      "source_sha256": "9723c56e6552961078492c5b399d4f7d16292fc0245622de81ef8a2d3775b5d4"
+    }
+  ],
+  "upstream": {
+    "commit": "447a5fcb8253627ddb5f6a226f64e43463afcdd5",
+    "url": "https://github.com/riscv-software-src/riscv-tests.git"
   }
 }

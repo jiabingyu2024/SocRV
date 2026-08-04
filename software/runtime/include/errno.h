@@ -1,0 +1,6 @@
+#ifndef SOCRV_MINILIBC_ERRNO_H
+#define SOCRV_MINILIBC_ERRNO_H
+
+#define EACCES 13
+
+#endif

@@ -6,68 +6,117 @@
   "additionalProperties": false,
   "required": [
     "schema_version",
+    "kind",
+    "profile",
     "elf",
     "entry",
+    "isa",
     "endianness",
-    "regions"
+    "word_format",
+    "memory_map_sha256",
+    "regions",
+    "segments",
+    "test_status"
   ],
   "properties": {
-    "schema_version": {
-      "const": 1
-    },
+    "schema_version": {"const": 2},
+    "kind": {"const": "software_image"},
+    "profile": {"type": "string"},
     "elf": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["path", "sha256"],
       "properties": {
         "path": {"type": "string"},
-        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        "sha256": {"$ref": "#/$defs/sha256"}
       }
     },
-    "entry": {
-      "type": "string",
-      "pattern": "^0x[0-9a-fA-F]{8}$"
+    "entry": {"$ref": "#/$defs/hex32"},
+    "isa": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["xlen", "march", "mabi"],
+      "properties": {
+        "xlen": {"const": 32},
+        "march": {"type": "string"},
+        "mabi": {"type": "string"}
+      }
     },
-    "endianness": {
-      "const": "little"
+    "endianness": {"const": "little"},
+    "word_format": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bits", "hex_digits", "address_unit"],
+      "properties": {
+        "bits": {"const": 32},
+        "hex_digits": {"const": 8},
+        "address_unit": {"const": "word"}
+      }
     },
+    "memory_map_sha256": {"$ref": "#/$defs/sha256"},
     "regions": {
       "type": "array",
-      "minItems": 1,
+      "minItems": 2,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "base", "size", "file", "sha256"],
+        "required": [
+          "name",
+          "base",
+          "size",
+          "used",
+          "stored_words",
+          "file",
+          "sha256",
+          "fill"
+        ],
         "properties": {
           "name": {"type": "string"},
-          "base": {"type": "string", "pattern": "^0x[0-9a-fA-F]{8}$"},
+          "base": {"$ref": "#/$defs/hex32"},
           "size": {"type": "integer", "minimum": 1},
           "used": {"type": "integer", "minimum": 0},
+          "stored_words": {"type": "integer", "minimum": 1},
           "file": {"type": "string"},
-          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "fill": {"const": "0x00000000"}
         }
       }
     },
     "segments": {
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": ["region", "address", "file_size", "memory_size", "flags"],
         "properties": {
           "region": {"type": "string"},
-          "address": {"type": "string", "pattern": "^0x[0-9a-fA-F]{8}$"},
+          "address": {"$ref": "#/$defs/hex32"},
           "file_size": {"type": "integer", "minimum": 0},
           "memory_size": {"type": "integer", "minimum": 1},
           "flags": {"type": "integer", "minimum": 0}
         }
       }
     },
-    "symbols": {
+    "test_status": {
       "type": "object",
-      "additionalProperties": {
-        "type": "string",
-        "pattern": "^0x[0-9a-fA-F]{8}$"
+      "additionalProperties": false,
+      "required": ["base", "pass_magic", "fail_magic"],
+      "properties": {
+        "base": {"$ref": "#/$defs/hex32"},
+        "pass_magic": {"$ref": "#/$defs/hex32"},
+        "fail_magic": {"$ref": "#/$defs/hex32"}
       }
+    }
+  },
+  "$defs": {
+    "hex32": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{8}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
     }
   }
 }

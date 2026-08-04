@@ -5,7 +5,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from build_software import build_profile
+from build_software import PROFILES, build_profile
 from check_fpga_reports import check
 from lib.repo import repo_path
 
@@ -24,7 +24,7 @@ def find_vivado() -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build the Kintex-7 SocRV bitstream with Vivado.")
-    parser.add_argument("--profile", choices=["smoke", "rtthread"], default="smoke")
+    parser.add_argument("--profile", choices=sorted(PROFILES), default="smoke")
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()

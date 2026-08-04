@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 
+from generate_soc_contract import OUTPUTS, rendered_outputs
 from lib.repo import repo_path
 
 
@@ -21,6 +22,11 @@ def parse_constants(text: str, pattern: re.Pattern[str]) -> dict[str, int]:
 
 def main() -> int:
     document = json.loads(repo_path("data", "soc", "memory_map.json").read_text(encoding="utf-8"))
+    contract = json.loads(
+        repo_path("data", "soc", "software_contract.json").read_text(
+            encoding="utf-8"
+        )
+    )
     expected: dict[str, int] = {}
     for name, region in document["regions"].items():
         expected[f"{name}_BASE"] = int(region["base"], 0)
@@ -35,6 +41,19 @@ def main() -> int:
         C_PATTERN,
     )
     failures = []
+    for name, content in rendered_outputs().items():
+        output = OUTPUTS[name]
+        if not output.is_file() or output.read_text(encoding="utf-8") != content:
+            failures.append(
+                f"generated software contract is stale: "
+                f"{output.relative_to(repo_path())}"
+            )
+    for peripheral_name, peripheral in contract["peripherals"].items():
+        if peripheral["region"] not in document["regions"]:
+            failures.append(
+                f"software peripheral {peripheral_name} references unknown "
+                f"region {peripheral['region']}"
+            )
     for key, value in expected.items():
         if sv_values.get(key) != value:
             failures.append(f"RTL {key}: expected 0x{value:08x}, got {sv_values.get(key)!r}")
@@ -45,7 +64,10 @@ def main() -> int:
     if failures:
         print("\n".join(failures))
         return 1
-    print(f"Memory map OK: {len(expected) // 2} regions")
+    print(
+        f"Memory map/software contract OK: {len(expected) // 2} regions, "
+        f"{len(contract['peripherals'])} peripherals"
+    )
     return 0
 
 

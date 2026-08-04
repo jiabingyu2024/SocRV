@@ -1,13 +1,10 @@
 #include <stdint.h>
-#include "soc.h"
+#include "test_status.h"
 
 void platform_exit(int code)
 {
-    mmio_write32(SOCRV_TEST_STATUS_BASE + 0x04u, (uint32_t)code);
-    mmio_write32(
-        SOCRV_TEST_STATUS_BASE + 0x00u,
-        code == 0 ? 0x50415353u : 0x4641494cu
-    );
-    for (;;) {
+    if (code == 0) {
+        test_status_pass(0u);
     }
+    test_status_fail((uint32_t)code);
 }
