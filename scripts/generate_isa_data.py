@@ -73,6 +73,7 @@ def build_test(
             "-static",
             "-Wl,--gc-sections",
             "-Isoftware/riscv-tests/env/socrv",
+            "-Isoftware/riscv-tests/upstream/env",
             "-Isoftware/riscv-tests/upstream/isa/macros/scalar",
             source.relative_to(repo_path()).as_posix(),
             "-Tsoftware/riscv-tests/env/socrv/link.ld",
@@ -126,6 +127,8 @@ def build_test(
         trim=True,
     )
     image_document = read_json(image_manifest)
+    image_document["isa"]["march"] = march
+    image_document["isa"]["mabi"] = mabi
     image_document["elf"]["path"] = (
         f"data/isa/{suite}/{name}/firmware.elf"
     )
@@ -136,7 +139,10 @@ def build_test(
         )
     write_json_atomic(image_manifest, image_document)
     return {
+        "suite": suite,
         "name": name,
+        "march": march,
+        "mabi": mabi,
         "source": source.relative_to(repo_path()).as_posix(),
         "source_sha256": sha256_file(source),
         "elf": elf.relative_to(output.parents[1]).as_posix(),
@@ -177,12 +183,18 @@ def verify_dataset(destination: Path = DESTINATION) -> None:
     )
     if manifest["memory_map_sha256"] != memory_map_hash:
         raise RuntimeError("ISA dataset was built for a different Memory Map")
+    if manifest["software_contract_sha256"] != sha256_file(
+        repo_path("data", "soc", "software_contract.json")
+    ):
+        raise RuntimeError("ISA dataset was built for a different CPU contract")
+    if manifest["selection_sha256"] != sha256_file(TESTLIST_PATH):
+        raise RuntimeError("ISA dataset selection is stale")
     failures: list[str] = []
     image_schema = read_json(
         repo_path("data", "schemas", "image.schema.json")
     )
     for test in manifest["tests"]:
-        test_root = destination / manifest["suite"] / test["name"]
+        test_root = destination / test["suite"] / test["name"]
         elf = test_root / "firmware.elf"
         image = test_root / "image.json"
         if not elf.is_file() or sha256_file(elf) != test["elf_sha256"]:
@@ -192,6 +204,10 @@ def verify_dataset(destination: Path = DESTINATION) -> None:
             continue
         image_document = read_json(image)
         Draft202012Validator(image_schema).validate(image_document)
+        if image_document["isa"]["march"] != test["march"]:
+            failures.append(f"{test['suite']}/{test['name']}: march mismatch")
+        if image_document["isa"]["mabi"] != test["mabi"]:
+            failures.append(f"{test['suite']}/{test['name']}: mabi mismatch")
         image_elf = repo_path(*Path(image_document["elf"]["path"]).parts)
         if (
             not image_elf.is_file()
@@ -211,59 +227,150 @@ def verify_dataset(destination: Path = DESTINATION) -> None:
         raise RuntimeError("\n".join(failures))
     print(
         f"ISA dataset verified: {len(manifest['tests'])} "
-        f"{manifest['suite']} tests"
+        f"tests across {len(manifest['suites'])} suites"
     )
+
+
+def gate_manifest(
+    selection: dict[str, object],
+    contract: dict[str, object],
+) -> dict[str, object]:
+    final_gate = selection["final_gate"]
+    mandatory = final_gate["mandatory_suites"]
+    fp_selection = final_gate["floating_point_selection"]
+    floating_point = contract["cpu"]["target"]["floating_point"]
+    fp_suites = {
+        "single": floating_point["candidates"]["single"]["riscv_test_suite"],
+        "double": floating_point["candidates"]["double"]["riscv_test_suite"],
+    }
+    final_suites = list(mandatory)
+    ready = fp_selection in fp_suites
+    if ready:
+        final_suites.append(fp_suites[fp_selection])
+    return {
+        "current": {
+            "ready": True,
+            "suites": ["rv32ui"],
+            "excluded_tests": ["rv32ui/fence_i"],
+            "description": "Tests implemented by the framework demo core",
+            "blocked_reason": None,
+        },
+        "final-base": {
+            "ready": True,
+            "suites": list(mandatory),
+            "excluded_tests": [],
+            "description": "Mandatory RV32UI, RV32MI and RV32UM CPU target",
+            "blocked_reason": None,
+        },
+        "fp-single": {
+            "ready": True,
+            "suites": [fp_suites["single"]],
+            "excluded_tests": [],
+            "description": "Candidate single-precision floating-point gate",
+            "blocked_reason": None,
+        },
+        "fp-double": {
+            "ready": True,
+            "suites": [fp_suites["double"]],
+            "excluded_tests": [],
+            "description": "Candidate double-precision floating-point gate",
+            "blocked_reason": None,
+        },
+        "final": {
+            "ready": ready,
+            "suites": final_suites,
+            "excluded_tests": [],
+            "description": "Complete final CPU ISA acceptance gate",
+            "blocked_reason": (
+                None
+                if ready
+                else "Select single or double precision in the CPU contract"
+            ),
+        },
+    }
 
 
 def generate() -> None:
     lock = read_json(LOCK_PATH)
-    testlist = read_json(TESTLIST_PATH)
+    selection = read_json(TESTLIST_PATH)
+    selection_schema = read_json(
+        repo_path("data", "schemas", "riscv_tests_selection.schema.json")
+    )
+    Draft202012Validator(selection_schema).validate(selection)
     actual_commit = upstream_commit()
     if actual_commit != lock["commit"]:
         raise RuntimeError(
             f"riscv-tests commit mismatch: {actual_commit} != {lock['commit']}"
         )
     memory_map_path = repo_path("data", "soc", "memory_map.json")
+    contract_path = repo_path("data", "soc", "software_contract.json")
     memory_map = read_json(memory_map_path)
-    contract = read_json(repo_path("data", "soc", "software_contract.json"))
-    if testlist["march"] != contract["cpu"]["march"]:
-        raise RuntimeError("riscv-tests march differs from software contract")
+    contract = read_json(contract_path)
+    target = contract["cpu"]["target"]
+    if (
+        selection["final_gate"]["mandatory_suites"]
+        != target["required_riscv_test_suites"]
+    ):
+        raise RuntimeError(
+            "mandatory riscv-tests suites differ from the CPU target contract"
+        )
+    if (
+        selection["final_gate"]["floating_point_selection"]
+        != target["floating_point"]["selection"]
+    ):
+        raise RuntimeError(
+            "floating-point selection differs from the CPU target contract"
+        )
     memory_map_hash = sha256_file(memory_map_path)
     staging = build_path("isa-data", "generated")
     if staging.exists():
         shutil.rmtree(staging)
-    suite = testlist["suite"]
     test_entries = []
-    for name in testlist["tests"]:
-        output = staging / suite / name
-        test_entries.append(
-            build_test(
-                suite,
-                name,
-                output,
-                testlist["march"],
-                contract["cpu"]["mabi"],
-                memory_map,
-                contract,
-                memory_map_hash,
+    suite_entries = []
+    for suite_config in selection["suites"]:
+        if not suite_config["generate"]:
+            continue
+        suite = suite_config["name"]
+        for name in suite_config["tests"]:
+            output = staging / suite / name
+            test_entries.append(
+                build_test(
+                    suite,
+                    name,
+                    output,
+                    suite_config["march"],
+                    suite_config["mabi"],
+                    memory_map,
+                    contract,
+                    memory_map_hash,
+                )
             )
+            print(f"Built {suite}/{name}")
+        suite_entries.append(
+            {
+                "name": suite,
+                "march": suite_config["march"],
+                "mabi": suite_config["mabi"],
+                "test_count": len(suite_config["tests"]),
+                "excluded": suite_config["excluded"],
+            }
         )
-        print(f"Built {suite}/{name}")
     write_json_atomic(
         staging / "manifest.json",
         {
-            "schema_version": 1,
+            "schema_version": 2,
             "kind": "generated_isa_dataset",
-            "suite": suite,
-            "march": testlist["march"],
-            "mabi": contract["cpu"]["mabi"],
+            "default_gate": selection["current_gate"],
+            "gates": gate_manifest(selection, contract),
             "upstream": {
                 "url": lock["url"],
                 "commit": lock["commit"],
             },
             "memory_map_sha256": memory_map_hash,
+            "software_contract_sha256": sha256_file(contract_path),
+            "selection_sha256": sha256_file(TESTLIST_PATH),
+            "suites": suite_entries,
             "tests": test_entries,
-            "excluded": testlist["excluded"],
         },
     )
     replace_dataset(staging)

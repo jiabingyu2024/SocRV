@@ -22,6 +22,8 @@
         "privilege",
         "march",
         "mabi",
+        "implementation",
+        "target",
         "misaligned",
         "atomic",
         "compressed"
@@ -31,6 +33,53 @@
         "privilege": {"const": "machine"},
         "march": {"type": "string"},
         "mabi": {"type": "string"},
+        "implementation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "status", "riscv_test_gate"],
+          "properties": {
+            "name": {"type": "string"},
+            "status": {"type": "string"},
+            "riscv_test_gate": {"type": "string"}
+          }
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "integer_march",
+            "required_riscv_test_suites",
+            "floating_point"
+          ],
+          "properties": {
+            "integer_march": {"type": "string"},
+            "required_riscv_test_suites": {
+              "type": "array",
+              "minItems": 3,
+              "uniqueItems": true,
+              "items": {"type": "string"}
+            },
+            "floating_point": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["selection", "candidates"],
+              "properties": {
+                "selection": {
+                  "enum": ["pending", "single", "double"]
+                },
+                "candidates": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["single", "double"],
+                  "properties": {
+                    "single": {"$ref": "#/$defs/fp_candidate"},
+                    "double": {"$ref": "#/$defs/fp_candidate"}
+                  }
+                }
+              }
+            }
+          }
+        },
         "misaligned": {"enum": ["unsupported", "hardware", "software"]},
         "atomic": {"type": "boolean"},
         "compressed": {"type": "boolean"}
@@ -70,16 +119,46 @@
     "test_status": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["pass_magic", "fail_magic", "status_register", "code_register"],
+      "required": [
+        "pass_magic",
+        "fail_magic",
+        "perf_start_magic",
+        "perf_stop_magic",
+        "status_register",
+        "code_register"
+      ],
       "properties": {
         "pass_magic": {"$ref": "#/$defs/hex32"},
         "fail_magic": {"$ref": "#/$defs/hex32"},
+        "perf_start_magic": {"$ref": "#/$defs/hex32"},
+        "perf_stop_magic": {"$ref": "#/$defs/hex32"},
         "status_register": {"type": "string"},
         "code_register": {"type": "string"}
       }
     }
   },
   "$defs": {
+    "fp_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "extension",
+        "march",
+        "riscv_test_suite",
+        "compatible_abis"
+      ],
+      "properties": {
+        "extension": {"enum": ["F", "FD"]},
+        "march": {"type": "string"},
+        "riscv_test_suite": {"enum": ["rv32uf", "rv32ud"]},
+        "compatible_abis": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["ilp32", "ilp32f", "ilp32d"]}
+        }
+      }
+    },
     "hex32": {
       "type": "string",
       "pattern": "^0x[0-9a-fA-F]{8}$"

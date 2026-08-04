@@ -1,0 +1,57 @@
+
+Discarded input sections
+
+ .text          0x00000000        0x0 /tmp/ccnqJijr.o
+ .bss           0x00000000        0x0 /tmp/ccnqJijr.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+CODE             0x00000000         0x00010000         xr
+DATA             0x10000000         0x00010000         xrw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD /tmp/ccnqJijr.o
+                0x00000000                        SOCRV_CODE_ORIGIN = 0x0
+                0x00010000                        SOCRV_CODE_LENGTH = 0x10000
+                0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
+                0x00010000                        SOCRV_DATA_LENGTH = 0x10000
+
+.text           0x00000000      0x160
+ *(.text.init)
+ .text.init     0x00000000      0x160 /tmp/ccnqJijr.o
+                0x00000000                _start
+ *(.text .text.*)
+ *(.rodata .rodata.*)
+                0x00000160                        . = ALIGN (0x4)
+                0x00000160                        __code_end = .
+
+.rela.dyn       0x00000160        0x0
+ .rela.text.init
+                0x00000160        0x0 /tmp/ccnqJijr.o
+
+.data           0x10000000       0x50
+ *(.data .data.*)
+ .data          0x10000000       0x50 /tmp/ccnqJijr.o
+                0x10000030                begin_signature
+                0x10000050                end_signature
+ *(.sdata .sdata.*)
+                0x10000050                        . = ALIGN (0x10)
+                0x10000050                        __data_end = .
+
+.bss            0x10000050        0x0
+ *(.sbss .sbss.*)
+ *(.bss .bss.*)
+ *(COMMON)
+                0x10000050                        . = ALIGN (0x10)
+                0x10000050                        __bss_end = .
+                0x00000001                        ASSERT ((__code_end <= (ORIGIN (CODE) + LENGTH (CODE))), CODE region overflow)
+                0x00000001                        ASSERT ((__bss_end <= (ORIGIN (DATA) + LENGTH (DATA))), DATA region overflow)
+OUTPUT(build/isa-data/generated/rv32ud/ldst/firmware.elf elf32-littleriscv)
+
+.riscv.attributes
+                0x00000000       0x3f
+ .riscv.attributes
+                0x00000000       0x3f /tmp/ccnqJijr.o

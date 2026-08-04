@@ -70,6 +70,9 @@ def load_lock(dependency: Dependency) -> dict[str, object]:
     sparse_paths = lock.get("sparse_paths")
     if sparse_paths is not None and not isinstance(sparse_paths, list):
         raise SystemExit(f"{dependency.name}: sparse_paths must be an array")
+    submodules = lock.get("submodules")
+    if submodules is not None and not isinstance(submodules, list):
+        raise SystemExit(f"{dependency.name}: submodules must be an array")
     return lock
 
 
@@ -115,6 +118,70 @@ def configure_sparse(
     return sparse_paths
 
 
+def verify_submodules(
+    dependency: Dependency,
+    lock: dict[str, object],
+) -> None:
+    for submodule in lock.get("submodules", []):
+        path = dependency.destination / str(submodule["path"])
+        result = git("rev-parse", "HEAD", cwd=path)
+        actual = result.stdout.strip() if result.returncode == 0 else None
+        expected = str(submodule["commit"])
+        if actual != expected:
+            raise SystemExit(
+                f"{dependency.name}/{submodule['path']}: expected commit "
+                f"{expected}, got {actual or 'missing'}"
+            )
+        remote = git("remote", "get-url", "origin", cwd=path)
+        actual_url = (
+            remote.stdout.strip().rstrip("/")
+            if remote.returncode == 0
+            else ""
+        )
+        expected_url = str(submodule["url"]).rstrip("/")
+        if actual_url != expected_url:
+            raise SystemExit(
+                f"{dependency.name}/{submodule['path']}: expected origin "
+                f"{expected_url}, got {actual_url or 'missing'}"
+            )
+        missing = [
+            str(required)
+            for required in submodule.get("required_paths", [])
+            if not (path / str(required)).exists()
+        ]
+        if missing:
+            raise SystemExit(
+                f"{dependency.name}/{submodule['path']}: checkout is "
+                "incomplete; missing:\n"
+                + "\n".join(f"  {required}" for required in missing)
+            )
+
+
+def initialize_submodules(
+    dependency: Dependency,
+    lock: dict[str, object],
+) -> None:
+    for submodule in lock.get("submodules", []):
+        path = str(submodule["path"])
+        result = git(
+            "submodule",
+            "update",
+            "--init",
+            "--depth",
+            "1",
+            "--",
+            path,
+            cwd=dependency.destination,
+            timeout=600,
+        )
+        if result.returncode != 0:
+            raise SystemExit(
+                f"{dependency.name}/{path}: submodule checkout failed:\n"
+                f"{result.stdout}{result.stderr}"
+            )
+    verify_submodules(dependency, lock)
+
+
 def verify_one(dependency: Dependency) -> dict[str, object]:
     lock = load_lock(dependency)
     actual = current_commit(dependency)
@@ -131,6 +198,7 @@ def verify_one(dependency: Dependency) -> dict[str, object]:
             f"{dependency.name}: expected origin {expected_url}, "
             f"got {actual_url or 'missing'}"
         )
+    verify_submodules(dependency, lock)
     missing = [
         str(path)
         for path in lock["required_paths"]
@@ -201,6 +269,7 @@ def initialize_checkout(
             f"{dependency.name}: checkout failed:\n"
             f"{checkout.stdout}{checkout.stderr}"
         )
+    initialize_submodules(dependency, lock)
 
 
 def fetch_one(dependency: Dependency) -> None:
@@ -208,6 +277,7 @@ def fetch_one(dependency: Dependency) -> None:
     actual = current_commit(dependency)
     if actual == lock["commit"]:
         configure_sparse(dependency, lock)
+        initialize_submodules(dependency, lock)
         verify_one(dependency)
         print(f"{dependency.name} already present at the locked revision")
         return

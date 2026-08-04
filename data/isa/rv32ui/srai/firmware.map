@@ -1,9 +1,9 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccrOS7LB.o
- .data          0x00000000        0x0 /tmp/ccrOS7LB.o
- .bss           0x00000000        0x0 /tmp/ccrOS7LB.o
+ .text          0x00000000        0x0 /tmp/cc2ftp7G.o
+ .data          0x00000000        0x0 /tmp/cc2ftp7G.o
+ .bss           0x00000000        0x0 /tmp/cc2ftp7G.o
 
 Memory Configuration
 
@@ -14,20 +14,24 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccrOS7LB.o
+LOAD /tmp/cc2ftp7G.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
                 0x00010000                        SOCRV_DATA_LENGTH = 0x10000
 
-.text           0x00000000      0x318
+.text           0x00000000      0x324
  *(.text.init)
- .text.init     0x00000000      0x318 /tmp/ccrOS7LB.o
+ .text.init     0x00000000      0x324 /tmp/cc2ftp7G.o
                 0x00000000                _start
  *(.text .text.*)
  *(.rodata .rodata.*)
-                0x00000318                        . = ALIGN (0x4)
-                0x00000318                        __code_end = .
+                0x00000324                        . = ALIGN (0x4)
+                0x00000324                        __code_end = .
+
+.rela.dyn       0x00000324        0x0
+ .rela.text.init
+                0x00000324        0x0 /tmp/cc2ftp7G.o
 
 .data           0x10000000        0x0
  *(.data .data.*)
@@ -46,6 +50,6 @@ LOAD /tmp/ccrOS7LB.o
 OUTPUT(build/isa-data/generated/rv32ui/srai/firmware.elf elf32-littleriscv)
 
 .riscv.attributes
-                0x00000000       0x27
+                0x00000000       0x33
  .riscv.attributes
-                0x00000000       0x27 /tmp/ccrOS7LB.o
+                0x00000000       0x33 /tmp/cc2ftp7G.o

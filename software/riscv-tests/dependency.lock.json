@@ -6,7 +6,18 @@
   "commit": "447a5fcb8253627ddb5f6a226f64e43463afcdd5",
   "required_paths": [
     "isa",
+    "env/encoding.h",
     "LICENSE",
     "README.md"
+  ],
+  "submodules": [
+    {
+      "path": "env",
+      "url": "https://github.com/riscv/riscv-test-env.git",
+      "commit": "6de71edb142be36319e380ce782c3d1830c65d68",
+      "required_paths": [
+        "encoding.h"
+      ]
+    }
   ]
 }

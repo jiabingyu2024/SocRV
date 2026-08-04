@@ -5,6 +5,11 @@
 #define SOCRV_XLEN 32u
 #define SOCRV_MARCH "rv32i_zicsr"
 #define SOCRV_MABI "ilp32"
+#define SOCRV_CPU_IMPLEMENTATION "demo_cpu_core"
+#define SOCRV_TARGET_INTEGER_MARCH "rv32im_zicsr_zicntr_zifencei"
+#define SOCRV_TARGET_FP_SELECTION "pending"
+#define SOCRV_TARGET_SINGLE_MARCH "rv32imf_zicsr_zicntr_zifencei"
+#define SOCRV_TARGET_DOUBLE_MARCH "rv32imfd_zicsr_zicntr_zifencei"
 #define SOCRV_SOC_CLOCK_HZ 50000000u
 #define SOCRV_TIMER_CLOCK_HZ 50000000u
 #define SOCRV_UART_BAUD 115200u

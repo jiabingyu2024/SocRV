@@ -75,6 +75,15 @@ def render_config(contract: dict[str, object]) -> str:
         f"#define SOCRV_XLEN {cpu['xlen']}u",
         f"#define SOCRV_MARCH \"{cpu['march']}\"",
         f"#define SOCRV_MABI \"{cpu['mabi']}\"",
+        f"#define SOCRV_CPU_IMPLEMENTATION \"{cpu['implementation']['name']}\"",
+        f"#define SOCRV_TARGET_INTEGER_MARCH "
+        f"\"{cpu['target']['integer_march']}\"",
+        f"#define SOCRV_TARGET_FP_SELECTION "
+        f"\"{cpu['target']['floating_point']['selection']}\"",
+        f"#define SOCRV_TARGET_SINGLE_MARCH "
+        f"\"{cpu['target']['floating_point']['candidates']['single']['march']}\"",
+        f"#define SOCRV_TARGET_DOUBLE_MARCH "
+        f"\"{cpu['target']['floating_point']['candidates']['double']['march']}\"",
         f"#define SOCRV_SOC_CLOCK_HZ {clocks['soc_hz']}u",
         f"#define SOCRV_TIMER_CLOCK_HZ {clocks['timer_hz']}u",
         f"#define SOCRV_UART_BAUD {clocks['uart_baud']}u",
@@ -122,6 +131,10 @@ def render_registers(contract: dict[str, object]) -> str:
             f"0x{hex_value(test_status['pass_magic']):08x}u",
             f"#define SOCRV_TEST_FAIL_MAGIC "
             f"0x{hex_value(test_status['fail_magic']):08x}u",
+            f"#define SOCRV_TEST_PERF_START_MAGIC "
+            f"0x{hex_value(test_status['perf_start_magic']):08x}u",
+            f"#define SOCRV_TEST_PERF_STOP_MAGIC "
+            f"0x{hex_value(test_status['perf_stop_magic']):08x}u",
             "",
             "#define SOCRV_TIMER_CONTROL_MTIME_ENABLE (1u << 0)",
             "#define SOCRV_TIMER_CONTROL_IRQ_ENABLE   (1u << 1)",

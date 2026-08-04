@@ -1,0 +1,65 @@
+{
+  "elf": {
+    "path": "data/isa/rv32ui/fence_i/firmware.elf",
+    "sha256": "563ba636867f593a496b5507c4f8ff02a61140f63ec6bb499ca5c560e101d287"
+  },
+  "endianness": "little",
+  "entry": "0x00000000",
+  "isa": {
+    "mabi": "ilp32",
+    "march": "rv32i_zicsr_zifencei",
+    "xlen": 32
+  },
+  "kind": "software_image",
+  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "profile": "riscv-tests/rv32ui/fence_i",
+  "regions": [
+    {
+      "base": "0x00000000",
+      "file": "data/isa/rv32ui/fence_i/code.mem",
+      "fill": "0x00000000",
+      "name": "CODE",
+      "sha256": "b5b6135545277fd34e4b4d2935dfe053e36765030c03462e31f6c4b76bb1f15d",
+      "size": 65536,
+      "stored_words": 89,
+      "used": 356
+    },
+    {
+      "base": "0x10000000",
+      "file": "data/isa/rv32ui/fence_i/data.mem",
+      "fill": "0x00000000",
+      "name": "DATA",
+      "sha256": "5773fa48581abef257280b5b041a8f8906aa912ef37b17e9b1b2ffcb7e5f4fc4",
+      "size": 65536,
+      "stored_words": 8,
+      "used": 32
+    }
+  ],
+  "schema_version": 2,
+  "segments": [
+    {
+      "address": "0x00000000",
+      "file_size": 356,
+      "flags": 5,
+      "memory_size": 356,
+      "region": "CODE"
+    },
+    {
+      "address": "0x10000000",
+      "file_size": 32,
+      "flags": 6,
+      "memory_size": 32,
+      "region": "DATA"
+    }
+  ],
+  "test_status": {
+    "base": "0x30002000",
+    "fail_magic": "0x4641494c",
+    "pass_magic": "0x50415353"
+  },
+  "word_format": {
+    "address_unit": "word",
+    "bits": 32,
+    "hex_digits": 8
+  }
+}

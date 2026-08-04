@@ -9,19 +9,24 @@ Disassembly of section .text:
    4:	00000297          	auipc	t0,0x0
    8:	01028293          	addi	t0,t0,16 # 14 <trap_vector>
    c:	30529073          	csrw	mtvec,t0
-  10:	0200006f          	j	30 <trap_vector+0x1c>
+  10:	02c0006f          	j	3c <unexpected_trap+0x1c>
 
 00000014 <trap_vector>:
-  14:	300022b7          	lui	t0,0x30002
-  18:	34202373          	csrr	t1,mcause
-  1c:	0062a223          	sw	t1,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
-  20:	46415337          	lui	t1,0x46415
-  24:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_DATA_ORIGIN+0x3641494c>
-  28:	0062a023          	sw	t1,0(t0)
-  2c:	0000006f          	j	2c <trap_vector+0x18>
-  30:	300022b7          	lui	t0,0x30002
-  34:	0002a223          	sw	zero,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
-  38:	50415337          	lui	t1,0x50415
-  3c:	35330313          	addi	t1,t1,851 # 50415353 <SOCRV_DATA_ORIGIN+0x40415353>
-  40:	0062a023          	sw	t1,0(t0)
-  44:	0000006f          	j	44 <trap_vector+0x30>
+  14:	00000f13          	li	t5,0
+  18:	000f0463          	beqz	t5,20 <unexpected_trap>
+  1c:	000f0067          	jr	t5
+
+00000020 <unexpected_trap>:
+  20:	300022b7          	lui	t0,0x30002
+  24:	34202373          	csrr	t1,mcause
+  28:	0062a223          	sw	t1,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
+  2c:	46415337          	lui	t1,0x46415
+  30:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_DATA_ORIGIN+0x3641494c>
+  34:	0062a023          	sw	t1,0(t0)
+  38:	0000006f          	j	38 <unexpected_trap+0x18>
+  3c:	300022b7          	lui	t0,0x30002
+  40:	0002a223          	sw	zero,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
+  44:	50415337          	lui	t1,0x50415
+  48:	35330313          	addi	t1,t1,851 # 50415353 <SOCRV_DATA_ORIGIN+0x40415353>
+  4c:	0062a023          	sw	t1,0(t0)
+  50:	0000006f          	j	50 <unexpected_trap+0x30>

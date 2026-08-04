@@ -29,6 +29,10 @@ def main() -> int:
             "isa_dataset.schema.json",
             repo_path("data", "isa", "manifest.json"),
         ),
+        (
+            "riscv_tests_selection.schema.json",
+            repo_path("software", "riscv-tests", "tests.json"),
+        ),
         *[
             ("profile.schema.json", path)
             for path in sorted(repo_path("data", "profiles").glob("*.json"))

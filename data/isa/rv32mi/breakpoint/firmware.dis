@@ -1,0 +1,120 @@
+
+build/isa-data/generated/rv32mi/breakpoint/firmware.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00000193          	li	gp,0
+   4:	00000297          	auipc	t0,0x0
+   8:	01028293          	addi	t0,t0,16 # 14 <trap_vector>
+   c:	30529073          	csrw	mtvec,t0
+  10:	0300006f          	j	40 <unexpected_trap+0x1c>
+
+00000014 <trap_vector>:
+  14:	00000f17          	auipc	t5,0x0
+  18:	164f0f13          	addi	t5,t5,356 # 178 <mtvec_handler>
+  1c:	000f0463          	beqz	t5,24 <unexpected_trap>
+  20:	000f0067          	jr	t5
+
+00000024 <unexpected_trap>:
+  24:	300022b7          	lui	t0,0x30002
+  28:	34202373          	csrr	t1,mcause
+  2c:	0062a223          	sw	t1,4(t0) # 30002004 <__bss_end+0x20001ff4>
+  30:	46415337          	lui	t1,0x46415
+  34:	94c30313          	addi	t1,t1,-1716 # 4641494c <__bss_end+0x3641493c>
+  38:	0062a023          	sw	t1,0(t0)
+  3c:	0000006f          	j	3c <unexpected_trap+0x18>
+  40:	00200193          	li	gp,2
+  44:	00000517          	auipc	a0,0x0
+  48:	01450513          	addi	a0,a0,20 # 58 <unexpected_trap+0x34>
+  4c:	30551573          	csrrw	a0,mtvec,a0
+  50:	00800593          	li	a1,8
+  54:	7a55a073          	csrs	tcontrol,a1
+  58:	30551073          	csrw	mtvec,a0
+  5c:	30046073          	csrsi	mstatus,8
+  60:	7a001073          	csrw	tselect,zero
+  64:	7a0025f3          	csrr	a1,tselect
+  68:	0eb01c63          	bne	zero,a1,160 <pass>
+  6c:	00000617          	auipc	a2,0x0
+  70:	02060613          	addi	a2,a2,32 # 8c <unexpected_trap+0x68>
+  74:	7a261073          	csrw	tdata2,a2
+  78:	20000537          	lui	a0,0x20000
+  7c:	04450513          	addi	a0,a0,68 # 20000044 <__bss_end+0x10000034>
+  80:	7a151073          	csrw	tdata1,a0
+  84:	7a1025f3          	csrr	a1,tdata1
+  88:	00b51863          	bne	a0,a1,98 <unexpected_trap+0x74>
+  8c:	0a000e63          	beqz	zero,148 <fail>
+  90:	00300193          	li	gp,3
+  94:	00062503          	lw	a0,0(a2)
+  98:	00400193          	li	gp,4
+  9c:	20000537          	lui	a0,0x20000
+  a0:	04150513          	addi	a0,a0,65 # 20000041 <__bss_end+0x10000031>
+  a4:	7a151073          	csrw	tdata1,a0
+  a8:	7a1025f3          	csrr	a1,tdata1
+  ac:	02b51063          	bne	a0,a1,cc <unexpected_trap+0xa8>
+  b0:	10000617          	auipc	a2,0x10000
+  b4:	f5060613          	addi	a2,a2,-176 # 10000000 <SOCRV_DATA_ORIGIN>
+  b8:	7a261073          	csrw	tdata2,a2
+  bc:	00062603          	lw	a2,0(a2)
+  c0:	08060463          	beqz	a2,148 <fail>
+  c4:	00500193          	li	gp,5
+  c8:	00062023          	sw	zero,0(a2)
+  cc:	00600193          	li	gp,6
+  d0:	20000537          	lui	a0,0x20000
+  d4:	04250513          	addi	a0,a0,66 # 20000042 <__bss_end+0x10000032>
+  d8:	7a151073          	csrw	tdata1,a0
+  dc:	7a1025f3          	csrr	a1,tdata1
+  e0:	06b51263          	bne	a0,a1,144 <unexpected_trap+0x120>
+  e4:	00c62023          	sw	a2,0(a2)
+  e8:	00700193          	li	gp,7
+  ec:	00062603          	lw	a2,0(a2)
+  f0:	04061c63          	bnez	a2,148 <fail>
+  f4:	00100513          	li	a0,1
+  f8:	7a051073          	csrw	tselect,a0
+  fc:	7a0025f3          	csrr	a1,tselect
+ 100:	06b51063          	bne	a0,a1,160 <pass>
+ 104:	20000537          	lui	a0,0x20000
+ 108:	04150513          	addi	a0,a0,65 # 20000041 <__bss_end+0x10000031>
+ 10c:	7a151073          	csrw	tdata1,a0
+ 110:	10000697          	auipc	a3,0x10000
+ 114:	ef468693          	addi	a3,a3,-268 # 10000004 <data2>
+ 118:	7a269073          	csrw	tdata2,a3
+ 11c:	00800193          	li	gp,8
+ 120:	0006a683          	lw	a3,0(a3)
+ 124:	02068263          	beqz	a3,148 <fail>
+ 128:	00a00193          	li	gp,10
+ 12c:	10000617          	auipc	a2,0x10000
+ 130:	ed460613          	addi	a2,a2,-300 # 10000000 <SOCRV_DATA_ORIGIN>
+ 134:	00c62023          	sw	a2,0(a2)
+ 138:	00b00193          	li	gp,11
+ 13c:	00062603          	lw	a2,0(a2)
+ 140:	00061463          	bnez	a2,148 <fail>
+ 144:	00301e63          	bne	zero,gp,160 <pass>
+
+00000148 <fail>:
+ 148:	300022b7          	lui	t0,0x30002
+ 14c:	0032a223          	sw	gp,4(t0) # 30002004 <__bss_end+0x20001ff4>
+ 150:	46415337          	lui	t1,0x46415
+ 154:	94c30313          	addi	t1,t1,-1716 # 4641494c <__bss_end+0x3641493c>
+ 158:	0062a023          	sw	t1,0(t0)
+ 15c:	0000006f          	j	15c <fail+0x14>
+
+00000160 <pass>:
+ 160:	300022b7          	lui	t0,0x30002
+ 164:	0002a223          	sw	zero,4(t0) # 30002004 <__bss_end+0x20001ff4>
+ 168:	50415337          	lui	t1,0x50415
+ 16c:	35330313          	addi	t1,t1,851 # 50415353 <__bss_end+0x40415343>
+ 170:	0062a023          	sw	t1,0(t0)
+ 174:	0000006f          	j	174 <pass+0x14>
+
+00000178 <mtvec_handler>:
+ 178:	0011f293          	andi	t0,gp,1
+ 17c:	fc0296e3          	bnez	t0,148 <fail>
+ 180:	00300293          	li	t0,3
+ 184:	34202373          	csrr	t1,mcause
+ 188:	fc6290e3          	bne	t0,t1,148 <fail>
+ 18c:	341022f3          	csrr	t0,mepc
+ 190:	00428293          	addi	t0,t0,4
+ 194:	34129073          	csrw	mepc,t0
+ 198:	30200073          	mret

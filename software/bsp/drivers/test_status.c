@@ -6,10 +6,7 @@ static void test_status_finish(uint32_t status, uint32_t code)
 
 static void test_status_finish(uint32_t status, uint32_t code)
 {
-    mmio_write32(
-        SOCRV_TEST_STATUS_BASE + SOCRV_TEST_STATUS_CODE_OFFSET,
-        code
-    );
+    test_status_set_code(code);
     mmio_write32(
         SOCRV_TEST_STATUS_BASE + SOCRV_TEST_STATUS_STATUS_OFFSET,
         status
@@ -17,6 +14,14 @@ static void test_status_finish(uint32_t status, uint32_t code)
     for (;;) {
         __asm volatile("nop");
     }
+}
+
+void test_status_set_code(uint32_t code)
+{
+    mmio_write32(
+        SOCRV_TEST_STATUS_BASE + SOCRV_TEST_STATUS_CODE_OFFSET,
+        code
+    );
 }
 
 void test_status_pass(uint32_t code)

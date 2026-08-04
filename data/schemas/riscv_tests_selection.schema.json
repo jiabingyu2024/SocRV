@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socrv.local/schema/riscv_tests_selection.schema.json",
+  "title": "SocRV riscv-tests selection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "current_gate",
+    "final_gate",
+    "suites"
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "current_gate": {"type": "string"},
+    "final_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mandatory_suites", "floating_point_selection"],
+      "properties": {
+        "mandatory_suites": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {"enum": ["rv32ui", "rv32mi", "rv32um"]}
+        },
+        "floating_point_selection": {
+          "enum": ["pending", "single", "double"]
+        }
+      }
+    },
+    "suites": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "march",
+          "mabi",
+          "generate",
+          "tests",
+          "excluded"
+        ],
+        "properties": {
+          "name": {
+            "enum": ["rv32ui", "rv32mi", "rv32um", "rv32uf", "rv32ud"]
+          },
+          "march": {"type": "string"},
+          "mabi": {"enum": ["ilp32", "ilp32f", "ilp32d"]},
+          "generate": {"type": "boolean"},
+          "tests": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string"}
+          },
+          "excluded": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["test", "reason"],
+              "properties": {
+                "test": {"type": "string"},
+                "reason": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

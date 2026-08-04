@@ -7,13 +7,21 @@ TRACE ?= 0
 .DEFAULT_GOAL := help
 
 .PHONY: help env-check doctor deps deps-check soc-contract soc-contract-check \
-	isa-data isa-data-check isa-regression data-isa-import data-isa-check \
+	isa-data isa-data-check isa-gates isa-regression \
+	isa-regression-current isa-regression-final-base \
+	isa-regression-fp-single isa-regression-fp-double isa-regression-final \
+	data-isa-import data-isa-check \
 	data-isa-legacy-import data-isa-legacy-check validate-schemas test-scripts \
 	check-generated-tree check-filelists check-memory-map rtl-lint check \
 	software software-smoke software-trap-timer software-rtthread \
 	software-coremark coremark-smoke coremark-rtthread \
+	software-coremark-rtthread-perf \
 	sim sim-smoke sim-trap-timer sim-rtthread sim-coremark-smoke \
-	sim-coremark-rtthread regression fpga-bitstream fpga-check fpga-program \
+	sim-coremark-rtthread sim-rtthread-coremark-smoke \
+	sim-rtthread-coremark-perf sim-isa sim-isa-current \
+	sim-isa-final-base sim-isa-fp-single sim-isa-fp-double sim-isa-final \
+	sim-correctness sim-required \
+	regression fpga-bitstream fpga-check fpga-program \
 	check-images release release-check clean-software clean-images clean-sim \
 	clean-regression clean-fpga clean
 
@@ -44,8 +52,25 @@ isa-data: deps-check
 isa-data-check:
 	@$(PYTHON) scripts/generate_isa_data.py --verify
 
-isa-regression: isa-data-check
-	@$(PYTHON) scripts/run_isa_tests.py
+isa-gates: isa-data-check
+	@$(PYTHON) scripts/run_isa_tests.py --list-gates
+
+isa-regression: isa-regression-current
+
+isa-regression-current: isa-data-check
+	@$(PYTHON) scripts/run_isa_tests.py --gate current
+
+isa-regression-final-base: isa-data-check
+	@$(PYTHON) scripts/run_isa_tests.py --gate final-base
+
+isa-regression-fp-single: isa-data-check
+	@$(PYTHON) scripts/run_isa_tests.py --gate fp-single
+
+isa-regression-fp-double: isa-data-check
+	@$(PYTHON) scripts/run_isa_tests.py --gate fp-double
+
+isa-regression-final: isa-data-check
+	@$(PYTHON) scripts/run_isa_tests.py --gate final
 
 # Compatibility aliases. The authoritative dataset is generated from the
 # locked official riscv-tests checkout, not copied from the previous project.
@@ -101,6 +126,9 @@ coremark-smoke: deps-check
 coremark-rtthread: deps-check
 	@$(PYTHON) scripts/build_software.py --profile coremark-rtthread
 
+software-coremark-rtthread-perf: deps-check
+	@$(PYTHON) scripts/build_software.py --profile coremark-rtthread-perf
+
 sim: deps-check
 	@$(PYTHON) scripts/run_verilator.py --profile $(PROFILE) $(if $(filter 1,$(TRACE)),--trace,)
 
@@ -118,6 +146,35 @@ sim-coremark-smoke: deps-check
 
 sim-coremark-rtthread: deps-check
 	@$(PYTHON) scripts/run_verilator.py --profile coremark-rtthread $(if $(filter 1,$(TRACE)),--trace,)
+
+sim-rtthread-coremark-smoke: sim-coremark-rtthread
+
+sim-rtthread-coremark-perf: deps-check
+	@$(PYTHON) scripts/run_verilator.py --profile coremark-rtthread-perf $(if $(filter 1,$(TRACE)),--trace,)
+
+sim-isa: sim-isa-current
+
+sim-isa-current: isa-regression-current
+
+sim-isa-final-base: isa-regression-final-base
+
+sim-isa-fp-single: isa-regression-fp-single
+
+sim-isa-fp-double: isa-regression-fp-double
+
+sim-isa-final: isa-regression-final
+
+sim-correctness: deps-check
+	@$(PYTHON) scripts/run_regression.py --suite correctness
+
+# Required acceptance flow. Recursive makes are intentionally sequential so
+# tests never race on shared software/model build products under make -j.
+sim-required:
+	@$(MAKE) sim-isa
+	@$(MAKE) sim-smoke
+	@$(MAKE) sim-rtthread
+	@$(MAKE) sim-rtthread-coremark-smoke
+	@$(MAKE) sim-rtthread-coremark-perf
 
 regression: deps-check
 	@$(PYTHON) scripts/run_regression.py --suite $(SUITE)

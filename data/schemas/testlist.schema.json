@@ -24,7 +24,17 @@
           "image": {"type": "string"},
           "checker": {"type": "string"},
           "max_cycles": {"type": "integer", "minimum": 1},
+          "max_wall_seconds": {"type": "integer", "minimum": 1},
           "seed": {"type": "integer", "minimum": 0},
+          "performance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["enabled", "iterations"],
+            "properties": {
+              "enabled": {"type": "boolean"},
+              "iterations": {"type": "integer", "minimum": 1}
+            }
+          },
           "model": {"type": "object"}
         }
       }

@@ -7,20 +7,24 @@
   "required": [
     "schema_version",
     "kind",
-    "suite",
-    "march",
-    "mabi",
+    "default_gate",
+    "gates",
     "upstream",
     "memory_map_sha256",
-    "tests",
-    "excluded"
+    "software_contract_sha256",
+    "selection_sha256",
+    "suites",
+    "tests"
   ],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"const": 2},
     "kind": {"const": "generated_isa_dataset"},
-    "suite": {"type": "string"},
-    "march": {"type": "string"},
-    "mabi": {"type": "string"},
+    "default_gate": {"type": "string"},
+    "gates": {
+      "type": "object",
+      "minProperties": 5,
+      "additionalProperties": {"$ref": "#/$defs/gate"}
+    },
     "upstream": {
       "type": "object",
       "additionalProperties": false,
@@ -30,34 +34,94 @@
         "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
       }
     },
-    "memory_map_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
+    "memory_map_sha256": {"$ref": "#/$defs/sha256"},
+    "software_contract_sha256": {"$ref": "#/$defs/sha256"},
+    "selection_sha256": {"$ref": "#/$defs/sha256"},
+    "suites": {
+      "type": "array",
+      "minItems": 5,
+      "items": {"$ref": "#/$defs/suite"}
     },
     "tests": {
       "type": "array",
       "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "name",
-          "source",
-          "source_sha256",
-          "elf",
-          "elf_sha256",
-          "image_manifest"
-        ],
-        "properties": {
-          "name": {"type": "string"},
-          "source": {"type": "string"},
-          "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-          "elf": {"type": "string"},
-          "elf_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-          "image_manifest": {"type": "string"}
-        }
+      "items": {"$ref": "#/$defs/test"}
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ready",
+        "suites",
+        "excluded_tests",
+        "description",
+        "blocked_reason"
+      ],
+      "properties": {
+        "ready": {"type": "boolean"},
+        "suites": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string"}
+        },
+        "excluded_tests": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string"}
+        },
+        "description": {"type": "string"},
+        "blocked_reason": {"type": ["string", "null"]}
       }
     },
-    "excluded": {"type": "array"}
+    "suite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "march",
+        "mabi",
+        "test_count",
+        "excluded"
+      ],
+      "properties": {
+        "name": {"type": "string"},
+        "march": {"type": "string"},
+        "mabi": {"type": "string"},
+        "test_count": {"type": "integer", "minimum": 1},
+        "excluded": {"type": "array"}
+      }
+    },
+    "test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suite",
+        "name",
+        "march",
+        "mabi",
+        "source",
+        "source_sha256",
+        "elf",
+        "elf_sha256",
+        "image_manifest"
+      ],
+      "properties": {
+        "suite": {"type": "string"},
+        "name": {"type": "string"},
+        "march": {"type": "string"},
+        "mabi": {"type": "string"},
+        "source": {"type": "string"},
+        "source_sha256": {"$ref": "#/$defs/sha256"},
+        "elf": {"type": "string"},
+        "elf_sha256": {"$ref": "#/$defs/sha256"},
+        "image_manifest": {"type": "string"}
+      }
+    }
   }
 }

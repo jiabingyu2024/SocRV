@@ -1,13 +1,13 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/ori/firmware.elf",
-    "sha256": "086252030c2d24c4a59320544ffbdc16f2378919faaa7cb527f5cb9de71eb1fe"
+    "sha256": "c49942214cc0202f3687d35ce806be9ab153b1ec5735af84e839a346133274ac"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32i_zicsr",
+    "march": "rv32i_zicsr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",
@@ -19,10 +19,10 @@
       "file": "data/isa/rv32ui/ori/code.mem",
       "fill": "0x00000000",
       "name": "CODE",
-      "sha256": "7b5b841d4499f10ba643808a8d896e151a864714a4662b1f219305e742be686e",
+      "sha256": "e482d680235471dae1b82cc287c62ad54b201dadd997b2bf7d6b54d51d43ee60",
       "size": 65536,
-      "stored_words": 143,
-      "used": 572
+      "stored_words": 146,
+      "used": 584
     },
     {
       "base": "0x10000000",
@@ -39,9 +39,9 @@
   "segments": [
     {
       "address": "0x00000000",
-      "file_size": 572,
+      "file_size": 584,
       "flags": 5,
-      "memory_size": 572,
+      "memory_size": 584,
       "region": "CODE"
     }
   ],

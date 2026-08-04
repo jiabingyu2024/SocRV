@@ -1,9 +1,9 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccEtJ8J8.o
- .data          0x00000000        0x0 /tmp/ccEtJ8J8.o
- .bss           0x00000000        0x0 /tmp/ccEtJ8J8.o
+ .text          0x00000000        0x0 /tmp/ccvnHMlA.o
+ .data          0x00000000        0x0 /tmp/ccvnHMlA.o
+ .bss           0x00000000        0x0 /tmp/ccvnHMlA.o
 
 Memory Configuration
 
@@ -14,20 +14,24 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccEtJ8J8.o
+LOAD /tmp/ccvnHMlA.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
                 0x00010000                        SOCRV_DATA_LENGTH = 0x10000
 
-.text           0x00000000       0xc0
+.text           0x00000000       0xcc
  *(.text.init)
- .text.init     0x00000000       0xc0 /tmp/ccEtJ8J8.o
+ .text.init     0x00000000       0xcc /tmp/ccvnHMlA.o
                 0x00000000                _start
  *(.text .text.*)
  *(.rodata .rodata.*)
-                0x000000c0                        . = ALIGN (0x4)
-                0x000000c0                        __code_end = .
+                0x000000cc                        . = ALIGN (0x4)
+                0x000000cc                        __code_end = .
+
+.rela.dyn       0x000000cc        0x0
+ .rela.text.init
+                0x000000cc        0x0 /tmp/ccvnHMlA.o
 
 .data           0x10000000        0x0
  *(.data .data.*)
@@ -46,6 +50,6 @@ LOAD /tmp/ccEtJ8J8.o
 OUTPUT(build/isa-data/generated/rv32ui/lui/firmware.elf elf32-littleriscv)
 
 .riscv.attributes
-                0x00000000       0x27
+                0x00000000       0x33
  .riscv.attributes
-                0x00000000       0x27 /tmp/ccEtJ8J8.o
+                0x00000000       0x33 /tmp/ccvnHMlA.o

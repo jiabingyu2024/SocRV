@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-04",
+  "mode": "architecture_update",
+  "reason": "Expand the final CPU target from the framework demo RV32I baseline to mandatory RV32UI, RV32MI and RV32UM acceptance with a later F or FD floating-point choice.",
+  "authoritative_inputs": [
+    "data/soc/software_contract.json",
+    "software/riscv-tests/tests.json",
+    "software/riscv-tests/dependency.lock.json"
+  ],
+  "modified_documents": [
+    {
+      "path": "docs/designPlan/rtl_internal_hierarchy_and_soc_interfaces.md",
+      "sections": [
+        "current implementation and final ISA contract"
+      ]
+    },
+    {
+      "path": "docs/designPlan/software_architecture_bsp_and_build_flow.md",
+      "sections": [
+        "current baseline",
+        "riscv-tests and data/isa",
+        "ISA/ABI decision cascade"
+      ]
+    },
+    {
+      "path": "docs/designPlan/tb_and_sim_architecture_and_verification_flow.md",
+      "sections": [
+        "current verification paths",
+        "current and final ISA gates"
+      ]
+    },
+    {
+      "path": "docs/designPlan/scripts_data_build_make_and_workflow.md",
+      "sections": [
+        "current ISA data and root Make entry points"
+      ]
+    }
+  ],
+  "cascade": [
+    "Keep active software profiles at rv32i_zicsr until the demo core is replaced.",
+    "Generate RV32UI, RV32MI, RV32UM, RV32UF and RV32UD datasets against the current Memory Map.",
+    "Require RV32UI, RV32MI and RV32UM for the final integer gate.",
+    "Block the complete final gate until single or double precision is selected.",
+    "After selection, update RTL misa/CSR/FP state, compiler march/mabi, RT-Thread context handling and commit trace together."
+  ],
+  "backup": "docs/backup/2026-08-04-isa-target/"
+}

@@ -4,7 +4,7 @@
     {
       "name": "baremetal-smoke",
       "target": "soc",
-      "suite": ["smoke", "baremetal"],
+      "suite": ["smoke", "correctness", "baremetal"],
       "image": "smoke",
       "checker": "test-status-and-uart",
       "max_cycles": 200000,
@@ -13,7 +13,7 @@
     {
       "name": "rtthread-smoke",
       "target": "soc",
-      "suite": ["smoke", "rtthread"],
+      "suite": ["smoke", "correctness", "rtthread", "os"],
       "image": "rtthread",
       "checker": "test-status-and-uart",
       "max_cycles": 2000000,
@@ -22,7 +22,7 @@
     {
       "name": "baremetal-trap-timer",
       "target": "soc",
-      "suite": ["smoke", "baremetal", "bsp"],
+      "suite": ["smoke", "correctness", "baremetal", "bsp"],
       "image": "trap-timer",
       "checker": "test-status",
       "max_cycles": 500000,
@@ -31,7 +31,7 @@
     {
       "name": "coremark-baremetal-functional",
       "target": "soc",
-      "suite": ["coremark", "functional"],
+      "suite": ["coremark", "functional", "correctness"],
       "image": "coremark-smoke",
       "checker": "coremark-crc-and-test-status",
       "max_cycles": 50000000,
@@ -40,11 +40,35 @@
     {
       "name": "coremark-rtthread-functional",
       "target": "soc",
-      "suite": ["coremark", "functional", "rtthread"],
+      "suite": [
+        "coremark",
+        "functional",
+        "correctness",
+        "rtthread",
+        "os"
+      ],
       "image": "coremark-rtthread",
       "checker": "coremark-crc-and-test-status",
       "max_cycles": 60000000,
-      "seed": 1
+      "seed": 1,
+      "performance": {
+        "enabled": true,
+        "iterations": 1
+      }
+    },
+    {
+      "name": "coremark-rtthread-performance",
+      "target": "soc",
+      "suite": ["coremark", "performance", "benchmark", "rtthread"],
+      "image": "coremark-rtthread-perf",
+      "checker": "coremark-crc-test-status-and-perf-window",
+      "max_cycles": 80000000,
+      "max_wall_seconds": 900,
+      "seed": 1,
+      "performance": {
+        "enabled": true,
+        "iterations": 10
+      }
     }
   ]
 }

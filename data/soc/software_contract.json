@@ -5,6 +5,43 @@
     "privilege": "machine",
     "march": "rv32i_zicsr",
     "mabi": "ilp32",
+    "implementation": {
+      "name": "demo_cpu_core",
+      "status": "framework_reference",
+      "riscv_test_gate": "current"
+    },
+    "target": {
+      "integer_march": "rv32im_zicsr_zicntr_zifencei",
+      "required_riscv_test_suites": [
+        "rv32ui",
+        "rv32mi",
+        "rv32um"
+      ],
+      "floating_point": {
+        "selection": "pending",
+        "candidates": {
+          "single": {
+            "extension": "F",
+            "march": "rv32imf_zicsr_zicntr_zifencei",
+            "riscv_test_suite": "rv32uf",
+            "compatible_abis": [
+              "ilp32",
+              "ilp32f"
+            ]
+          },
+          "double": {
+            "extension": "FD",
+            "march": "rv32imfd_zicsr_zicntr_zifencei",
+            "riscv_test_suite": "rv32ud",
+            "compatible_abis": [
+              "ilp32",
+              "ilp32f",
+              "ilp32d"
+            ]
+          }
+        }
+      }
+    },
     "misaligned": "unsupported",
     "atomic": false,
     "compressed": false
@@ -162,6 +199,8 @@
   "test_status": {
     "pass_magic": "0x50415353",
     "fail_magic": "0x4641494c",
+    "perf_start_magic": "0x43504d53",
+    "perf_stop_magic": "0x43504d45",
     "status_register": "TEST_STATUS.STATUS",
     "code_register": "TEST_STATUS.CODE"
   }

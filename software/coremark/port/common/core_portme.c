@@ -5,6 +5,8 @@
 #include "core_portme.h"
 #include "drv_timer.h"
 #include "drv_uart.h"
+#include "soc.h"
+#include "test_status.h"
 
 #if VALIDATION_RUN
 volatile ee_s32 seed1_volatile = 0x3415;
@@ -143,12 +145,14 @@ int ee_printf(const char *format, ...)
 
 void start_time(void)
 {
+    test_status_set_code(SOCRV_TEST_PERF_START_MAGIC);
     start_ticks = (CORE_TICKS)timer_read();
 }
 
 void stop_time(void)
 {
     stop_ticks = (CORE_TICKS)timer_read();
+    test_status_set_code(SOCRV_TEST_PERF_STOP_MAGIC);
 }
 
 CORE_TICKS get_time(void)

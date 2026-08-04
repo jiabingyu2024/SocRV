@@ -42,6 +42,11 @@ PROFILES = {
         ("rt-thread", "coremark"),
         60_000_000,
     ),
+    "coremark-rtthread-perf": SoftwareProfile(
+        "coremark-rtthread-performance-simulation",
+        ("rt-thread", "coremark"),
+        80_000_000,
+    ),
 }
 
 

@@ -1,9 +1,9 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccMMgeod.o
- .data          0x00000000        0x0 /tmp/ccMMgeod.o
- .bss           0x00000000        0x0 /tmp/ccMMgeod.o
+ .text          0x00000000        0x0 /tmp/ccLD0h3A.o
+ .data          0x00000000        0x0 /tmp/ccLD0h3A.o
+ .bss           0x00000000        0x0 /tmp/ccLD0h3A.o
 
 Memory Configuration
 
@@ -14,20 +14,24 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccMMgeod.o
+LOAD /tmp/ccLD0h3A.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
                 0x00010000                        SOCRV_DATA_LENGTH = 0x10000
 
-.text           0x00000000       0xb4
+.text           0x00000000       0xc0
  *(.text.init)
- .text.init     0x00000000       0xb4 /tmp/ccMMgeod.o
+ .text.init     0x00000000       0xc0 /tmp/ccLD0h3A.o
                 0x00000000                _start
  *(.text .text.*)
  *(.rodata .rodata.*)
-                0x000000b4                        . = ALIGN (0x4)
-                0x000000b4                        __code_end = .
+                0x000000c0                        . = ALIGN (0x4)
+                0x000000c0                        __code_end = .
+
+.rela.dyn       0x000000c0        0x0
+ .rela.text.init
+                0x000000c0        0x0 /tmp/ccLD0h3A.o
 
 .data           0x10000000        0x0
  *(.data .data.*)
@@ -46,6 +50,6 @@ LOAD /tmp/ccMMgeod.o
 OUTPUT(build/isa-data/generated/rv32ui/jal/firmware.elf elf32-littleriscv)
 
 .riscv.attributes
-                0x00000000       0x27
+                0x00000000       0x33
  .riscv.attributes
-                0x00000000       0x27 /tmp/ccMMgeod.o
+                0x00000000       0x33 /tmp/ccLD0h3A.o

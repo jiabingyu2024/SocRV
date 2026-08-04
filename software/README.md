@@ -19,6 +19,22 @@ riscv-tests 与 CoreMark 适配。第三方 `upstream/` 由 lock 文件管理且
 当前固件固定为 `-march=rv32i_zicsr -mabi=ilp32`，CODE 和 DATA 各
 64 KiB，分别从 `0x0000_0000`、`0x1000_0000` 开始。
 
+这是 demo core 的当前构建能力，不是最终 CPU 上限。最终整数目标为
+RV32IM + Zicsr + Zicntr + Zifencei，必过 RV32UI/RV32MI/RV32UM；浮点在
+F 与 FD 中待选。正式核实现相应指令、CSR 和上下文保存前，不得把普通
+Profile 的 `-march` 提前改强。
+
+ISA 数据与 gate：
+
+```text
+make isa-data
+make isa-gates
+make sim-isa                 # 当前 demo
+make sim-isa-final-base      # 最终整数
+make sim-isa-fp-single       # F 候选
+make sim-isa-fp-double       # FD 候选
+```
+
 ## 构建 Profile
 
 从仓库根目录执行：

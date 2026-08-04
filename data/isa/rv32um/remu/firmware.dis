@@ -1,0 +1,115 @@
+
+build/isa-data/generated/rv32um/remu/firmware.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00000193          	li	gp,0
+   4:	00000297          	auipc	t0,0x0
+   8:	01028293          	addi	t0,t0,16 # 14 <trap_vector>
+   c:	30529073          	csrw	mtvec,t0
+  10:	02c0006f          	j	3c <test_2>
+
+00000014 <trap_vector>:
+  14:	00000f13          	li	t5,0
+  18:	000f0463          	beqz	t5,20 <unexpected_trap>
+  1c:	000f0067          	jr	t5
+
+00000020 <unexpected_trap>:
+  20:	300022b7          	lui	t0,0x30002
+  24:	34202373          	csrr	t1,mcause
+  28:	0062a223          	sw	t1,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
+  2c:	46415337          	lui	t1,0x46415
+  30:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_DATA_ORIGIN+0x3641494c>
+  34:	0062a023          	sw	t1,0(t0)
+  38:	0000006f          	j	38 <unexpected_trap+0x18>
+
+0000003c <test_2>:
+  3c:	00200193          	li	gp,2
+  40:	01400593          	li	a1,20
+  44:	00600613          	li	a2,6
+  48:	02c5f733          	remu	a4,a1,a2
+  4c:	00200393          	li	t2,2
+  50:	0c771463          	bne	a4,t2,118 <fail>
+
+00000054 <test_3>:
+  54:	00300193          	li	gp,3
+  58:	fec00593          	li	a1,-20
+  5c:	00600613          	li	a2,6
+  60:	02c5f733          	remu	a4,a1,a2
+  64:	00200393          	li	t2,2
+  68:	0a771863          	bne	a4,t2,118 <fail>
+
+0000006c <test_4>:
+  6c:	00400193          	li	gp,4
+  70:	01400593          	li	a1,20
+  74:	ffa00613          	li	a2,-6
+  78:	02c5f733          	remu	a4,a1,a2
+  7c:	01400393          	li	t2,20
+  80:	08771c63          	bne	a4,t2,118 <fail>
+
+00000084 <test_5>:
+  84:	00500193          	li	gp,5
+  88:	fec00593          	li	a1,-20
+  8c:	ffa00613          	li	a2,-6
+  90:	02c5f733          	remu	a4,a1,a2
+  94:	fec00393          	li	t2,-20
+  98:	08771063          	bne	a4,t2,118 <fail>
+
+0000009c <test_6>:
+  9c:	00600193          	li	gp,6
+  a0:	800005b7          	lui	a1,0x80000
+  a4:	00100613          	li	a2,1
+  a8:	02c5f733          	remu	a4,a1,a2
+  ac:	00000393          	li	t2,0
+  b0:	06771463          	bne	a4,t2,118 <fail>
+
+000000b4 <test_7>:
+  b4:	00700193          	li	gp,7
+  b8:	800005b7          	lui	a1,0x80000
+  bc:	fff00613          	li	a2,-1
+  c0:	02c5f733          	remu	a4,a1,a2
+  c4:	800003b7          	lui	t2,0x80000
+  c8:	04771863          	bne	a4,t2,118 <fail>
+
+000000cc <test_8>:
+  cc:	00800193          	li	gp,8
+  d0:	800005b7          	lui	a1,0x80000
+  d4:	00000613          	li	a2,0
+  d8:	02c5f733          	remu	a4,a1,a2
+  dc:	800003b7          	lui	t2,0x80000
+  e0:	02771c63          	bne	a4,t2,118 <fail>
+
+000000e4 <test_9>:
+  e4:	00900193          	li	gp,9
+  e8:	00100593          	li	a1,1
+  ec:	00000613          	li	a2,0
+  f0:	02c5f733          	remu	a4,a1,a2
+  f4:	00100393          	li	t2,1
+  f8:	02771063          	bne	a4,t2,118 <fail>
+
+000000fc <test_10>:
+  fc:	00a00193          	li	gp,10
+ 100:	00000593          	li	a1,0
+ 104:	00000613          	li	a2,0
+ 108:	02c5f733          	remu	a4,a1,a2
+ 10c:	00000393          	li	t2,0
+ 110:	00771463          	bne	a4,t2,118 <fail>
+ 114:	00301e63          	bne	zero,gp,130 <pass>
+
+00000118 <fail>:
+ 118:	300022b7          	lui	t0,0x30002
+ 11c:	0032a223          	sw	gp,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
+ 120:	46415337          	lui	t1,0x46415
+ 124:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_DATA_ORIGIN+0x3641494c>
+ 128:	0062a023          	sw	t1,0(t0)
+ 12c:	0000006f          	j	12c <fail+0x14>
+
+00000130 <pass>:
+ 130:	300022b7          	lui	t0,0x30002
+ 134:	0002a223          	sw	zero,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
+ 138:	50415337          	lui	t1,0x50415
+ 13c:	35330313          	addi	t1,t1,851 # 50415353 <SOCRV_DATA_ORIGIN+0x40415353>
+ 140:	0062a023          	sw	t1,0(t0)
+ 144:	0000006f          	j	144 <pass+0x14>

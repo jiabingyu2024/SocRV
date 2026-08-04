@@ -32,7 +32,52 @@
     },
     "seed": {"type": "integer", "minimum": 0},
     "cycles": {"type": "integer", "minimum": 0},
+    "commits": {"type": "integer", "minimum": 0},
+    "ipc": {"type": "number", "minimum": 0},
     "exit_reason": {"type": "string"},
+    "max_cycles": {"type": "integer", "minimum": 1},
+    "image": {"type": "string"},
+    "performance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested",
+        "complete",
+        "iterations",
+        "start_cycle",
+        "end_cycle",
+        "cycles",
+        "commits",
+        "ipc",
+        "seconds",
+        "cycles_per_iteration",
+        "commits_per_iteration",
+        "iterations_per_second"
+      ],
+      "properties": {
+        "requested": {"type": "boolean"},
+        "complete": {"type": "boolean"},
+        "iterations": {"type": "integer", "minimum": 0},
+        "start_cycle": {"type": ["integer", "null"], "minimum": 0},
+        "end_cycle": {"type": ["integer", "null"], "minimum": 0},
+        "cycles": {"type": ["integer", "null"], "minimum": 0},
+        "commits": {"type": ["integer", "null"], "minimum": 0},
+        "ipc": {"type": ["number", "null"], "minimum": 0},
+        "seconds": {"type": ["number", "null"], "minimum": 0},
+        "cycles_per_iteration": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "commits_per_iteration": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "iterations_per_second": {
+          "type": ["number", "null"],
+          "minimum": 0
+        }
+      }
+    },
     "artifacts": {"type": "object"},
     "failure": {"type": ["object", "null"]},
     "reproduce": {"type": "string"}
