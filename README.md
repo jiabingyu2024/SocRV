@@ -1,16 +1,14 @@
 # SocRV
 
-SocRV 是一套面向 RV32 CPU、HXI SoC、Verilator 和 Xilinx FPGA 的工程框架。
+SocRV 是面向自研 RV32 CPU、HXI SoC、Verilator 和 Kintex-7 FPGA 的统一工程框架。
+最终目标是在 FPGA 上启动 RT-Thread，在 FinSH/MSH 中输入：
 
-当前设计依据位于 [`docs/designPlan/`](docs/designPlan/)。项目约束：
+```text
+coremark 10000
+```
 
-- `rtl/` 只放厂商无关、可综合设计；
-- `tb/` 保存 Testbench、Harness 和仿真模型；
-- `sim/` 保存 filelist、工具配置和回归清单；
-- `software/` 保存启动、BSP、RT-Thread 和应用；
-- `fpga/` 保存板级 RTL、XDC、Vivado Tcl 和 Xilinx Wrapper；
-- `data/` 保存受控输入；
-- `build/` 保存全部可删除生成物。
+仿真使用同一个 `rtthread-coremark` 固件，通过 UART 自动注入较小轮次命令，用于
+上板前的正确性和性能趋势检查。
 
 ## 快速开始
 
@@ -18,72 +16,63 @@ SocRV 是一套面向 RV32 CPU、HXI SoC、Verilator 和 Xilinx FPGA 的工程�
 make help
 make deps
 make check
-make isa-data
-make isa-gates
-make sim-isa
-make sim-smoke
-make sim-trap-timer
-make sim-rtthread
-make sim-rtthread-coremark-smoke
-make sim-rtthread-coremark-perf
-make sim-required
-make fpga-bitstream PROFILE=smoke
-make fpga-check PROFILE=smoke
+make sim-quick
+make software-fpga
 ```
 
-`sim-smoke` 会编译裸机程序、生成 CODE/DATA 镜像、在 WSL 中构建
-Verilator，并运行完整 SoC。`sim-trap-timer` 验证 M-mode ecall 返回和
-Timer IRQ。`sim-rtthread` 使用固定到 commit
-`ddf52e2cdd977f14fc04035c88672ac204aec713` 的 RT-Thread v5.2.2，并启用
-FinSH/MSH。`isa-data` 从锁定官方 riscv-tests 源码按当前 Memory Map
-重新生成 RV32UI、RV32MI、RV32UM、RV32UF 和 RV32UD 共 86 个镜像；
-不再复用上一轮地址布局的二进制。`sim-isa` 仍是当前 demo core 的快速门；
-最终整数门为 `sim-isa-final-base`，浮点可分别试跑
-`sim-isa-fp-single`/`sim-isa-fp-double`。F/FD 未选择前，
-`sim-isa-final` 会明确阻塞。
+常用单项：
 
-CoreMark v1.01 同时提供裸机短仿真、RT-Thread 1 轮正确性、RT-Thread
-10 轮简单性能仿真和裸机 FPGA 正式测量候选 Profile。仿真由软件通过
-Test Status MMIO 标记精确测量窗口，结果给出 cycles、commits、IPC 和
-cycles/iteration；其合成 tick 配置只服务于 RTL 仿真，不能作为官方分数。
+```text
+make sim-smoke
+make sim-isa ISA_GATE=current
+make sim-rtthread
+make sim-coremark COREMARK_ITERATIONS=3
+```
 
-FPGA 默认目标是 `xc7k325tffg900-2`，输入差分时钟 200 MHz，SoC 时钟
-50 MHz。Vivado 的工程、报告与 bitstream 全部进入
-`build/vivado/kintex7-<profile>/`。
+正式 CPU 完成 RV32IM/Machine Mode 后：
 
-## 替换 CPU Core
+```text
+make sim-isa ISA_GATE=final-base
+make sim-full
+```
 
-当前 `rtl/cpu/demo/demo_cpu_core.sv` 是验证框架用的多周期 RV32I+Zicsr
-参考核。正式 CPU 只需在 `rtl/cpu/cpu_subsystem.sv` 内替换实例，并保持：
+`final-base` 包含 RV32UI、RV32MI 和 RV32UM。浮点在 F/FD 方案确定后，分别使用
+`fp-single` 或 `fp-double` gate。
 
-- instruction/data 两个 HXI master；
-- software/timer/external 三路 machine interrupt；
-- `commit_trace_t` 调试边界；
-- active-low synchronous-use reset 语义。
+FPGA 命令会调用 Vivado，应由用户显式执行：
 
-SoC、Software、Verilator harness 和 FPGA 顶层不依赖 demo core 的内部层次。
-正式核目标为 RV32IM + Zicsr + Zicntr + Zifencei，必须通过 RV32UI、
-RV32MI、RV32UM；浮点后续在 F 与 FD 中选择，并分别以 RV32UF/RV32UD
-验收。现有软件 Profile 在正式核支持前继续使用 `rv32i_zicsr/ilp32`。
+```text
+make fpga-build
+make fpga-check
+make fpga-program
+```
+
+完整操作说明见
+[`docs/cpu_iteration_sim_software_fpga_guide.md`](docs/cpu_iteration_sim_software_fpga_guide.md)。
+
+## 目录边界
+
+- `rtl/`：厂商无关、可综合 RTL；
+- `tb/`：Testbench 与 C++ harness；
+- `sim/`：filelist 与仿真器配置；
+- `software/`：启动、BSP、RT-Thread、riscv-tests、CoreMark；
+- `fpga/`：板级 RTL、XDC 和 Vivado Tcl；
+- `data/`：Memory Map、软件合同、测试清单和 ISA 镜像；
+- `scripts/`：构建、运行、检查和结果收集；
+- `build/`：全部可重新生成的产物。
 
 ## 结果位置
 
 ```text
-build/software/      ELF、MAP、反汇编
-build/images/        CODE/DATA MEM 与 image.json
-build/verilator/     模型与模型内容指纹
+build/software/      ELF、MAP、反汇编和构建 manifest
+build/images/        CODE/DATA MEM 和 image.json
 build/result/        单次仿真 JSON
-build/log/           单次仿真日志
+build/log/           仿真串口与运行日志
 build/wave/          可选 VCD
-build/regression/    回归汇总
-build/vivado/        Vivado 工程、报告和 bitstream
-build/release/       可校验发布包
+build/regression/    ISA/测试套件汇总
+build/vivado/        Vivado 工程、报告、result.json 和 bitstream
 ```
 
-## 工具
-
-- Verilator 在 WSL2 中运行；
-- RISC-V GCC 可在 WSL2 中生成 RV32 ELF；
-- Vivado 2023.2 从 Windows 批处理入口运行。
-
-所有脚本从自身位置解析仓库根目录，不依赖调用者当前目录。
+当前参考 core 的软件 ISA 是 `rv32i_zicsr/ilp32`。最终整数目标是
+RV32IM + Zicsr + Zicntr + Zifencei，并通过 RV32UI/RV32MI/RV32UM；浮点在
+F 或 FD 中后续确定。

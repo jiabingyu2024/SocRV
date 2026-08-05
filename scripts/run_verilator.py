@@ -19,6 +19,7 @@ from lib.wsl import bash, in_repo
 CPP_SOURCES = [
     "tb/cpp/common/sim_config.cpp",
     "tb/cpp/common/uart_decoder.cpp",
+    "tb/cpp/common/uart_stimulus.cpp",
     "tb/cpp/common/perf_stats.cpp",
     "tb/cpp/common/sim_result.cpp",
     "tb/cpp/common/sim_control.cpp",
@@ -31,8 +32,7 @@ DEFAULT_CYCLES = {
     "trap-timer": 500_000,
     "rtthread": 2_000_000,
     "coremark-smoke": 50_000_000,
-    "coremark-rtthread": 60_000_000,
-    "coremark-rtthread-perf": 80_000_000,
+    "rtthread-coremark": 30_000_000,
 }
 
 DEFAULT_TESTS = {
@@ -40,14 +40,12 @@ DEFAULT_TESTS = {
     "trap-timer": "baremetal-trap-timer",
     "rtthread": "rtthread-smoke",
     "coremark-smoke": "coremark-baremetal-functional",
-    "coremark-rtthread": "coremark-rtthread-functional",
-    "coremark-rtthread-perf": "coremark-rtthread-performance",
+    "rtthread-coremark": "rtthread-coremark-command",
 }
 
 BENCHMARK_ITERATIONS = {
     "coremark-smoke": 1,
-    "coremark-rtthread": 1,
-    "coremark-rtthread-perf": 10,
+    "rtthread-coremark": 3,
 }
 
 
@@ -237,6 +235,8 @@ def run_image(
     benchmark_iterations: int = 0,
     reproduce: str = "",
     wall_timeout: int = 600,
+    uart_command: str = "",
+    uart_start_cycle: int = 900_000,
 ) -> Path:
     if rebuild_model:
         build_model()
@@ -274,6 +274,11 @@ def run_image(
             reproduce += (
                 f" --benchmark-iterations {benchmark_iterations}"
             )
+        if uart_command:
+            reproduce += (
+                f" --uart-command {json.dumps(uart_command)}"
+                f" --uart-start-cycle {uart_start_cycle}"
+            )
         if wall_timeout != 600:
             reproduce += f" --wall-timeout {wall_timeout}"
         if trace:
@@ -301,6 +306,24 @@ def run_image(
         reproduce,
         *performance_arguments(performance, benchmark_iterations),
     ]
+    if uart_command:
+        contract = read_json(
+            repo_path("data", "soc", "software_contract.json")
+        )
+        cycles_per_bit = (
+            int(contract["clocks"]["soc_hz"])
+            // int(contract["clocks"]["uart_baud"])
+        )
+        argv.extend(
+            [
+                "--uart-command",
+                uart_command + "\r",
+                "--uart-start-cycle",
+                str(uart_start_cycle),
+                "--uart-cycles-per-bit",
+                str(cycles_per_bit),
+            ]
+        )
     if wave_path:
         argv.extend(["--trace", relative_to_repo(wave_path)])
     command = in_repo(repo_path(), argv)
@@ -354,6 +377,8 @@ def run_profile(
     benchmark_iterations: int | None = None,
     wall_timeout: int = 600,
     require_pass: bool = True,
+    uart_command: str = "",
+    uart_start_cycle: int = 900_000,
 ) -> Path:
     if build_sw:
         _, image_dir = build_profile(profile)
@@ -375,6 +400,8 @@ def run_profile(
         benchmark_iterations=benchmark_iterations,
         wall_timeout=wall_timeout,
         require_pass=require_pass,
+        uart_command=uart_command,
+        uart_start_cycle=uart_start_cycle,
     )
 
 
@@ -387,6 +414,8 @@ def main() -> int:
     parser.add_argument("--max-cycles", type=int)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--benchmark-iterations", type=int)
+    parser.add_argument("--uart-command")
+    parser.add_argument("--uart-start-cycle", type=int, default=900_000)
     parser.add_argument("--wall-timeout", type=int, default=600)
     parser.add_argument("--no-rtl-build", action="store_true")
     parser.add_argument("--no-software-build", action="store_true")
@@ -407,16 +436,29 @@ def main() -> int:
             args.profile,
             f"{args.profile}-run",
         )
+        benchmark_iterations = args.benchmark_iterations
+        if benchmark_iterations is None:
+            benchmark_iterations = BENCHMARK_ITERATIONS.get(args.profile, 0)
+        max_cycles = args.max_cycles
+        if max_cycles is None and args.profile == "rtthread-coremark":
+            max_cycles = 3_000_000 + 3_000_000 * benchmark_iterations
+        uart_command = args.uart_command or (
+            f"coremark {benchmark_iterations}"
+            if args.profile == "rtthread-coremark"
+            else ""
+        )
         result_path = run_profile(
             args.profile,
             test_name,
-            args.max_cycles or DEFAULT_CYCLES[args.profile],
+            max_cycles or DEFAULT_CYCLES[args.profile],
             rebuild_model=not args.no_rtl_build,
             build_sw=not args.no_software_build,
             trace=args.trace,
             seed=args.seed,
-            benchmark_iterations=args.benchmark_iterations,
+            benchmark_iterations=benchmark_iterations,
             wall_timeout=args.wall_timeout,
+            uart_command=uart_command,
+            uart_start_cycle=args.uart_start_cycle,
         )
     except (OSError, RuntimeError, ValueError) as error:
         parser.error(str(error))

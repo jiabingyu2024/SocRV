@@ -26,6 +26,8 @@
           "max_cycles": {"type": "integer", "minimum": 1},
           "max_wall_seconds": {"type": "integer", "minimum": 1},
           "seed": {"type": "integer", "minimum": 0},
+          "uart_command": {"type": "string", "minLength": 1},
+          "uart_start_cycle": {"type": "integer", "minimum": 1},
           "performance": {
             "type": "object",
             "additionalProperties": false,

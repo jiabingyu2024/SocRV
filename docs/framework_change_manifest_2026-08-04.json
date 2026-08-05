@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-04",
+  "objective": "Unify RT-Thread/CoreMark simulation and FPGA flow around a shell command, simplify Make entry points, and preserve simulation/FPGA memory consistency.",
+  "backup": "backup/2026-08-04_18-40-00",
+  "software": {
+    "profile_added": "rtthread-coremark",
+    "profiles_removed": [
+      "coremark-rtthread",
+      "coremark-rtthread-perf"
+    ],
+    "fpga_command": "coremark 10000",
+    "simulation_command_default": "coremark 3",
+    "tick_width": 64,
+    "returns_to_shell": true
+  },
+  "simulation": {
+    "uart_injection": true,
+    "uart_baud": 115200,
+    "default_injection_cycle": 900000,
+    "result": "build/result/soc/rtthread-coremark-command-3.json"
+  },
+  "make_entry_points": [
+    "sim-smoke",
+    "sim-isa",
+    "sim-rtthread",
+    "sim-coremark",
+    "sim-quick",
+    "sim-full",
+    "software-fpga",
+    "fpga-build",
+    "fpga-check",
+    "fpga-program"
+  ],
+  "vivado_invoked": false
+}

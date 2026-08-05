@@ -24,8 +24,8 @@ typedef uint32_t ee_u32;
 typedef uint8_t ee_u8;
 typedef uint32_t ee_ptr_int;
 typedef size_t ee_size_t;
-typedef uint32_t CORE_TICKS;
-typedef uint32_t CORETIMETYPE;
+typedef uint64_t CORE_TICKS;
+typedef uint64_t CORETIMETYPE;
 
 #define NULL ((void *)0)
 #define align_mem(x) \
@@ -53,6 +53,8 @@ extern ee_u32 default_num_contexts;
 void portable_init(core_portable *portable, int *argc, char *argv[]);
 void portable_fini(core_portable *portable);
 int coremark_result_code(void);
+void coremark_set_iterations(ee_u32 iterations);
+CORE_TICKS coremark_last_ticks(void);
 int ee_printf(const char *format, ...);
 
 #endif

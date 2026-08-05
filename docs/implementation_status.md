@@ -1,93 +1,82 @@
-# SocRV framework implementation
+# SocRV framework implementation status
 
-本文记录设计规划落地后的工程事实；规划依据仍是 `docs/designPlan/`。
-
-## 已打通路径
+## 当前主链路
 
 ```text
-C / Assembly
-  -> WSL RV32 GCC
-  -> ELF
-  -> CODE/DATA MEM + hash manifest
-  -> demo RV32I core
-  -> HXI crossbar
-  -> BRAM / Timer / IRQ / HXI-to-APB
-  -> UART / GPIO / Test Status
-  -> Verilator result
-  -> Kintex-7 inferred BRAM + MMCM
-  -> Vivado synth / place / route / bitstream
+RT-Thread + FinSH + CoreMark
+  -> RV32 ELF
+  -> code.mem / data.mem
+  -> soc_sim_top 或 fpga_top
+  -> UART 命令 `coremark <iterations>`
 ```
 
-验证 profile：
+当前已实现：
 
-- `smoke`：初始化 DATA/BSS、UART、GPIO、Test Status；
-- `trap-timer`：M-mode ecall 返回、完整 Trap Frame、machine timer interrupt；
-- `rtthread`：RT-Thread v5.2.2、heap、scheduler、线程上下文、timer/software
-  interrupt、FinSH/MSH、UART 和 Test Status；
-- `coremark-smoke`：裸机短迭代与官方 CRC；
-- `coremark-rtthread`：RT-Thread 下 1 iteration CoreMark，检查官方 CRC、
-  Test Status 和 MMIO 测量窗口；
-- `coremark-rtthread-perf`：RT-Thread 下 10 iterations CoreMark，检查正确性
-  并统计 cycle/commit/IPC；
-- `coremark-baremetal`：50 MHz Timer、2000 iterations 的 FPGA 正式测量候选。
+- 固定版本 RT-Thread、riscv-tests 和 CoreMark；
+- 从官方 riscv-tests 按当前 Memory Map 生成 ISA 数据；
+- `current` 与最终 RV32UI/RV32MI/RV32UM、F/FD 候选 gate；
+- 统一 `rtthread-coremark` 固件；
+- 仿真通过真实 UART RX 注入 FinSH 命令；
+- CoreMark 64 位 tick、CRC 判定和性能窗口；
+- Verilator 模型内容指纹；
+- 仿真/FPGA 共用 generic ROM/RAM 与可配置响应延迟；
+- 简化后的 Make 日常、里程碑、软件和 FPGA 入口。
 
-官方 riscv-tests 已固定到
-`447a5fcb8253627ddb5f6a226f64e43463afcdd5`。当前 `data/isa` 由该源码
-及锁定的 `riscv-test-env` 子模块按 SocRV Memory Map 生成。数据集包含
-RV32UI 41、RV32MI 16、RV32UM 8、RV32UF 11、RV32UD 10，共 86 个镜像。
-已有的 40/40 Verilator 结果只属于 RV32I demo gate，不表示最终核已经通过
-RV32MI、RV32UM 或浮点测试。
+## 2026-08-04 本轮验证
 
-最终 CPU 目标为 RV32IM + Zicsr + Zicntr + Zifencei，必过
-RV32UI/RV32MI/RV32UM；浮点后续在 F 与 FD 中选择，对应 RV32UF 或 RV32UD。
-完整 final gate 在选择前保持阻塞，现有软件仍以
-`-march=rv32i_zicsr -mabi=ilp32` 构建。
-
-2026-08-04 的回归结果：
+已执行且通过：
 
 ```text
-smoke/BSP/RT-Thread     3/3 PASS
-CoreMark functional    2/2 PASS，crcfinal 0xe714
-RV32UI demo gate        40/40 PASS
-RT-Thread CoreMark 1it  window 2,378,755 cycles，IPC 0.313869
-RT-Thread CoreMark 10it window 23,786,681 cycles，2,378,668.1 cycles/it，
-                        IPC 0.313871
-coremark-baremetal FPGA timing met，DRC 0 error
+python -B scripts/validate_schemas.py
+python -B scripts/build_software.py --profile rtthread-coremark --force
+python -B scripts/lint_rtl.py
+python -B scripts/run_verilator.py \
+  --profile rtthread-coremark \
+  --test rtthread-coremark-command-3 \
+  --benchmark-iterations 3 \
+  --uart-command "coremark 3"
 ```
 
-CoreMark 仿真 Profile 为缩短 RTL 验证时间使用合成
-`COREMARK_TICKS_PER_SEC=1`，但 Harness 的窗口秒数按实际 50 MHz SoC cycle
-换算。因此这些数字可做同配置下的简单仿真对比，不作为官方 CoreMark 分数。
-
-## TB/Sim 当前实现
-
-当前五条验收入口是：
+3 轮命令仿真结果：
 
 ```text
-make sim-isa
-make sim-smoke
-make sim-rtthread
-make sim-rtthread-coremark-smoke
-make sim-rtthread-coremark-perf
+status                  PASS
+CoreMark window         7,136,021 cycles
+cycles/iteration        2,378,673.67
+IPC                     0.313871
+simulated window time   0.142720 s @ 50 MHz
 ```
 
-`make sim-required` 顺序运行以上全部入口。它们共用 `soc_sim_top` 和同一个
-Verilator executable；运行时切换 CODE/DATA 镜像。C++ Harness 已拆分为
-config、control、UART、result、performance 和 DUT adapter。模型 manifest
-对 RTL、filelist、flags、Harness 和 Verilator 版本做内容指纹，输入变化时
-完整重建，`--no-rtl-build` 不允许复用过期模型。
+10 轮 performance regression 也已通过：
 
-## CPU 替换边界
+```text
+CoreMark window         23,786,691 cycles
+cycles/iteration        2,378,669.10
+IPC                     0.313871
+```
 
-`cpu_subsystem` 是唯一 CPU 集成边界。未来正式 core 不得让 SoC 反向依赖
-其内部模块；取指和数据访问都通过 HXI，interrupt 与 commit trace 使用稳定
-端口。
+结果文件：
 
-## FPGA 已知非阻塞告警
+```text
+build/result/soc/rtthread-coremark-command-3.json
+build/log/soc/rtthread-coremark-command-3.log
+build/regression/performance/summary.json
+```
 
-当前板卡参考约束未提供 configuration bank 电压事实，因此 Vivado 保留
-`CFGBVS-1` warning。SoC 中仍有异步断言复位的外设控制寄存器；综合优化后，
-部分共享控制逻辑会驱动推断 BRAM 的 enable，Vivado 因而报告
-`REQP-1839` warning。当前实现共 22 条 DRC warning、0 条 DRC error，且时序
-约束满足。正式上板前应由板卡原理图确认 `CFGBVS/CONFIG_VOLTAGE`；后续正式
-CPU 和新增控制逻辑应优先使用同步功能复位。
+本轮未调用 Vivado。综合、bitstream 和板上 `coremark 10000` 仍需用户按操作文档
+显式执行。
+
+## ISA 状态说明
+
+当前参考 core 的软件构建能力仍是 `rv32i_zicsr/ilp32`。最终整数目标不变：
+
+```text
+RV32IM + Zicsr + Zicntr + Zifencei
+required tests: RV32UI + RV32MI + RV32UM
+```
+
+浮点在 F 或 FD 中后续确定。完整 ISA 数据已经准备好，不代表当前参考 core 已通过
+最终 gate。
+
+详细操作见
+[`cpu_iteration_sim_software_fpga_guide.md`](cpu_iteration_sim_software_fpga_guide.md)。

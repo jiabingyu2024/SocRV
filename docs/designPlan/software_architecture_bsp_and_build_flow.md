@@ -1,5 +1,13 @@
 # Software 侧结构与移植流程
 
+> **当前实现说明（2026-08-04）**：最终软件 profile 是
+> `rtthread-coremark`。固件启动后停留在 FinSH/MSH，由
+> `coremark [iterations]` 命令启动测试；板上目标命令为 `coremark 10000`。
+> 原先自动运行的 `coremark-rtthread` 与 `coremark-rtthread-perf` 已移除。
+> 构建、产物和板上操作以
+> [`../cpu_iteration_sim_software_fpga_guide.md`](../cpu_iteration_sim_software_fpga_guide.md)
+> 为准。
+
 > 适用项目：`SocRV` RV32 SoC、裸机程序、BSP、RT-Thread、FinSH、CoreMark、Verilator SoC 仿真与 FPGA。  
 > 本文说明 `software/` 的目录、启动链、链接布局、Trap/中断、驱动、RT-Thread Port、应用和镜像边界。  
 > 本轮实现已经冻结第一版 ISA/ABI、Memory Map、IRQ、时钟和软件可见寄存器合同；权威值位于 `data/soc/`，本文件后续章节仍保留架构原则与变更方法。

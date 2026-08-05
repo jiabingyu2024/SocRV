@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "name": "rtthread-coremark",
+  "software": {
+    "profile": "rtthread-coremark"
+  },
+  "simulation": {
+    "target": "soc",
+    "default_test": "rtthread-coremark-command-3"
+  },
+  "fpga": {
+    "board": "kintex7_competition",
+    "profile": "rtthread-coremark",
+    "debug": false
+  }
+}

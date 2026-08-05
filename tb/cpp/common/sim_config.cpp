@@ -48,6 +48,14 @@ SimConfig SimConfig::parse(int argc, char** argv) {
         } else if (argument == "--soc-hz") {
             config.soc_hz = std::stoull(
                 require_value(argc, argv, index), nullptr, 0);
+        } else if (argument == "--uart-command") {
+            config.uart_command = require_value(argc, argv, index);
+        } else if (argument == "--uart-start-cycle") {
+            config.uart_start_cycle = std::stoull(
+                require_value(argc, argv, index), nullptr, 0);
+        } else if (argument == "--uart-cycles-per-bit") {
+            config.uart_cycles_per_bit = std::stoull(
+                require_value(argc, argv, index), nullptr, 0);
         } else if (argument == "--reproduce") {
             config.reproduce = require_value(argc, argv, index);
         } else if (!argument.empty() && argument.front() == '+') {
@@ -62,6 +70,11 @@ SimConfig SimConfig::parse(int argc, char** argv) {
     if ((config.perf_start_code == 0) != (config.perf_stop_code == 0)) {
         throw std::invalid_argument(
             "performance start and stop codes must be supplied together");
+    }
+    if (!config.uart_command.empty() &&
+        config.uart_cycles_per_bit < 2u) {
+        throw std::invalid_argument(
+            "--uart-cycles-per-bit must be at least 2");
     }
     return config;
 }

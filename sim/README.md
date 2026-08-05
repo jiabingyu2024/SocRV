@@ -1,27 +1,23 @@
-# Simulation configuration
-
-- `filelists/soc_verilator.f`：厂商无关 SoC 与仿真顶层
-- `filelists/fpga_kintex7.f`：共享 RTL 与 Kintex-7 backend/top
-- `verilator/common_flags.f`：统一 Verilator 编译、trace 和 warning 策略
+# Simulation
 
 常用入口：
 
 ```text
-make sim-isa
 make sim-smoke
+make sim-isa ISA_GATE=current
 make sim-rtthread
-make sim-rtthread-coremark-smoke
-make sim-rtthread-coremark-perf
-make sim-required
-make regression
-make sim PROFILE=smoke TRACE=1
+make sim-coremark COREMARK_ITERATIONS=3
+make sim-quick
+make sim-full
 ```
 
-Runner 会对 RTL filelist、所列 RTL、C++ Harness、Verilator flags 和工具版本
-计算模型指纹。指纹变化时完整重建 `obj_dir`；`--no-rtl-build` 只允许复用
-指纹匹配的模型，避免误跑旧 executable。
+`sim-coremark` 启动与 FPGA 相同的 `rtthread-coremark` 镜像，再通过 UART RX
+逐位注入 `coremark <iterations>\r`。它不是软件 `main()` 的自动调用。
 
-运行产物按类型分开：
+模型指纹覆盖 RTL、递归 filelist、Verilator flags、C++ harness、头文件和工具
+版本。输入变化时自动完整重建，避免复用过期模型。
+
+结果：
 
 ```text
 build/result/soc/<test>.json
@@ -29,3 +25,5 @@ build/log/soc/<test>.log
 build/wave/soc/<test>.vcd
 build/regression/<suite>/summary.json
 ```
+
+只有定位失败时建议使用 `TRACE=1`。

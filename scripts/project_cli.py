@@ -5,61 +5,56 @@ import argparse
 
 HELP = """SocRV project entry points
 
-Foundation:
-  make env-check          detect WSL, Verilator, RISC-V GCC and Vivado
-  make doctor             verbose environment report
-  make deps               fetch pinned external source dependencies
-  make deps-check         verify fetched dependency commits
-  make soc-contract       regenerate BSP headers/linker constants
-  make isa-data           build data/isa from pinned official riscv-tests
-  make isa-data-check     validate ISA data hashes and current Memory Map
-  make isa-gates          show current/final ISA gates without simulation
-  make isa-regression     run the current demo-core RV32UI gate
-  make sim-isa            alias for the current fast ISA correctness gate
-  make sim-isa-final-base run final RV32UI/RV32MI/RV32UM acceptance
-  make sim-isa-fp-single  run the candidate RV32UF acceptance suite
-  make sim-isa-fp-double  run the candidate RV32UD acceptance suite
-  make sim-isa-final      run final base plus the selected F/FD suite
-  make validate-schemas   validate all JSON schemas
-  make test-scripts       run project-script unit tests
-  make check              schemas, contracts, filelists and WSL RTL lint
+Daily CPU iteration:
+  make sim-smoke
+      Fast bare-metal SoC sanity test.
+  make sim-isa ISA_GATE=current
+      Fast ISA gate for the instructions implemented by the current core.
+  make sim-rtthread
+      Boot RT-Thread and verify scheduler/timer/basic BSP behavior.
+  make sim-coremark COREMARK_ITERATIONS=3
+      Inject `coremark 3` through the real UART RX and collect CRC/timing data.
+  make sim-quick
+      Run the four checks above in sequence.
+  make sim-full
+      Run RV32UI/RV32MI/RV32UM, RT-Thread and CoreMark 10 milestone checks.
 
-Software and simulation:
-  make software-smoke     build bare-metal ELF and CODE/DATA images
-  make software-trap-timer build the trap/timer BSP acceptance image
-  make software-rtthread  build pinned RT-Thread ELF and images
-  make software-coremark  build the formal bare-metal CoreMark FPGA image
-  make coremark-smoke     build the short CoreMark functional image
-  make coremark-rtthread  build the RT-Thread CoreMark image
-  make software-coremark-rtthread-perf build the 10-iteration RT-Thread image
-  make sim-smoke          run the complete bare-metal SoC simulation
-  make sim-trap-timer     verify ecall return and machine timer interrupt
-  make sim-rtthread       run RT-Thread on the demo core
-  make sim-coremark-smoke run short CoreMark and verify its reference CRC
-  make sim-rtthread-coremark-smoke run 1-iteration CoreMark through RT-Thread
-  make sim-rtthread-coremark-perf run 10 iterations and collect simple metrics
-  make sim-correctness    run the controlled functional correctness suite
-  make sim-required       run ISA, smoke, RT-Thread and both CoreMark profiles
-  make regression         run the controlled smoke testlist
+Software:
+  make deps
+      Clone or update pinned RT-Thread, CoreMark and riscv-tests dependencies.
+  make software-fpga
+      Build the unified RT-Thread + FinSH + CoreMark board image.
+  make software PROFILE=<name>
+      Build one explicit software profile.
 
-FPGA:
-  make fpga-bitstream PROFILE=smoke  synthesize, implement and write .bit
-  make fpga-bitstream PROFILE=coremark-baremetal  build formal CoreMark image
-  make fpga-check PROFILE=smoke      gate existing timing/DRC/bitstream
-  make fpga-program PROFILE=smoke    program a connected Kintex-7 board
-  make release PROFILE=smoke         package ELF, images, bitstream and reports
-  make release-check PROFILE=smoke   verify release hashes
+FPGA (these commands invoke Vivado):
+  make fpga-build
+      Build the default rtthread-coremark bitstream and checked reports.
+  make fpga-check
+      Check an existing implementation result without rebuilding.
+  make fpga-program
+      Program the existing default bitstream.
 
-Scoped cleanup:
+Project checks:
+  make doctor
+      Print detailed tool/dependency diagnostics.
+  make check
+      Validate contracts, generated ISA data, schemas, scripts, filelists,
+      Memory Map and RTL lint.
+  make isa-gates
+      List current/final-base/fp-single/fp-double/final ISA gates.
+  make regression SUITE=smoke|correctness|coremark|performance
+      Run the controlled JSON testlist.
+
+Useful variables:
+  PROFILE=rtthread-coremark
+  ISA_GATE=current|final-base|fp-single|fp-double|final
+  COREMARK_ITERATIONS=3
+  TRACE=0|1
+  JOBS=4
+
+Generated files are under build/. Use scoped clean targets where possible:
   make clean-software | clean-images | clean-sim | clean-regression | clean-fpga
-  make clean              remove only build/ generated artifacts
-
-Common variables:
-  PYTHON=<path>            Python used by project scripts
-  JOBS=<n>                 parallel build jobs (used by later stages)
-  PROFILE=<software-profile> software/simulation profile
-  SUITE=smoke|correctness|coremark|performance controlled regression suite
-  TRACE=0|1                enable VCD for simulation targets
 """
 
 

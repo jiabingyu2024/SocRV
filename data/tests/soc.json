@@ -29,16 +29,7 @@
       "seed": 1
     },
     {
-      "name": "coremark-baremetal-functional",
-      "target": "soc",
-      "suite": ["coremark", "functional", "correctness"],
-      "image": "coremark-smoke",
-      "checker": "coremark-crc-and-test-status",
-      "max_cycles": 50000000,
-      "seed": 1
-    },
-    {
-      "name": "coremark-rtthread-functional",
+      "name": "rtthread-coremark-command-3",
       "target": "soc",
       "suite": [
         "coremark",
@@ -47,22 +38,26 @@
         "rtthread",
         "os"
       ],
-      "image": "coremark-rtthread",
-      "checker": "coremark-crc-and-test-status",
-      "max_cycles": 60000000,
+      "image": "rtthread-coremark",
+      "checker": "uart-command-coremark-crc-and-test-status",
+      "uart_command": "coremark 3",
+      "uart_start_cycle": 900000,
+      "max_cycles": 12000000,
       "seed": 1,
       "performance": {
         "enabled": true,
-        "iterations": 1
+        "iterations": 3
       }
     },
     {
-      "name": "coremark-rtthread-performance",
+      "name": "rtthread-coremark-command-10",
       "target": "soc",
       "suite": ["coremark", "performance", "benchmark", "rtthread"],
-      "image": "coremark-rtthread-perf",
-      "checker": "coremark-crc-test-status-and-perf-window",
-      "max_cycles": 80000000,
+      "image": "rtthread-coremark",
+      "checker": "uart-command-coremark-crc-test-status-and-perf-window",
+      "uart_command": "coremark 10",
+      "uart_start_cycle": 900000,
+      "max_cycles": 33000000,
       "max_wall_seconds": 900,
       "seed": 1,
       "performance": {

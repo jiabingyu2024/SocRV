@@ -1,5 +1,14 @@
 # TB 与 Sim 内部结构规划：从单元测试到 SoC 回归
 
+> **当前实现说明（2026-08-04）**：CoreMark 已收敛为单一
+> `rtthread-coremark` 固件。`make sim-coremark COREMARK_ITERATIONS=3`
+> 会在 RT-Thread/FinSH 启动后，通过真实 UART RX 时序输入命令；日常总入口为
+> `make sim-quick`，里程碑入口为 `make sim-full`。本文后面出现的
+> `coremark-rtthread*`、`sim-required` 等旧 profile/命令仅保留为规划演进记录，
+> 不再是当前入口。实际操作以
+> [`../cpu_iteration_sim_software_fpga_guide.md`](../cpu_iteration_sim_software_fpga_guide.md)
+> 为准。
+
 > 适用项目：`SocRV` 自研 RV32 CPU、HXI SoC、Verilator 仿真、RT-Thread、CoreMark 与 FPGA 上板前验证。  
 > 本文与 `project_structure_for_verilator_and_fpga.md`、`rtl_internal_hierarchy_and_soc_interfaces.md` 配套，展开其中 `tb/` 与 `sim/` 两侧的职责、内部层次、接口和运行流程。  
 > 本文规划的是目标结构。当前仓库不需要一次创建所有空目录，也不要求照搬上一轮 `superScalar` 的文件；相应文件在功能开始实现时建立。

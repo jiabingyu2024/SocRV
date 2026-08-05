@@ -37,15 +37,10 @@ PROFILES = {
         None,
         score_candidate=True,
     ),
-    "coremark-rtthread": SoftwareProfile(
-        "coremark-rtthread-functional",
+    "rtthread-coremark": SoftwareProfile(
+        "rtthread-coremark-command",
         ("rt-thread", "coremark"),
-        60_000_000,
-    ),
-    "coremark-rtthread-perf": SoftwareProfile(
-        "coremark-rtthread-performance-simulation",
-        ("rt-thread", "coremark"),
-        80_000_000,
+        30_000_000,
     ),
 }
 

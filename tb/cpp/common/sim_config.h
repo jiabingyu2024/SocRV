@@ -8,6 +8,8 @@ struct SimConfig {
     std::uint64_t max_cycles = 200000;
     std::uint64_t benchmark_iterations = 0;
     std::uint64_t soc_hz = 50000000;
+    std::uint64_t uart_start_cycle = 900000;
+    std::uint64_t uart_cycles_per_bit = 434;
     std::uint32_t perf_start_code = 0;
     std::uint32_t perf_stop_code = 0;
     std::uint32_t seed = 1;
@@ -18,6 +20,7 @@ struct SimConfig {
     std::string profile;
     std::string reproduce;
     std::string test_name = "baremetal-smoke";
+    std::string uart_command;
 
     static SimConfig parse(int argc, char** argv);
     bool performance_enabled() const;

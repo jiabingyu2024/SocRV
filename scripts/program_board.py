@@ -10,7 +10,11 @@ from run_vivado import find_vivado
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Program the Kintex-7 board with an existing SocRV bitstream.")
-    parser.add_argument("--profile", choices=sorted(PROFILES), default="smoke")
+    parser.add_argument(
+        "--profile",
+        choices=sorted(PROFILES),
+        default="rtthread-coremark",
+    )
     parser.add_argument("--server", default="localhost:3121")
     args = parser.parse_args()
     bitstream = repo_path(

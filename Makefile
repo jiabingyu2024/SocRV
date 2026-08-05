@@ -1,28 +1,21 @@
 PYTHON ?= python
 JOBS ?= 4
-PROFILE ?= smoke
+PROFILE ?= rtthread-coremark
 SUITE ?= smoke
 TRACE ?= 0
+ISA_GATE ?= current
+COREMARK_ITERATIONS ?= 3
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env-check doctor deps deps-check soc-contract soc-contract-check \
-	isa-data isa-data-check isa-gates isa-regression \
-	isa-regression-current isa-regression-final-base \
-	isa-regression-fp-single isa-regression-fp-double isa-regression-final \
-	data-isa-import data-isa-check \
-	data-isa-legacy-import data-isa-legacy-check validate-schemas test-scripts \
-	check-generated-tree check-filelists check-memory-map rtl-lint check \
-	software software-smoke software-trap-timer software-rtthread \
-	software-coremark coremark-smoke coremark-rtthread \
-	software-coremark-rtthread-perf \
-	sim sim-smoke sim-trap-timer sim-rtthread sim-coremark-smoke \
-	sim-coremark-rtthread sim-rtthread-coremark-smoke \
-	sim-rtthread-coremark-perf sim-isa sim-isa-current \
-	sim-isa-final-base sim-isa-fp-single sim-isa-fp-double sim-isa-final \
-	sim-correctness sim-required \
-	regression fpga-bitstream fpga-check fpga-program \
-	check-images release release-check clean-software clean-images clean-sim \
+.PHONY: help env-check doctor deps deps-check soc-contract \
+	soc-contract-check isa-data isa-data-check isa-gates validate-schemas \
+	test-scripts check-generated-tree check-filelists check-memory-map \
+	rtl-lint check software software-smoke software-trap-timer \
+	software-rtthread software-fpga sim sim-smoke sim-trap-timer \
+	sim-rtthread sim-coremark sim-isa sim-quick sim-full regression \
+	fpga-build fpga-bitstream fpga-check fpga-program check-images \
+	release release-check clean-software clean-images clean-sim \
 	clean-regression clean-fpga clean
 
 help:
@@ -55,35 +48,6 @@ isa-data-check:
 isa-gates: isa-data-check
 	@$(PYTHON) scripts/run_isa_tests.py --list-gates
 
-isa-regression: isa-regression-current
-
-isa-regression-current: isa-data-check
-	@$(PYTHON) scripts/run_isa_tests.py --gate current
-
-isa-regression-final-base: isa-data-check
-	@$(PYTHON) scripts/run_isa_tests.py --gate final-base
-
-isa-regression-fp-single: isa-data-check
-	@$(PYTHON) scripts/run_isa_tests.py --gate fp-single
-
-isa-regression-fp-double: isa-data-check
-	@$(PYTHON) scripts/run_isa_tests.py --gate fp-double
-
-isa-regression-final: isa-data-check
-	@$(PYTHON) scripts/run_isa_tests.py --gate final
-
-# Compatibility aliases. The authoritative dataset is generated from the
-# locked official riscv-tests checkout, not copied from the previous project.
-data-isa-import: isa-data
-
-data-isa-check: isa-data-check
-
-data-isa-legacy-import:
-	@$(PYTHON) scripts/import_legacy_isa.py
-
-data-isa-legacy-check:
-	@$(PYTHON) scripts/import_legacy_isa.py --verify
-
 validate-schemas:
 	@$(PYTHON) scripts/validate_schemas.py
 
@@ -102,9 +66,12 @@ check-memory-map:
 rtl-lint:
 	@$(PYTHON) scripts/lint_rtl.py
 
-check: env-check deps-check soc-contract-check isa-data-check validate-schemas test-scripts check-generated-tree check-filelists check-memory-map rtl-lint
+check: env-check deps-check soc-contract-check isa-data-check \
+	validate-schemas test-scripts check-generated-tree check-filelists \
+	check-memory-map rtl-lint
 	@$(PYTHON) scripts/project_cli.py message "static and foundational checks passed"
 
+# Software images. software-fpga is the board image that waits for FinSH input.
 software: deps-check
 	@$(PYTHON) scripts/build_software.py --profile $(PROFILE)
 
@@ -117,79 +84,66 @@ software-trap-timer:
 software-rtthread: deps-check
 	@$(PYTHON) scripts/build_software.py --profile rtthread
 
-software-coremark: deps-check
-	@$(PYTHON) scripts/build_software.py --profile coremark-baremetal
+software-fpga: deps-check
+	@$(PYTHON) scripts/build_software.py --profile rtthread-coremark
 
-coremark-smoke: deps-check
-	@$(PYTHON) scripts/build_software.py --profile coremark-smoke
-
-coremark-rtthread: deps-check
-	@$(PYTHON) scripts/build_software.py --profile coremark-rtthread
-
-software-coremark-rtthread-perf: deps-check
-	@$(PYTHON) scripts/build_software.py --profile coremark-rtthread-perf
-
+# Focused simulations. TRACE=1 is intended for a failing focused test.
 sim: deps-check
-	@$(PYTHON) scripts/run_verilator.py --profile $(PROFILE) $(if $(filter 1,$(TRACE)),--trace,)
+	@$(PYTHON) scripts/run_verilator.py --profile $(PROFILE) \
+		$(if $(filter 1,$(TRACE)),--trace,)
 
 sim-smoke:
-	@$(PYTHON) scripts/run_verilator.py --profile smoke $(if $(filter 1,$(TRACE)),--trace,)
+	@$(PYTHON) scripts/run_verilator.py --profile smoke \
+		$(if $(filter 1,$(TRACE)),--trace,)
 
 sim-trap-timer:
-	@$(PYTHON) scripts/run_verilator.py --profile trap-timer $(if $(filter 1,$(TRACE)),--trace,)
+	@$(PYTHON) scripts/run_verilator.py --profile trap-timer \
+		$(if $(filter 1,$(TRACE)),--trace,)
 
 sim-rtthread: deps-check
-	@$(PYTHON) scripts/run_verilator.py --profile rtthread $(if $(filter 1,$(TRACE)),--trace,)
+	@$(PYTHON) scripts/run_verilator.py --profile rtthread \
+		$(if $(filter 1,$(TRACE)),--trace,)
 
-sim-coremark-smoke: deps-check
-	@$(PYTHON) scripts/run_verilator.py --profile coremark-smoke $(if $(filter 1,$(TRACE)),--trace,)
+sim-coremark: deps-check
+	@$(PYTHON) scripts/run_verilator.py --profile rtthread-coremark \
+		--test rtthread-coremark-command-$(COREMARK_ITERATIONS) \
+		--benchmark-iterations $(COREMARK_ITERATIONS) \
+		--uart-command "coremark $(COREMARK_ITERATIONS)" \
+		$(if $(filter 1,$(TRACE)),--trace,)
 
-sim-coremark-rtthread: deps-check
-	@$(PYTHON) scripts/run_verilator.py --profile coremark-rtthread $(if $(filter 1,$(TRACE)),--trace,)
+sim-isa: isa-data-check
+	@$(PYTHON) scripts/run_isa_tests.py --gate $(ISA_GATE)
 
-sim-rtthread-coremark-smoke: sim-coremark-rtthread
-
-sim-rtthread-coremark-perf: deps-check
-	@$(PYTHON) scripts/run_verilator.py --profile coremark-rtthread-perf $(if $(filter 1,$(TRACE)),--trace,)
-
-sim-isa: sim-isa-current
-
-sim-isa-current: isa-regression-current
-
-sim-isa-final-base: isa-regression-final-base
-
-sim-isa-fp-single: isa-regression-fp-single
-
-sim-isa-fp-double: isa-regression-fp-double
-
-sim-isa-final: isa-regression-final
-
-sim-correctness: deps-check
-	@$(PYTHON) scripts/run_regression.py --suite correctness
-
-# Required acceptance flow. Recursive makes are intentionally sequential so
-# tests never race on shared software/model build products under make -j.
-sim-required:
-	@$(MAKE) sim-isa
+# Daily CPU edit loop: current ISA gate, bare-metal, RT-Thread, CoreMark 3.
+sim-quick:
 	@$(MAKE) sim-smoke
+	@$(MAKE) sim-isa ISA_GATE=current
 	@$(MAKE) sim-rtthread
-	@$(MAKE) sim-rtthread-coremark-smoke
-	@$(MAKE) sim-rtthread-coremark-perf
+	@$(MAKE) sim-coremark COREMARK_ITERATIONS=3
+
+# Milestone gate: full RV32UI/RV32MI/RV32UM target and a longer trend run.
+sim-full:
+	@$(MAKE) sim-isa ISA_GATE=final-base
+	@$(MAKE) sim-rtthread
+	@$(MAKE) sim-coremark COREMARK_ITERATIONS=10
 
 regression: deps-check
 	@$(PYTHON) scripts/run_regression.py --suite $(SUITE)
 
-check-images:
-	@$(PYTHON) scripts/check_images.py
-
-fpga-bitstream: deps-check
+# Vivado is only invoked when the user explicitly runs fpga-build/program.
+fpga-build: deps-check
 	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --jobs $(JOBS)
+
+fpga-bitstream: fpga-build
 
 fpga-check:
 	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --check-only
 
 fpga-program:
 	@$(PYTHON) scripts/program_board.py --profile $(PROFILE)
+
+check-images:
+	@$(PYTHON) scripts/check_images.py
 
 release: fpga-check check-images
 	@$(PYTHON) scripts/package_release.py --profile $(PROFILE)

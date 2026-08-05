@@ -24,7 +24,11 @@ def find_vivado() -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build the Kintex-7 SocRV bitstream with Vivado.")
-    parser.add_argument("--profile", choices=sorted(PROFILES), default="smoke")
+    parser.add_argument(
+        "--profile",
+        choices=sorted(PROFILES),
+        default="rtthread-coremark",
+    )
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()

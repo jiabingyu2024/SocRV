@@ -1,5 +1,11 @@
 # 工程构建入口与操作流程
 
+> **当前实现说明（2026-08-04）**：Make 总入口已收敛为
+> `sim-smoke`、`sim-isa ISA_GATE=...`、`sim-rtthread`、`sim-coremark`、
+> `sim-quick`、`sim-full`、`software-fpga` 和 `fpga-build`。本文后续较细的
+> 分阶段命令属于早期规划，不代表当前 Make 接口。当前操作表见
+> [`../cpu_iteration_sim_software_fpga_guide.md`](../cpu_iteration_sim_software_fpga_guide.md)。
+
 > 适用项目：`SocRV` 的 RTL、TB/Sim、Software、FPGA 和 Release 自动化。  
 > 本文把 `scripts/`、`data/`、`build/` 与仓库根目录 `Makefile` 接成一条统一流程，规定输入、编排、产物、命令行和操作顺序。  
 > 各侧内部技术细节仍由 RTL、TB/Sim、FPGA 和 Software 专项文档负责；本文只定义跨目录合同和总入口。

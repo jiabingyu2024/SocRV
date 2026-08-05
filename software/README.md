@@ -1,77 +1,56 @@
 # Software
 
-`software/` 保存启动、链接脚本、BSP、轻量 runtime、应用、RT-Thread、
-riscv-tests 与 CoreMark 适配。第三方 `upstream/` 由 lock 文件管理且不修改；
-所有 SocRV 私有代码位于 `port/`、`env/`、`bsp/` 或 `applications/`。
+`software/` 包含启动代码、linker、BSP、RT-Thread port、应用、riscv-tests 和
+CoreMark 适配。第三方源码由 `dependency.lock.json` 固定版本，项目不修改
+`upstream/`。
 
-## 硬件合同
+## 权威合同
 
-权威输入是 `data/soc/memory_map.json` 和
-`data/soc/software_contract.json`。以下文件由
-`scripts/generate_soc_contract.py` 生成，禁止手改：
-
-- `bsp/include/soc_memory_map.h`
-- `bsp/include/soc_config.h`
-- `bsp/include/soc_irq.h`
-- `bsp/include/soc_registers.h`
-- `linker/memory.ldh`
-
-当前固件固定为 `-march=rv32i_zicsr -mabi=ilp32`，CODE 和 DATA 各
-64 KiB，分别从 `0x0000_0000`、`0x1000_0000` 开始。
-
-这是 demo core 的当前构建能力，不是最终 CPU 上限。最终整数目标为
-RV32IM + Zicsr + Zicntr + Zifencei，必过 RV32UI/RV32MI/RV32UM；浮点在
-F 与 FD 中待选。正式核实现相应指令、CSR 和上下文保存前，不得把普通
-Profile 的 `-march` 提前改强。
-
-ISA 数据与 gate：
+硬件/软件合同位于：
 
 ```text
+data/soc/memory_map.json
+data/soc/software_contract.json
+```
+
+修改后运行：
+
+```text
+make soc-contract
 make isa-data
-make isa-gates
-make sim-isa                 # 当前 demo
-make sim-isa-final-base      # 最终整数
-make sim-isa-fp-single       # F 候选
-make sim-isa-fp-double       # FD 候选
+make check
 ```
 
-## 构建 Profile
+生成的 BSP 头文件和 linker 常量禁止手工维护。
 
-从仓库根目录执行：
+## 主要 profile
+
+| Profile | 用途 |
+| --- | --- |
+| `smoke` | 裸机基础路径 |
+| `trap-timer` | M-mode trap 与 timer IRQ |
+| `rtthread` | RT-Thread 启动冒烟 |
+| `rtthread-coremark` | 最终 FPGA 固件与 UART 命令仿真 |
+
+构建最终固件：
 
 ```text
-make software PROFILE=smoke
-make software-trap-timer
-make software-rtthread
-make coremark-smoke
-make software-coremark
-make coremark-rtthread
+make software-fpga
 ```
 
-产物统一位于：
+产物：
 
 ```text
-build/software/<profile>/firmware.elf
-build/software/<profile>/firmware.map
-build/software/<profile>/firmware.dis
-build/software/<profile>/firmware.bin
-build/software/<profile>/size.json
-build/software/<profile>/build_manifest.json
-build/images/<profile>/code.mem
-build/images/<profile>/data.mem
-build/images/<profile>/image.json
+build/software/rtthread-coremark/firmware.{elf,map,dis,bin}
+build/software/rtthread-coremark/{size.json,build_manifest.json}
+build/images/rtthread-coremark/{code.mem,data.mem,image.json}
 ```
 
-`firmware.elf` 是权威产物；同一 `image.json` 被 Verilator 和 FPGA
-流程消费。构建会检查 ELF section 是否越过 CODE/DATA 边界。
-
-## 外部依赖
+板上进入 `msh >` 后运行：
 
 ```text
-make deps
-make deps-check
+coremark 10000
 ```
 
-该入口统一管理 RT-Thread、riscv-tests 和 CoreMark。正式 CoreMark 分数只
-能来自 `coremark-baremetal` 的 FPGA 运行并满足官方迭代/有效性条件；
-`coremark-smoke` 只用于快速 CRC 功能验证。
+当前参考 core 使用 `rv32i_zicsr/ilp32`。最终整数目标是 RV32IM + Zicsr +
+Zicntr + Zifencei，并通过 RV32UI/RV32MI/RV32UM；浮点在 F/FD 中后续确定。

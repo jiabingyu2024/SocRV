@@ -64,6 +64,8 @@ def main() -> int:
             benchmark_iterations=performance.get("iterations", 0),
             wall_timeout=test.get("max_wall_seconds", 600),
             require_pass=False,
+            uart_command=test.get("uart_command", ""),
+            uart_start_cycle=test.get("uart_start_cycle", 900_000),
         )
         result = json.loads(result_path.read_text(encoding="utf-8"))
         results.append(result)

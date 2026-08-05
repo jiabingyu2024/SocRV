@@ -1,5 +1,11 @@
 # FPGA 侧结构与实现流程
 
+> **当前实现说明（2026-08-04）**：默认上板 profile 是
+> `rtthread-coremark`，`make fpga-build` 生成 bitstream，串口进入
+> FinSH/MSH 后输入 `coremark 10000`。仿真和 FPGA 共用 memory 实现及初始化
+> 镜像；完整操作和产物路径见
+> [`../cpu_iteration_sim_software_fpga_guide.md`](../cpu_iteration_sim_software_fpga_guide.md)。
+
 > 适用项目：`SocRV` 自研 RV32 CPU、HXI SoC、Xilinx FPGA、片上 BRAM、UART/GPIO 与可选 digital twin。  
 > 本文与项目结构、RTL、TB/Sim 规划配套，说明 `fpga/` 的目录职责、板级层次、Backend/IP、时钟复位、约束、Vivado Tcl、报告和上板验收。  
 > 本文不填写尚未冻结的板卡引脚、时钟频率、BRAM 容量和 IP 参数；这些值确认后进入板卡 Profile、XDC 和架构事实表。

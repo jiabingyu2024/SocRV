@@ -5,6 +5,7 @@
 #include "perf_stats.h"
 #include "soc_dut_adapter.h"
 #include "uart_decoder.h"
+#include "uart_stimulus.h"
 
 SimControl::SimControl(const SimConfig& config, SocDutAdapter& dut)
     : config_(config), dut_(dut) {}
@@ -13,6 +14,10 @@ SimResult SimControl::run() {
     SimResult result;
     PerfStats stats(config_);
     UartDecoder uart;
+    UartStimulus uart_stimulus(
+        config_.uart_command,
+        config_.uart_start_cycle,
+        config_.uart_cycles_per_bit);
     std::uint32_t last_commit_pc = 0;
 
     dut_.set_reset(false);
@@ -21,6 +26,7 @@ SimResult SimControl::run() {
         if (cycle == 10) {
             dut_.set_reset(true);
         }
+        dut_.set_uart_rx(uart_stimulus.level(cycle));
         dut_.step_cycle();
         uart.sample(dut_.uart_tx());
         if (dut_.commit_valid()) {

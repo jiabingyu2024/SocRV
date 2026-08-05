@@ -1,26 +1,33 @@
 # CoreMark integration
 
-`upstream/` is the unmodified EEMBC CoreMark v1.01 source checkout.  All SocRV
-timer, console, memory and RT-Thread integration belongs under `port/`.
+`upstream/` 是固定版本且不修改的 EEMBC CoreMark v1.01。SocRV 的 timer、UART、
+RT-Thread 和命令适配全部位于 `port/`。
 
-Two result classes are kept separate:
+项目主 profile 是 `rtthread-coremark`：
 
-- `coremark-baremetal`: standalone benchmark for formal FPGA measurements;
-- `coremark-rtthread`: benchmark executed as an RT-Thread application.
+- 启动 RT-Thread 和 FinSH/MSH；
+- 注册 `coremark [iterations]`；
+- 不在 `main()` 中自动运行；
+- 默认参数是 10000；
+- 使用 64 位 tick，避免 10000 轮累计溢出；
+- 完成后返回 shell。
 
-The short `coremark-smoke` profile is only a functional simulation gate.  Its
-iteration count is intentionally below the official validity threshold and it
-must never be reported as a CoreMark score.
-
-Typical entry points:
+仿真示例：
 
 ```text
-make sim-coremark-smoke
-make sim-coremark-rtthread
-make software-coremark
-make fpga-bitstream PROFILE=coremark-baremetal
+make sim-coremark COREMARK_ITERATIONS=3
 ```
 
-The formal profile uses the 50 MHz hardware timer and 2000 iterations. A score
-is reportable only after the FPGA run satisfies CoreMark's validity rules; the
-build manifest records compiler, flags, sources and the locked upstream commit.
+FPGA 软件：
+
+```text
+make software-fpga
+```
+
+板上串口命令：
+
+```text
+coremark 10000
+```
+
+短仿真用于 CRC 和性能趋势，不满足官方 10 秒规则，不应作为正式分数。
