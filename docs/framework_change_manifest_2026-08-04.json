@@ -17,7 +17,9 @@
   "simulation": {
     "uart_injection": true,
     "uart_baud": 115200,
-    "default_injection_cycle": 900000,
+    "injection_trigger": "complete decoded UART suffix: msh >",
+    "default_prompt_timeout_cycles": 5000000,
+    "checker": "UART transcript, command timing, CoreMark CRC/tick and performance-window checker",
     "result": "build/result/soc/rtthread-coremark-command-3.json"
   },
   "make_entry_points": [

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-05",
+  "objective": "Allow Harvard instruction/data traffic to proceed concurrently and make UART-driven RT-Thread/CoreMark simulation self-checking.",
+  "rtl_backup": "backup/20260805_095831/rtl/bus/hxi/hxi_crossbar.sv",
+  "hxi": {
+    "masters": [
+      "instruction",
+      "data"
+    ],
+    "outstanding_per_master": 1,
+    "parallel_when_targets_differ": true,
+    "same_target_arbitration": "per-slave round-robin",
+    "interface_change": false
+  },
+  "uart_command_flow": {
+    "trigger": "the decoded UART transcript ends with the complete configured prompt",
+    "default_prompt": "msh >",
+    "default_prompt_timeout_cycles": 5000000,
+    "fixed_cycle_injection_removed": true,
+    "command_terminator": "\\r"
+  },
+  "checker": {
+    "executable": "tb/cpp/common/uart_checker.cpp",
+    "checks": [
+      "UART framing",
+      "required and forbidden transcript strings",
+      "prompt detection and command-send ordering",
+      "CoreMark iteration count",
+      "CoreMark list/matrix/state reference CRC values",
+      "SocRV aggregate CRC PASS line",
+      "numeric exact total ticks",
+      "complete performance window when requested"
+    ],
+    "result_object": "checker"
+  },
+  "verification": {
+    "schema_validation": "PASS",
+    "script_unit_tests": "5/5 PASS",
+    "rtl_lint": "PASS",
+    "verilator_build": "PASS",
+    "correctness_regression": "PASS",
+    "performance_regression": "PASS",
+    "current_isa_gate": "40/40 RV32UI PASS",
+    "negative_checker_self_test": "PASS: missing expected text forces checker_failed",
+    "negative_prompt_self_test": "PASS: wrong prompt times out and command_sent remains false"
+  },
+  "vivado_invoked": false
+}

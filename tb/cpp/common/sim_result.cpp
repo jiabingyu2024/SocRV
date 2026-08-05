@@ -26,6 +26,19 @@ const char* boolean(bool value) {
     return value ? "true" : "false";
 }
 
+void write_string_array(
+    std::ofstream& output,
+    const std::vector<std::string>& values) {
+    output << "[";
+    for (std::size_t index = 0; index < values.size(); ++index) {
+        if (index != 0) {
+            output << ", ";
+        }
+        output << "\"" << escape_json(values[index]) << "\"";
+    }
+    output << "]";
+}
+
 }  // namespace
 
 void SimResult::write_json(const SimConfig& config) const {
@@ -87,6 +100,39 @@ void SimResult::write_json(const SimConfig& config) const {
                << "    \"iterations_per_second\": null\n";
     }
     output << "  },\n"
+           << "  \"checker\": {\n"
+           << "    \"name\": \"" << escape_json(checker.name) << "\",\n"
+           << "    \"passed\": " << boolean(checker.passed) << ",\n"
+           << "    \"message\": \"" << escape_json(checker.message)
+           << "\",\n"
+           << "    \"prompt_seen\": " << boolean(checker.prompt_seen)
+           << ",\n"
+           << "    \"prompt_cycle\": ";
+    if (checker.prompt_seen) {
+        output << checker.prompt_cycle;
+    } else {
+        output << "null";
+    }
+    output << ",\n"
+           << "    \"command_sent\": " << boolean(checker.command_sent)
+           << ",\n"
+           << "    \"command_cycle\": ";
+    if (checker.command_sent) {
+        output << checker.command_cycle;
+    } else {
+        output << "null";
+    }
+    output << ",\n"
+           << "    \"framing_error\": "
+           << boolean(checker.framing_error) << ",\n"
+           << "    \"decoded_bytes\": " << checker.decoded_bytes << ",\n"
+           << "    \"missing\": ";
+    write_string_array(output, checker.missing);
+    output << ",\n"
+           << "    \"forbidden_seen\": ";
+    write_string_array(output, checker.forbidden_seen);
+    output << "\n"
+           << "  },\n"
            << "  \"artifacts\": {\n"
            << "    \"log\": \"" << escape_json(config.log_path) << "\",\n"
            << "    \"wave\": ";
@@ -96,7 +142,18 @@ void SimResult::write_json(const SimConfig& config) const {
         output << "\"" << escape_json(config.trace_path) << "\"\n";
     }
     output << "  },\n"
-           << "  \"failure\": null,\n"
+           << "  \"failure\": ";
+    if (status == "PASS") {
+        output << "null,\n";
+    } else {
+        output << "{\n"
+               << "    \"reason\": \"" << escape_json(exit_reason)
+               << "\",\n"
+               << "    \"message\": \"" << escape_json(checker.message)
+               << "\"\n"
+               << "  },\n";
+    }
+    output
            << "  \"reproduce\": \"" << escape_json(config.reproduce) << "\"\n"
            << "}\n";
 }

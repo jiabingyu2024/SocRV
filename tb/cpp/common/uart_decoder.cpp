@@ -1,34 +1,40 @@
 #include "uart_decoder.h"
 
-#include <iostream>
+UartDecoder::UartDecoder(std::uint64_t cycles_per_bit)
+    : cycles_per_bit_(cycles_per_bit) {}
 
-void UartDecoder::sample(bool tx) {
-    constexpr int divisor = 434;
+bool UartDecoder::sample(bool tx, char& decoded_byte) {
     if (!receiving_) {
         if (!tx) {
             receiving_ = true;
-            countdown_ = divisor + divisor / 2 - 1;
+            countdown_ =
+                cycles_per_bit_ + cycles_per_bit_ / 2u - 1u;
             bit_index_ = 0;
             byte_ = 0;
         }
-        return;
+        return false;
     }
     if (countdown_ > 0) {
         --countdown_;
-        return;
+        return false;
     }
     if (bit_index_ < 8) {
         if (tx) {
             byte_ |= static_cast<std::uint8_t>(1u << bit_index_);
         }
         ++bit_index_;
-        countdown_ = divisor - 1;
-        return;
+        countdown_ = cycles_per_bit_ - 1u;
+        return false;
     }
     if (tx) {
-        std::cout << static_cast<char>(byte_) << std::flush;
+        decoded_byte = static_cast<char>(byte_);
     } else {
-        std::cerr << "\nUART framing error\n";
+        framing_error_ = true;
     }
     receiving_ = false;
+    return tx;
+}
+
+bool UartDecoder::framing_error() const {
+    return framing_error_;
 }

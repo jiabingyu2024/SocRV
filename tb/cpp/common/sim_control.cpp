@@ -4,6 +4,7 @@
 
 #include "perf_stats.h"
 #include "soc_dut_adapter.h"
+#include "uart_checker.h"
 #include "uart_decoder.h"
 #include "uart_stimulus.h"
 
@@ -13,10 +14,10 @@ SimControl::SimControl(const SimConfig& config, SocDutAdapter& dut)
 SimResult SimControl::run() {
     SimResult result;
     PerfStats stats(config_);
-    UartDecoder uart;
+    UartDecoder uart(config_.uart_cycles_per_bit);
+    UartChecker checker(config_);
     UartStimulus uart_stimulus(
         config_.uart_command,
-        config_.uart_start_cycle,
         config_.uart_cycles_per_bit);
     std::uint32_t last_commit_pc = 0;
 
@@ -28,7 +29,22 @@ SimResult SimControl::run() {
         }
         dut_.set_uart_rx(uart_stimulus.level(cycle));
         dut_.step_cycle();
-        uart.sample(dut_.uart_tx());
+        char decoded_byte = '\0';
+        if (uart.sample(dut_.uart_tx(), decoded_byte)) {
+            std::cout << decoded_byte << std::flush;
+            checker.observe(decoded_byte, cycle);
+            if (!config_.uart_command.empty() &&
+                checker.prompt_seen() &&
+                !uart_stimulus.started()) {
+                const std::uint64_t command_cycle =
+                    cycle + config_.uart_cycles_per_bit;
+                uart_stimulus.start(command_cycle);
+                checker.mark_command_sent(command_cycle);
+            }
+        }
+        if (uart.framing_error()) {
+            checker.mark_framing_error();
+        }
         if (dut_.commit_valid()) {
             last_commit_pc = dut_.commit_pc();
         }
@@ -53,6 +69,17 @@ SimResult SimControl::run() {
             result.test_code = dut_.test_code();
             break;
         }
+        if (!config_.uart_command.empty() &&
+            !uart_stimulus.started() &&
+            cycle >= config_.uart_prompt_timeout) {
+            std::cerr << "\nFAIL: UART prompt `" << config_.uart_prompt
+                      << "` not seen before cycle "
+                      << config_.uart_prompt_timeout << "\n";
+            result.status = "FAIL";
+            result.exit_reason = "uart_prompt_timeout";
+            result.cycles = cycle;
+            break;
+        }
         if (cycle + 1 == config_.max_cycles) {
             std::cerr << "\nTIMEOUT after " << config_.max_cycles
                       << " cycles\n";
@@ -69,6 +96,15 @@ SimResult SimControl::run() {
         !result.performance.complete) {
         result.status = "FAIL";
         result.exit_reason = "performance_window_incomplete";
+    }
+    result.checker = checker.evaluate(
+        result.status == "PASS",
+        result.performance.complete);
+    if (result.status == "PASS" && !result.checker.passed) {
+        std::cerr << "\nFAIL: checker " << result.checker.name << ": "
+                  << result.checker.message << "\n";
+        result.status = "FAIL";
+        result.exit_reason = "checker_failed";
     }
     dut_.finish();
     return result;

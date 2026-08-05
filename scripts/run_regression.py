@@ -65,7 +65,14 @@ def main() -> int:
             wall_timeout=test.get("max_wall_seconds", 600),
             require_pass=False,
             uart_command=test.get("uart_command", ""),
-            uart_start_cycle=test.get("uart_start_cycle", 900_000),
+            uart_prompt=test.get("uart_prompt", "msh >"),
+            uart_prompt_timeout=test.get(
+                "uart_prompt_timeout",
+                5_000_000,
+            ),
+            checker=test["checker"],
+            uart_expect=tuple(test.get("uart_expect", [])),
+            uart_reject=tuple(test.get("uart_reject", [])),
         )
         result = json.loads(result_path.read_text(encoding="utf-8"))
         results.append(result)

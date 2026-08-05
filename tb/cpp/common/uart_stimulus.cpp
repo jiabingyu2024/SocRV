@@ -4,14 +4,23 @@
 
 UartStimulus::UartStimulus(
     std::string command,
-    std::uint64_t start_cycle,
     std::uint64_t cycles_per_bit)
     : bytes_(std::move(command)),
-      start_cycle_(start_cycle),
       cycles_per_bit_(cycles_per_bit) {}
 
+void UartStimulus::start(std::uint64_t cycle) {
+    if (!started_) {
+        start_cycle_ = cycle;
+        started_ = true;
+    }
+}
+
+bool UartStimulus::started() const {
+    return started_;
+}
+
 bool UartStimulus::level(std::uint64_t cycle) const {
-    if (bytes_.empty() || cycle < start_cycle_) {
+    if (bytes_.empty() || !started_ || cycle < start_cycle_) {
         return true;
     }
 

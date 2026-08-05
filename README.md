@@ -7,8 +7,10 @@ SocRV 是面向自研 RV32 CPU、HXI SoC、Verilator 和 Kintex-7 FPGA 的统一
 coremark 10000
 ```
 
-仿真使用同一个 `rtthread-coremark` 固件，通过 UART 自动注入较小轮次命令，用于
-上板前的正确性和性能趋势检查。
+仿真使用同一个 `rtthread-coremark` 固件，完整检测到 UART `msh >` 后自动注入
+较小轮次命令；可执行 checker 检查 CoreMark CRC、tick、Test Status 和性能窗口，
+用于上板前的正确性和性能趋势检查。HXI 保持哈佛双 Master：I/D 各一笔
+outstanding，访问不同 Slave 时可并行。
 
 ## 快速开始
 

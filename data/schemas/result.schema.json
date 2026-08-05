@@ -37,6 +37,48 @@
     "exit_reason": {"type": "string"},
     "max_cycles": {"type": "integer", "minimum": 1},
     "image": {"type": "string"},
+    "checker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "passed",
+        "message",
+        "prompt_seen",
+        "prompt_cycle",
+        "command_sent",
+        "command_cycle",
+        "framing_error",
+        "decoded_bytes",
+        "missing",
+        "forbidden_seen"
+      ],
+      "properties": {
+        "name": {"type": "string"},
+        "passed": {"type": "boolean"},
+        "message": {"type": "string"},
+        "prompt_seen": {"type": "boolean"},
+        "prompt_cycle": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "command_sent": {"type": "boolean"},
+        "command_cycle": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "framing_error": {"type": "boolean"},
+        "decoded_bytes": {"type": "integer", "minimum": 0},
+        "missing": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "forbidden_seen": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
     "performance": {
       "type": "object",
       "additionalProperties": false,

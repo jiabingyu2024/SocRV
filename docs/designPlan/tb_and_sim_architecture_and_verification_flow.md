@@ -1,8 +1,11 @@
 # TB 与 Sim 内部结构规划：从单元测试到 SoC 回归
 
-> **当前实现说明（2026-08-04）**：CoreMark 已收敛为单一
+> **当前实现说明（2026-08-05）**：CoreMark 已收敛为单一
 > `rtthread-coremark` 固件。`make sim-coremark COREMARK_ITERATIONS=3`
-> 会在 RT-Thread/FinSH 启动后，通过真实 UART RX 时序输入命令；日常总入口为
+> 会先逐位解码 DUT 的 UART TX，只有在完整检测到 `msh >` 后才通过真实 UART RX
+> 时序输入命令；若提示符超时则失败且不发送命令。可执行 checker 会检查 UART
+> 帧、必需/禁止文本、CoreMark 三项参考 CRC、迭代次数、精确 tick、Test Status
+> 和完整性能窗口，并把判定写入结果 JSON 的 `checker` 对象。日常总入口为
 > `make sim-quick`，里程碑入口为 `make sim-full`。本文后面出现的
 > `coremark-rtthread*`、`sim-required` 等旧 profile/命令仅保留为规划演进记录，
 > 不再是当前入口。实际操作以
@@ -25,14 +28,17 @@
 | ISA 直接快速验证 | `make sim-isa` | 当前 demo gate 的 RV32UI 子集，逐项 Test Status，汇总到 `build/regression/isa/current/` |
 | 裸机 smoke | `make sim-smoke` | DATA/BSS、UART、GPIO、Test Status |
 | RT-Thread 正确性 | `make sim-rtthread` | 内核启动、调度、Timer/Software IRQ、FinSH/MSH、Test Status |
-| RT-Thread + 少量 CoreMark | `make sim-rtthread-coremark-smoke` | 1 iteration，上游参考 CRC `0xe714`、Test Status、完整性能窗口 |
-| RT-Thread + 多轮 CoreMark | `make sim-rtthread-coremark-perf` | 10 iterations，同样先检查 CRC，再输出简单仿真统计 |
+| RT-Thread + 少量 CoreMark | `make sim-coremark COREMARK_ITERATIONS=3` | 完整 `msh >` 后注入命令，检查三项参考 CRC、精确 tick、Test Status 和性能窗口 |
+| RT-Thread + 多轮 CoreMark | `make sim-coremark COREMARK_ITERATIONS=10` | 同样先做正确性 checker，再输出简单仿真统计 |
 
-一次顺序执行全部必需路径：
+日常顺序执行当前门 ISA、RT-Thread 和 3 轮 CoreMark：
 
 ```text
-make sim-required
+make sim-quick
 ```
+
+最终 CPU 里程碑执行 `make sim-full`，其中 ISA gate 为 `final-base`，CoreMark
+为 10 轮。
 
 这里选择单一 SoC Top，原因是当前 RV32UI 回归在模型已构建后已足够快，
 而单独增加 `cpu_sim_top` 会立即复制镜像加载、Test Status、watchdog 和结果
@@ -54,11 +60,14 @@ tb/cpp/
    ├─ sim_control.h/.cpp
    ├─ sim_result.h/.cpp
    ├─ uart_decoder.h/.cpp
+   ├─ uart_stimulus.h/.cpp
+   ├─ uart_checker.h/.cpp
    └─ perf_stats.h/.cpp
 ```
 
 `soc_dut_adapter` 是唯一包含 `Vsoc_sim_top.h` 的层；`sim_control` 管 reset、
-cycle watchdog 与退出条件；`sim_result` 写统一 JSON；`perf_stats` 只统计
+cycle watchdog、UART 提示符门控与退出条件；`uart_checker` 根据实际解码出的
+UART transcript 做可执行判定；`sim_result` 写统一 JSON；`perf_stats` 只统计
 RTL 已可靠提供的 cycle 和 commit，不虚构 cache miss、branch miss 等事件。
 
 模型复用由 `scripts/run_verilator.py` 的内容指纹控制。指纹覆盖 Verilator

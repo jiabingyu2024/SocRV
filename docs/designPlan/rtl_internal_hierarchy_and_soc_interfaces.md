@@ -6,6 +6,23 @@
 
 ---
 
+## 当前 HXI 并发实现（2026-08-05）
+
+`hxi_crossbar` 不是全局单事务总线。当前合同是“每个 Master 最多一笔
+outstanding”，因此 I-HXI 和 D-HXI 各自可以保留一笔未完成请求：
+
+- 取指与数据访问命中不同 Slave 时，两笔请求可在同一周期握手并独立返回；
+- 两者命中同一 Slave（例如取指与 D-side 读取 Code 区 `.rodata`）时，只串行化
+  该 Slave 的冲突，使用该 Slave 自己的 round-robin 仲裁；
+- 响应按每个 Master 记录的目标独立返回，不需要 transaction ID；
+- 以后调整 Code/Data BRAM 延迟只会延长对应 Slave 的占用，不应阻塞另一个 Slave。
+
+这满足哈佛架构的 SoC 互联要求。当前 `demo_cpu_core` 本身仍采用顺序状态机，
+不会主动制造同时 I/D 请求；后续流水/超标量 CPU 接入同一双 Master 端口后，
+Crossbar 不会把不同目标的取指和访存重新全局串行化。
+
+---
+
 ## 当前实现与最终 ISA 合同（2026-08-04）
 
 `rtl/cpu/demo/demo_cpu_core.sv` 只是框架参考核，当前能力保持为 RV32I +
@@ -666,10 +683,11 @@ rsp_err
 
 ### 6.3 第一版 Outstanding
 
-推荐：
+当前实现：
 
 ```text
-每个 Master 最多一笔请求已经发出但尚未收到响应
+I-HXI：最多一笔请求已经发出但尚未收到响应
+D-HXI：最多一笔请求已经发出但尚未收到响应
 ```
 
 这样不需要：
@@ -678,6 +696,9 @@ rsp_err
 - 乱序响应；
 - Response Reorder；
 - 多事务 Scoreboard。
+
+这不是“全 Crossbar 只能有一笔”。两个 Master 命中不同 Slave 时可以同时
+outstanding；只有命中同一 Slave 的冲突才在该 Slave 上仲裁。
 
 Cache Line refill 用四笔连续 word 请求完成，而不是第一版就做 burst。
 

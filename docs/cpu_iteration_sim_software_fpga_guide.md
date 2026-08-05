@@ -104,12 +104,19 @@ Runner 执行以下过程：
 
 1. 构建 `rtthread-coremark` 固件；
 2. 启动 `soc_sim_top`；
-3. 等待 RT-Thread/FinSH 启动；
-4. 按 50 MHz、115200 baud 的真实 UART 帧，向 `uart_rx_i` 发送
+3. 按配置的 UART 波特率逐位解码 `uart_tx_o`，等待 transcript 的末尾完整出现
+   `msh >`；只看到 `msh`、`msh ` 或零散字符都不会触发；
+4. 检测到提示符后等待一个 UART bit time，再按 50 MHz、115200 baud 的真实
+   UART 帧向 `uart_rx_i` 发送
    `coremark 3\r`；
 5. CoreMark 通过硬件 timer 划定测量窗口；
-6. 检查参考 CRC，通过 Test Status 结束仿真；
+6. checker 检查 UART framing、命令轮次、`crclist=0xe714`、
+   `crcmatrix=0x1fd7`、`crcstate=0x8e3a`、项目 CRC PASS 文本、数值型精确
+   tick、完整性能窗口和 Test Status；
 7. 记录 cycles、commits、IPC、每轮 cycles 和模拟秒数。
+
+默认提示符超时是 5,000,000 cycles。超时结果为 `uart_prompt_timeout`，
+`checker.command_sent` 保持 `false`，因此不会再用固定 cycle 盲发命令。
 
 轮次可以改为其他小值：
 
@@ -144,6 +151,11 @@ build/log/soc/rtthread-coremark-command-3.log
 CoreMark JSON 中重点看：
 
 - `status`：应为 `PASS`；
+- `exit_reason`：正常为 Test Status 完成；提示符或 checker 失败时会给出明确原因；
+- `checker.passed`：UART/CoreMark 可执行判定；
+- `checker.prompt_seen` / `checker.prompt_cycle`；
+- `checker.command_sent` / `checker.command_cycle`；
+- `checker.framing_error`、`checker.missing`、`checker.forbidden_seen`；
 - `cycles`：从复位到测试完成的总仿真周期；
 - `performance.cycles`：CoreMark 测量窗口；
 - `performance.commits`；

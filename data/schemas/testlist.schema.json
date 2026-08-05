@@ -27,7 +27,18 @@
           "max_wall_seconds": {"type": "integer", "minimum": 1},
           "seed": {"type": "integer", "minimum": 0},
           "uart_command": {"type": "string", "minLength": 1},
-          "uart_start_cycle": {"type": "integer", "minimum": 1},
+          "uart_prompt": {"type": "string", "minLength": 1},
+          "uart_prompt_timeout": {"type": "integer", "minimum": 1},
+          "uart_expect": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+          },
+          "uart_reject": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+          },
           "performance": {
             "type": "object",
             "additionalProperties": false,

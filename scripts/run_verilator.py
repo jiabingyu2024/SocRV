@@ -19,6 +19,7 @@ from lib.wsl import bash, in_repo
 CPP_SOURCES = [
     "tb/cpp/common/sim_config.cpp",
     "tb/cpp/common/uart_decoder.cpp",
+    "tb/cpp/common/uart_checker.cpp",
     "tb/cpp/common/uart_stimulus.cpp",
     "tb/cpp/common/perf_stats.cpp",
     "tb/cpp/common/sim_result.cpp",
@@ -46,6 +47,44 @@ DEFAULT_TESTS = {
 BENCHMARK_ITERATIONS = {
     "coremark-smoke": 1,
     "rtthread-coremark": 3,
+}
+
+DEFAULT_CHECKERS = {
+    "smoke": "test-status-and-uart",
+    "trap-timer": "test-status",
+    "rtthread": "test-status-and-uart",
+    "coremark-smoke": "coremark-crc-and-test-status",
+    "rtthread-coremark":
+        "uart-command-coremark-crc-test-status-and-perf-window",
+}
+
+DEFAULT_UART_EXPECT = {
+    "smoke": ("SocRV smoke PASS",),
+    "rtthread": (
+        "Thread Nano Operating System",
+        "SocRV RT-Thread boot",
+        "msh >",
+    ),
+    "rtthread-coremark": (
+        "SocRV RT-Thread ready",
+        "msh >",
+    ),
+}
+
+DEFAULT_UART_REJECT = {
+    "coremark-smoke": (
+        "ERROR! list crc",
+        "ERROR! matrix crc",
+        "ERROR! state crc",
+        "Cannot validate operation",
+    ),
+    "rtthread-coremark": (
+        "ERROR! list crc",
+        "ERROR! matrix crc",
+        "ERROR! state crc",
+        "Cannot validate operation",
+        "SocRV CoreMark CRC check FAIL",
+    ),
 }
 
 
@@ -236,7 +275,11 @@ def run_image(
     reproduce: str = "",
     wall_timeout: int = 600,
     uart_command: str = "",
-    uart_start_cycle: int = 900_000,
+    uart_prompt: str = "msh >",
+    uart_prompt_timeout: int = 5_000_000,
+    checker: str = "test-status",
+    uart_expect: tuple[str, ...] = (),
+    uart_reject: tuple[str, ...] = (),
 ) -> Path:
     if rebuild_model:
         build_model()
@@ -277,8 +320,14 @@ def run_image(
         if uart_command:
             reproduce += (
                 f" --uart-command {json.dumps(uart_command)}"
-                f" --uart-start-cycle {uart_start_cycle}"
+                f" --uart-prompt {json.dumps(uart_prompt)}"
+                f" --uart-prompt-timeout {uart_prompt_timeout}"
             )
+        reproduce += f" --checker {checker}"
+        for expected in uart_expect:
+            reproduce += f" --uart-expect {json.dumps(expected)}"
+        for forbidden in uart_reject:
+            reproduce += f" --uart-reject {json.dumps(forbidden)}"
         if wall_timeout != 600:
             reproduce += f" --wall-timeout {wall_timeout}"
         if trace:
@@ -304,8 +353,14 @@ def run_image(
         relative_to_repo(image_dir / "image.json"),
         "--reproduce",
         reproduce,
+        "--checker",
+        checker,
         *performance_arguments(performance, benchmark_iterations),
     ]
+    for expected in uart_expect:
+        argv.extend(["--uart-expect", expected])
+    for forbidden in uart_reject:
+        argv.extend(["--uart-reject", forbidden])
     if uart_command:
         contract = read_json(
             repo_path("data", "soc", "software_contract.json")
@@ -318,8 +373,10 @@ def run_image(
             [
                 "--uart-command",
                 uart_command + "\r",
-                "--uart-start-cycle",
-                str(uart_start_cycle),
+                "--uart-prompt",
+                uart_prompt,
+                "--uart-prompt-timeout",
+                str(uart_prompt_timeout),
                 "--uart-cycles-per-bit",
                 str(cycles_per_bit),
             ]
@@ -378,7 +435,11 @@ def run_profile(
     wall_timeout: int = 600,
     require_pass: bool = True,
     uart_command: str = "",
-    uart_start_cycle: int = 900_000,
+    uart_prompt: str = "msh >",
+    uart_prompt_timeout: int = 5_000_000,
+    checker: str = "",
+    uart_expect: tuple[str, ...] | None = None,
+    uart_reject: tuple[str, ...] | None = None,
 ) -> Path:
     if build_sw:
         _, image_dir = build_profile(profile)
@@ -388,6 +449,12 @@ def run_profile(
         performance = profile in BENCHMARK_ITERATIONS
     if benchmark_iterations is None:
         benchmark_iterations = BENCHMARK_ITERATIONS.get(profile, 0)
+    if not checker:
+        checker = DEFAULT_CHECKERS.get(profile, "test-status")
+    if uart_expect is None:
+        uart_expect = DEFAULT_UART_EXPECT.get(profile, ())
+    if uart_reject is None:
+        uart_reject = DEFAULT_UART_REJECT.get(profile, ())
     return run_image(
         image_dir,
         test_name,
@@ -401,7 +468,11 @@ def run_profile(
         wall_timeout=wall_timeout,
         require_pass=require_pass,
         uart_command=uart_command,
-        uart_start_cycle=uart_start_cycle,
+        uart_prompt=uart_prompt,
+        uart_prompt_timeout=uart_prompt_timeout,
+        checker=checker,
+        uart_expect=uart_expect,
+        uart_reject=uart_reject,
     )
 
 
@@ -415,7 +486,11 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--benchmark-iterations", type=int)
     parser.add_argument("--uart-command")
-    parser.add_argument("--uart-start-cycle", type=int, default=900_000)
+    parser.add_argument("--uart-prompt", default="msh >")
+    parser.add_argument("--uart-prompt-timeout", type=int, default=5_000_000)
+    parser.add_argument("--checker")
+    parser.add_argument("--uart-expect", action="append")
+    parser.add_argument("--uart-reject", action="append")
     parser.add_argument("--wall-timeout", type=int, default=600)
     parser.add_argument("--no-rtl-build", action="store_true")
     parser.add_argument("--no-software-build", action="store_true")
@@ -458,7 +533,19 @@ def main() -> int:
             benchmark_iterations=benchmark_iterations,
             wall_timeout=args.wall_timeout,
             uart_command=uart_command,
-            uart_start_cycle=args.uart_start_cycle,
+            uart_prompt=args.uart_prompt,
+            uart_prompt_timeout=args.uart_prompt_timeout,
+            checker=args.checker or "",
+            uart_expect=(
+                tuple(args.uart_expect)
+                if args.uart_expect is not None
+                else None
+            ),
+            uart_reject=(
+                tuple(args.uart_reject)
+                if args.uart_reject is not None
+                else None
+            ),
         )
     except (OSError, RuntimeError, ValueError) as error:
         parser.error(str(error))

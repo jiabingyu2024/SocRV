@@ -3,13 +3,14 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 struct SimConfig {
     std::uint64_t max_cycles = 200000;
     std::uint64_t benchmark_iterations = 0;
     std::uint64_t soc_hz = 50000000;
-    std::uint64_t uart_start_cycle = 900000;
     std::uint64_t uart_cycles_per_bit = 434;
+    std::uint64_t uart_prompt_timeout = 5000000;
     std::uint32_t perf_start_code = 0;
     std::uint32_t perf_stop_code = 0;
     std::uint32_t seed = 1;
@@ -21,6 +22,10 @@ struct SimConfig {
     std::string reproduce;
     std::string test_name = "baremetal-smoke";
     std::string uart_command;
+    std::string uart_prompt = "msh >";
+    std::string checker = "test-status";
+    std::vector<std::string> uart_expect;
+    std::vector<std::string> uart_reject;
 
     static SimConfig parse(int argc, char** argv);
     bool performance_enabled() const;

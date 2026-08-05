@@ -13,40 +13,136 @@ module hxi_crossbar (
   import hxi_pkg::*;
   import memory_map_pkg::*;
 
-  logic busy_q;
-  logic owner_q;
-  logic selected_owner;
-  hxi_target_t target_q;
-  hxi_target_t selected_target;
+  localparam int unsigned MASTER_COUNT = 2;
+  localparam int unsigned SLAVE_COUNT  = 6;
 
-  logic selected_req_valid;
-  logic [31:0] selected_req_addr;
-  logic selected_req_write;
-  logic [31:0] selected_req_wdata;
-  logic [3:0] selected_req_wstrb;
-  logic selected_req_ready;
-  logic selected_rsp_valid;
-  logic [31:0] selected_rsp_rdata;
-  logic selected_rsp_err;
-  logic selected_rsp_ready;
+  logic [MASTER_COUNT-1:0] master_busy_q;
+  hxi_target_t master_target_q [MASTER_COUNT];
+  logic [SLAVE_COUNT-1:0] slave_busy_q;
+  logic [SLAVE_COUNT-1:0] prefer_m1_q;
+
+  hxi_target_t m0_target;
+  hxi_target_t m1_target;
+  logic m0_eligible;
+  logic m1_eligible;
+  logic same_target;
+  logic m0_grant;
+  logic m1_grant;
+  logic m0_req_fire;
+  logic m1_req_fire;
+  logic m0_rsp_fire;
+  logic m1_rsp_fire;
+
+  logic [SLAVE_COUNT-1:0] slave_req_valid;
+  logic [SLAVE_COUNT-1:0] slave_req_ready;
+  logic [SLAVE_COUNT-1:0][31:0] slave_req_addr;
+  logic [SLAVE_COUNT-1:0] slave_req_write;
+  logic [SLAVE_COUNT-1:0][31:0] slave_req_wdata;
+  logic [SLAVE_COUNT-1:0][3:0] slave_req_wstrb;
+  logic [SLAVE_COUNT-1:0] slave_rsp_valid;
+  logic [SLAVE_COUNT-1:0] slave_rsp_ready;
+  logic [SLAVE_COUNT-1:0][31:0] slave_rsp_rdata;
+  logic [SLAVE_COUNT-1:0] slave_rsp_err;
 
   function automatic hxi_target_t decode(input logic [31:0] address);
-    if (in_region(address, CODE_BASE, CODE_SIZE))       return HXI_TARGET_CODE;
-    if (in_region(address, DATA_BASE, DATA_SIZE))       return HXI_TARGET_DATA;
-    if (in_region(address, TIMER_BASE, TIMER_SIZE))     return HXI_TARGET_TIMER;
-    if (in_region(address, IRQ_CTRL_BASE, IRQ_CTRL_SIZE)) return HXI_TARGET_IRQ;
-    if (in_region(address, APB_BASE, APB_SIZE))         return HXI_TARGET_APB;
+    if (in_region(address, CODE_BASE, CODE_SIZE))
+      return HXI_TARGET_CODE;
+    if (in_region(address, DATA_BASE, DATA_SIZE))
+      return HXI_TARGET_DATA;
+    if (in_region(address, TIMER_BASE, TIMER_SIZE))
+      return HXI_TARGET_TIMER;
+    if (in_region(address, IRQ_CTRL_BASE, IRQ_CTRL_SIZE))
+      return HXI_TARGET_IRQ;
+    if (in_region(address, APB_BASE, APB_SIZE))
+      return HXI_TARGET_APB;
     return HXI_TARGET_DEFAULT;
   endfunction
 
+  assign slave_req_ready[HXI_TARGET_CODE]    = s0_o.req_ready;
+  assign slave_req_ready[HXI_TARGET_DATA]    = s1_o.req_ready;
+  assign slave_req_ready[HXI_TARGET_TIMER]   = s2_o.req_ready;
+  assign slave_req_ready[HXI_TARGET_IRQ]     = s3_o.req_ready;
+  assign slave_req_ready[HXI_TARGET_APB]     = s4_o.req_ready;
+  assign slave_req_ready[HXI_TARGET_DEFAULT] = s5_o.req_ready;
+
+  assign slave_rsp_valid[HXI_TARGET_CODE]    = s0_o.rsp_valid;
+  assign slave_rsp_valid[HXI_TARGET_DATA]    = s1_o.rsp_valid;
+  assign slave_rsp_valid[HXI_TARGET_TIMER]   = s2_o.rsp_valid;
+  assign slave_rsp_valid[HXI_TARGET_IRQ]     = s3_o.rsp_valid;
+  assign slave_rsp_valid[HXI_TARGET_APB]     = s4_o.rsp_valid;
+  assign slave_rsp_valid[HXI_TARGET_DEFAULT] = s5_o.rsp_valid;
+
+  assign slave_rsp_rdata[HXI_TARGET_CODE]    = s0_o.rsp_rdata;
+  assign slave_rsp_rdata[HXI_TARGET_DATA]    = s1_o.rsp_rdata;
+  assign slave_rsp_rdata[HXI_TARGET_TIMER]   = s2_o.rsp_rdata;
+  assign slave_rsp_rdata[HXI_TARGET_IRQ]     = s3_o.rsp_rdata;
+  assign slave_rsp_rdata[HXI_TARGET_APB]     = s4_o.rsp_rdata;
+  assign slave_rsp_rdata[HXI_TARGET_DEFAULT] = s5_o.rsp_rdata;
+
+  assign slave_rsp_err[HXI_TARGET_CODE]    = s0_o.rsp_err;
+  assign slave_rsp_err[HXI_TARGET_DATA]    = s1_o.rsp_err;
+  assign slave_rsp_err[HXI_TARGET_TIMER]   = s2_o.rsp_err;
+  assign slave_rsp_err[HXI_TARGET_IRQ]     = s3_o.rsp_err;
+  assign slave_rsp_err[HXI_TARGET_APB]     = s4_o.rsp_err;
+  assign slave_rsp_err[HXI_TARGET_DEFAULT] = s5_o.rsp_err;
+
+  assign s0_o.req_valid = slave_req_valid[HXI_TARGET_CODE];
+  assign s1_o.req_valid = slave_req_valid[HXI_TARGET_DATA];
+  assign s2_o.req_valid = slave_req_valid[HXI_TARGET_TIMER];
+  assign s3_o.req_valid = slave_req_valid[HXI_TARGET_IRQ];
+  assign s4_o.req_valid = slave_req_valid[HXI_TARGET_APB];
+  assign s5_o.req_valid = slave_req_valid[HXI_TARGET_DEFAULT];
+
+  assign s0_o.req_addr = slave_req_addr[HXI_TARGET_CODE];
+  assign s1_o.req_addr = slave_req_addr[HXI_TARGET_DATA];
+  assign s2_o.req_addr = slave_req_addr[HXI_TARGET_TIMER];
+  assign s3_o.req_addr = slave_req_addr[HXI_TARGET_IRQ];
+  assign s4_o.req_addr = slave_req_addr[HXI_TARGET_APB];
+  assign s5_o.req_addr = slave_req_addr[HXI_TARGET_DEFAULT];
+
+  assign s0_o.req_write = slave_req_write[HXI_TARGET_CODE];
+  assign s1_o.req_write = slave_req_write[HXI_TARGET_DATA];
+  assign s2_o.req_write = slave_req_write[HXI_TARGET_TIMER];
+  assign s3_o.req_write = slave_req_write[HXI_TARGET_IRQ];
+  assign s4_o.req_write = slave_req_write[HXI_TARGET_APB];
+  assign s5_o.req_write = slave_req_write[HXI_TARGET_DEFAULT];
+
+  assign s0_o.req_wdata = slave_req_wdata[HXI_TARGET_CODE];
+  assign s1_o.req_wdata = slave_req_wdata[HXI_TARGET_DATA];
+  assign s2_o.req_wdata = slave_req_wdata[HXI_TARGET_TIMER];
+  assign s3_o.req_wdata = slave_req_wdata[HXI_TARGET_IRQ];
+  assign s4_o.req_wdata = slave_req_wdata[HXI_TARGET_APB];
+  assign s5_o.req_wdata = slave_req_wdata[HXI_TARGET_DEFAULT];
+
+  assign s0_o.req_wstrb = slave_req_wstrb[HXI_TARGET_CODE];
+  assign s1_o.req_wstrb = slave_req_wstrb[HXI_TARGET_DATA];
+  assign s2_o.req_wstrb = slave_req_wstrb[HXI_TARGET_TIMER];
+  assign s3_o.req_wstrb = slave_req_wstrb[HXI_TARGET_IRQ];
+  assign s4_o.req_wstrb = slave_req_wstrb[HXI_TARGET_APB];
+  assign s5_o.req_wstrb = slave_req_wstrb[HXI_TARGET_DEFAULT];
+
+  assign s0_o.rsp_ready = slave_rsp_ready[HXI_TARGET_CODE];
+  assign s1_o.rsp_ready = slave_rsp_ready[HXI_TARGET_DATA];
+  assign s2_o.rsp_ready = slave_rsp_ready[HXI_TARGET_TIMER];
+  assign s3_o.rsp_ready = slave_rsp_ready[HXI_TARGET_IRQ];
+  assign s4_o.rsp_ready = slave_rsp_ready[HXI_TARGET_APB];
+  assign s5_o.rsp_ready = slave_rsp_ready[HXI_TARGET_DEFAULT];
+
   always_comb begin
-    selected_owner     = m1_i.req_valid;
-    selected_req_valid = selected_owner ? m1_i.req_valid : m0_i.req_valid;
-    selected_req_addr  = selected_owner ? m1_i.req_addr  : m0_i.req_addr;
-    selected_req_write = selected_owner ? m1_i.req_write : m0_i.req_write;
-    selected_req_wdata = selected_owner ? m1_i.req_wdata : m0_i.req_wdata;
-    selected_req_wstrb = selected_owner ? m1_i.req_wstrb : m0_i.req_wstrb;
-    selected_target    = decode(selected_req_addr);
+    m0_target = decode(m0_i.req_addr);
+    m1_target = decode(m1_i.req_addr);
+
+    m0_eligible = m0_i.req_valid && !master_busy_q[0] &&
+                  !slave_busy_q[m0_target];
+    m1_eligible = m1_i.req_valid && !master_busy_q[1] &&
+                  !slave_busy_q[m1_target];
+    same_target = m0_eligible && m1_eligible &&
+                  (m0_target == m1_target);
+
+    m0_grant = m0_eligible &&
+               (!same_target || !prefer_m1_q[m0_target]);
+    m1_grant = m1_eligible &&
+               (!same_target || prefer_m1_q[m1_target]);
 
     m0_i.req_ready = 1'b0;
     m1_i.req_ready = 1'b0;
@@ -57,143 +153,84 @@ module hxi_crossbar (
     m0_i.rsp_err   = 1'b0;
     m1_i.rsp_err   = 1'b0;
 
-    s0_o.req_valid = 1'b0;
-    s1_o.req_valid = 1'b0;
-    s2_o.req_valid = 1'b0;
-    s3_o.req_valid = 1'b0;
-    s4_o.req_valid = 1'b0;
-    s5_o.req_valid = 1'b0;
-    s0_o.req_addr  = selected_req_addr;
-    s1_o.req_addr  = selected_req_addr;
-    s2_o.req_addr  = selected_req_addr;
-    s3_o.req_addr  = selected_req_addr;
-    s4_o.req_addr  = selected_req_addr;
-    s5_o.req_addr  = selected_req_addr;
-    s0_o.req_write = selected_req_write;
-    s1_o.req_write = selected_req_write;
-    s2_o.req_write = selected_req_write;
-    s3_o.req_write = selected_req_write;
-    s4_o.req_write = selected_req_write;
-    s5_o.req_write = selected_req_write;
-    s0_o.req_wdata = selected_req_wdata;
-    s1_o.req_wdata = selected_req_wdata;
-    s2_o.req_wdata = selected_req_wdata;
-    s3_o.req_wdata = selected_req_wdata;
-    s4_o.req_wdata = selected_req_wdata;
-    s5_o.req_wdata = selected_req_wdata;
-    s0_o.req_wstrb = selected_req_wstrb;
-    s1_o.req_wstrb = selected_req_wstrb;
-    s2_o.req_wstrb = selected_req_wstrb;
-    s3_o.req_wstrb = selected_req_wstrb;
-    s4_o.req_wstrb = selected_req_wstrb;
-    s5_o.req_wstrb = selected_req_wstrb;
-    s0_o.rsp_ready = 1'b0;
-    s1_o.rsp_ready = 1'b0;
-    s2_o.rsp_ready = 1'b0;
-    s3_o.rsp_ready = 1'b0;
-    s4_o.rsp_ready = 1'b0;
-    s5_o.rsp_ready = 1'b0;
+    slave_req_valid = '0;
+    slave_req_addr  = '0;
+    slave_req_write = '0;
+    slave_req_wdata = '0;
+    slave_req_wstrb = '0;
+    slave_rsp_ready = '0;
 
-    selected_req_ready = 1'b0;
-    if (!busy_q && selected_req_valid) begin
-      case (selected_target)
-        HXI_TARGET_CODE: begin
-          s0_o.req_valid = 1'b1;
-          selected_req_ready = s0_o.req_ready;
-        end
-        HXI_TARGET_DATA: begin
-          s1_o.req_valid = 1'b1;
-          selected_req_ready = s1_o.req_ready;
-        end
-        HXI_TARGET_TIMER: begin
-          s2_o.req_valid = 1'b1;
-          selected_req_ready = s2_o.req_ready;
-        end
-        HXI_TARGET_IRQ: begin
-          s3_o.req_valid = 1'b1;
-          selected_req_ready = s3_o.req_ready;
-        end
-        HXI_TARGET_APB: begin
-          s4_o.req_valid = 1'b1;
-          selected_req_ready = s4_o.req_ready;
-        end
-        default: begin
-          s5_o.req_valid = 1'b1;
-          selected_req_ready = s5_o.req_ready;
-        end
-      endcase
-      if (selected_owner) m1_i.req_ready = selected_req_ready;
-      else                m0_i.req_ready = selected_req_ready;
+    if (m0_grant) begin
+      slave_req_valid[m0_target] = m0_i.req_valid;
+      slave_req_addr[m0_target]  = m0_i.req_addr;
+      slave_req_write[m0_target] = m0_i.req_write;
+      slave_req_wdata[m0_target] = m0_i.req_wdata;
+      slave_req_wstrb[m0_target] = m0_i.req_wstrb;
+      m0_i.req_ready = slave_req_ready[m0_target];
     end
 
-    selected_rsp_valid = 1'b0;
-    selected_rsp_rdata = '0;
-    selected_rsp_err   = 1'b0;
-    selected_rsp_ready = owner_q ? m1_i.rsp_ready : m0_i.rsp_ready;
-    if (busy_q) begin
-      case (target_q)
-        HXI_TARGET_CODE: begin
-          selected_rsp_valid = s0_o.rsp_valid;
-          selected_rsp_rdata = s0_o.rsp_rdata;
-          selected_rsp_err   = s0_o.rsp_err;
-          s0_o.rsp_ready     = selected_rsp_ready;
-        end
-        HXI_TARGET_DATA: begin
-          selected_rsp_valid = s1_o.rsp_valid;
-          selected_rsp_rdata = s1_o.rsp_rdata;
-          selected_rsp_err   = s1_o.rsp_err;
-          s1_o.rsp_ready     = selected_rsp_ready;
-        end
-        HXI_TARGET_TIMER: begin
-          selected_rsp_valid = s2_o.rsp_valid;
-          selected_rsp_rdata = s2_o.rsp_rdata;
-          selected_rsp_err   = s2_o.rsp_err;
-          s2_o.rsp_ready     = selected_rsp_ready;
-        end
-        HXI_TARGET_IRQ: begin
-          selected_rsp_valid = s3_o.rsp_valid;
-          selected_rsp_rdata = s3_o.rsp_rdata;
-          selected_rsp_err   = s3_o.rsp_err;
-          s3_o.rsp_ready     = selected_rsp_ready;
-        end
-        HXI_TARGET_APB: begin
-          selected_rsp_valid = s4_o.rsp_valid;
-          selected_rsp_rdata = s4_o.rsp_rdata;
-          selected_rsp_err   = s4_o.rsp_err;
-          s4_o.rsp_ready     = selected_rsp_ready;
-        end
-        default: begin
-          selected_rsp_valid = s5_o.rsp_valid;
-          selected_rsp_rdata = s5_o.rsp_rdata;
-          selected_rsp_err   = s5_o.rsp_err;
-          s5_o.rsp_ready     = selected_rsp_ready;
-        end
-      endcase
-      if (owner_q) begin
-        m1_i.rsp_valid = selected_rsp_valid;
-        m1_i.rsp_rdata = selected_rsp_rdata;
-        m1_i.rsp_err   = selected_rsp_err;
-      end else begin
-        m0_i.rsp_valid = selected_rsp_valid;
-        m0_i.rsp_rdata = selected_rsp_rdata;
-        m0_i.rsp_err   = selected_rsp_err;
-      end
+    if (m1_grant) begin
+      slave_req_valid[m1_target] = m1_i.req_valid;
+      slave_req_addr[m1_target]  = m1_i.req_addr;
+      slave_req_write[m1_target] = m1_i.req_write;
+      slave_req_wdata[m1_target] = m1_i.req_wdata;
+      slave_req_wstrb[m1_target] = m1_i.req_wstrb;
+      m1_i.req_ready = slave_req_ready[m1_target];
     end
+
+    if (master_busy_q[0]) begin
+      m0_i.rsp_valid = slave_rsp_valid[master_target_q[0]];
+      m0_i.rsp_rdata = slave_rsp_rdata[master_target_q[0]];
+      m0_i.rsp_err   = slave_rsp_err[master_target_q[0]];
+      slave_rsp_ready[master_target_q[0]] = m0_i.rsp_ready;
+    end
+
+    if (master_busy_q[1]) begin
+      m1_i.rsp_valid = slave_rsp_valid[master_target_q[1]];
+      m1_i.rsp_rdata = slave_rsp_rdata[master_target_q[1]];
+      m1_i.rsp_err   = slave_rsp_err[master_target_q[1]];
+      slave_rsp_ready[master_target_q[1]] = m1_i.rsp_ready;
+    end
+
+    m0_req_fire = m0_grant && m0_i.req_valid && m0_i.req_ready;
+    m1_req_fire = m1_grant && m1_i.req_valid && m1_i.req_ready;
+    m0_rsp_fire = master_busy_q[0] && m0_i.rsp_valid &&
+                  m0_i.rsp_ready;
+    m1_rsp_fire = master_busy_q[1] && m1_i.rsp_valid &&
+                  m1_i.rsp_ready;
   end
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      busy_q   <= 1'b0;
-      owner_q  <= 1'b0;
-      target_q <= HXI_TARGET_DEFAULT;
+      master_busy_q      <= '0;
+      master_target_q[0] <= HXI_TARGET_DEFAULT;
+      master_target_q[1] <= HXI_TARGET_DEFAULT;
+      slave_busy_q       <= '0;
+      prefer_m1_q        <= '0;
     end else begin
-      if (!busy_q && selected_req_valid && selected_req_ready) begin
-        busy_q   <= 1'b1;
-        owner_q  <= selected_owner;
-        target_q <= selected_target;
-      end else if (busy_q && selected_rsp_valid && selected_rsp_ready) begin
-        busy_q <= 1'b0;
+      if (m0_rsp_fire)
+        master_busy_q[0] <= 1'b0;
+      if (m1_rsp_fire)
+        master_busy_q[1] <= 1'b0;
+
+      if (m0_req_fire) begin
+        master_busy_q[0]      <= 1'b1;
+        master_target_q[0]    <= m0_target;
+        slave_busy_q[m0_target] <= 1'b1;
       end
+      if (m1_req_fire) begin
+        master_busy_q[1]      <= 1'b1;
+        master_target_q[1]    <= m1_target;
+        slave_busy_q[m1_target] <= 1'b1;
+      end
+
+      if (m0_rsp_fire)
+        slave_busy_q[master_target_q[0]] <= 1'b0;
+      if (m1_rsp_fire)
+        slave_busy_q[master_target_q[1]] <= 1'b0;
+
+      if (same_target && (m0_req_fire || m1_req_fire))
+        prefer_m1_q[m0_target] <= !prefer_m1_q[m0_target];
     end
   end
 endmodule

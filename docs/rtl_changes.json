@@ -7,7 +7,9 @@
       "data_width": 32,
       "write_strobe_width": 4,
       "masters": ["instruction", "data"],
-      "outstanding": 1,
+      "outstanding_per_master": 1,
+      "parallel_different_targets": true,
+      "same_target_arbitration": "per-slave round-robin",
       "response": ["valid", "ready", "rdata", "error"]
     },
     "reset_vector": "0x00000000",
@@ -33,10 +35,29 @@
         "rtthread-coremark UART command simulation PASS"
       ],
       "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-05",
+      "scope": [
+        "rtl/bus/hxi/hxi_crossbar.sv"
+      ],
+      "backup": "backup/20260805_095831/rtl/bus/hxi/hxi_crossbar.sv",
+      "summary": "Removed global HXI serialization. Instruction and data masters now each own one outstanding slot and may access different slaves concurrently; same-slave conflicts use per-slave round-robin arbitration.",
+      "interface_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "correctness regression PASS",
+        "performance regression PASS",
+        "current ISA gate PASS: 40 RV32UI tests"
+      ],
+      "vivado_invoked": false
     }
   ],
   "assumptions": [
-    "HXI globally serializes requests; the contract permits one outstanding transaction.",
+    "Each HXI master permits one outstanding transaction; instruction and data requests to different slaves are independent.",
+    "Two masters contending for the same HXI slave are serialized by per-slave round-robin arbitration.",
     "Code and data memory are each 64 KiB.",
     "Memory response latency parameters must be at least one cycle.",
     "The demo core is verification infrastructure and is not the final CPU implementation."

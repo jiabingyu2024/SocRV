@@ -50,12 +50,22 @@ SimConfig SimConfig::parse(int argc, char** argv) {
                 require_value(argc, argv, index), nullptr, 0);
         } else if (argument == "--uart-command") {
             config.uart_command = require_value(argc, argv, index);
-        } else if (argument == "--uart-start-cycle") {
-            config.uart_start_cycle = std::stoull(
+        } else if (argument == "--uart-prompt") {
+            config.uart_prompt = require_value(argc, argv, index);
+        } else if (argument == "--uart-prompt-timeout") {
+            config.uart_prompt_timeout = std::stoull(
                 require_value(argc, argv, index), nullptr, 0);
         } else if (argument == "--uart-cycles-per-bit") {
             config.uart_cycles_per_bit = std::stoull(
                 require_value(argc, argv, index), nullptr, 0);
+        } else if (argument == "--checker") {
+            config.checker = require_value(argc, argv, index);
+        } else if (argument == "--uart-expect") {
+            config.uart_expect.emplace_back(
+                require_value(argc, argv, index));
+        } else if (argument == "--uart-reject") {
+            config.uart_reject.emplace_back(
+                require_value(argc, argv, index));
         } else if (argument == "--reproduce") {
             config.reproduce = require_value(argc, argv, index);
         } else if (!argument.empty() && argument.front() == '+') {
@@ -75,6 +85,16 @@ SimConfig SimConfig::parse(int argc, char** argv) {
         config.uart_cycles_per_bit < 2u) {
         throw std::invalid_argument(
             "--uart-cycles-per-bit must be at least 2");
+    }
+    if (!config.uart_command.empty() &&
+        config.uart_prompt.empty()) {
+        throw std::invalid_argument(
+            "--uart-prompt is required with --uart-command");
+    }
+    if (!config.uart_command.empty() &&
+        config.uart_prompt_timeout == 0u) {
+        throw std::invalid_argument(
+            "--uart-prompt-timeout must be positive");
     }
     return config;
 }
