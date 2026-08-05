@@ -17,6 +17,7 @@ from lib.wsl import bash, in_repo, to_wsl_path
 
 
 CPP_SOURCES = [
+    "tb/cpp/fpu/rv32f_dpi.cpp",
     "tb/cpp/common/sim_config.cpp",
     "tb/cpp/common/uart_decoder.cpp",
     "tb/cpp/common/uart_checker.cpp",
@@ -240,7 +241,7 @@ def build_model(*, force: bool = False, difftest: bool = False) -> None:
     object_dir.mkdir(parents=True, exist_ok=True)
     cpp_sources = list(CPP_SOURCES)
     cflags = (
-        "-std=c++17 -O2 "
+        "-std=c++17 -O2 -frounding-math -fno-fast-math "
         "-I../../../../tb/cpp/common "
         "-I../../../../tb/cpp/adapter "
         "-I../../../../tb/cpp/difftest"

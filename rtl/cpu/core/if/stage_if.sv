@@ -1,0 +1,40 @@
+//==============================================================================
+// 模块: stage_if
+// 功能概述：
+//  纯组合逻辑。valid 为 1 时输出已对齐的 PC、IROM instruction 和预测 PC，否则输出 0。
+//==============================================================================
+`include "cpu_defines.svh"
+
+module stage_if(
+    input  logic  [`PC_BUS]         i_pc,
+    input  logic  [`INST_BUS]       i_inst,
+    input  logic  [`PC_BUS]         i_pc_predict,
+    input  logic  [7:0]             i_bpu_pht_idx,
+
+    input  logic                    i_valid,
+
+    output logic  [`PC_BUS]         o_pc,
+    output logic  [`INST_BUS]       o_inst,
+    output logic  [`PC_BUS]         o_pc_predict,
+    output logic  [7:0]             o_bpu_pht_idx,
+    output logic                    o_valid
+
+);
+
+    always_comb begin
+        if (i_valid) begin
+            o_pc         = i_pc;
+            o_inst       = i_inst;
+            o_pc_predict = i_pc_predict;
+            o_bpu_pht_idx = i_bpu_pht_idx;
+            o_valid       = 1'b1;
+        end else begin
+            o_pc         = '0;
+            o_inst       = '0;
+            o_pc_predict = '0;
+            o_bpu_pht_idx = '0;
+            o_valid       = 1'b0;
+        end
+    end
+
+endmodule

@@ -1,0 +1,515 @@
+`timescale 1ns / 1ps
+
+//------------------------------------------------------------------------------
+// One byte lane of one cache-line word bank.
+//
+// Keep this as a conventional simple-dual-port distributed-RAM template:
+// - asynchronous read preserves the same-cycle LW-only fast path;
+// - synchronous write matches store-hit and refill updates;
+// - there is deliberately no reset on the memory contents.  valid_q in DCache
+//   is the architectural reset state and masks uninitialized data.
+//------------------------------------------------------------------------------
+module DCacheDataByteBank #(
+    parameter int unsigned LINE_COUNT = 1024,
+    parameter int unsigned INDEX_W    = $clog2(LINE_COUNT)
+) (
+    input  logic               clk,
+    input  logic [INDEX_W-1:0] read_addr,
+    output logic [7:0]         read_data,
+    input  logic               write_en,
+    input  logic [INDEX_W-1:0] write_addr,
+    input  logic [7:0]         write_data
+);
+    (* ram_style = "distributed" *) logic [7:0] mem_q [0:LINE_COUNT-1];
+
+    assign read_data = mem_q[read_addr];
+
+    always_ff @(posedge clk) begin
+        if (write_en) begin
+            mem_q[write_addr] <= write_data;
+        end
+    end
+endmodule
+
+//------------------------------------------------------------------------------
+// Blocking, direct-mapped D-cache for the current five-stage in-order core.
+//
+// Timing contract:
+// - External memory is a single-outstanding ready/valid port. Reads complete
+//   only when mem_resp_valid is asserted; writes complete on req handshake.
+// - Cache lookup starts from the EX address. Tag fragments, valid and the
+//   selected word are registered on the edge that moves the request into M1;
+//   this removes LUTRAM from M1 ready/forwarding without adding a hit cycle.
+// - Cacheable hit data is registered again on the edge that lets M1 advance, so
+//   the existing M2 stage can consume it in the next cycle.
+// - Returned load data is shifted down by the original byte offset, matching the
+//   current DramBramAdapter contract used by stage_m2.
+// - Miss refill uses ordinary 32-bit reads and is fully blocking: fill the whole
+//   line first, then replay the original load to the core. This keeps the M1/M2
+//   timing identical for hit and miss paths on the current five-stage pipeline.
+// - The first cacheable miss request is issued from DC_MISS_REQ one cycle after
+//   lookup.  This cuts the tag-compare-to-DRAM-enable combinational path without
+//   changing hit latency or the one-cycle external-memory response contract.
+//------------------------------------------------------------------------------
+module DCache #(
+    parameter int unsigned LINE_COUNT = 512,
+    parameter logic [31:0] CACHE_ADDR_START = 32'h8010_0000,
+    parameter logic [31:0] CACHE_ADDR_END   = 32'h8014_0000
+) (
+    input  logic        clk,
+    input  logic        rst,
+
+    input  logic        cpu_req_valid,
+    output logic        cpu_req_ready,
+    input  logic        cpu_req_write,
+    input  logic [31:0] cpu_req_addr,
+    input  logic [(4*$clog2(LINE_COUNT))-1:0] cpu_req_tag_indices,
+    input  logic [(4*$clog2(LINE_COUNT))-1:0] cpu_req_data_indices,
+    input  logic [31:0] cpu_probe_addr,
+    input  logic        cpu_probe_advance,
+    input  logic        cpu_probe_kill,
+    input  logic [31:0] cpu_req_wdata,
+    input  logic [3:0]  cpu_req_wstrb,
+    input  logic        cpu_req_uncached,
+    output logic        cpu_resp_valid,
+    output logic [31:0] cpu_resp_rdata,
+    output logic [31:0] cpu_m1_rdata,
+    output logic [31:0] cpu_fast_word,
+
+    output logic        mem_req_valid,
+    input  logic        mem_req_ready,
+    output logic        mem_req_write,
+    output logic [31:0] mem_req_addr,
+    output logic [31:0] mem_req_wdata,
+    output logic [3:0]  mem_req_wstrb,
+    output logic        mem_req_uncached,
+    input  logic        mem_resp_valid,
+    input  logic [31:0] mem_resp_rdata,
+
+    output logic [63:0] perf_dcache_access,
+    output logic [63:0] perf_dcache_miss,
+    output logic [63:0] perf_stall_mem
+);
+    localparam int unsigned WORDS_PER_LINE = 4;
+    localparam int unsigned INDEX_W = $clog2(LINE_COUNT);
+    localparam int unsigned TAG_LSB = 4 + INDEX_W;
+
+    typedef enum logic [2:0] {
+        DC_IDLE,
+        DC_UNCACHED_WAIT,
+        DC_UNCACHED_REPLAY,
+        DC_MISS_REQ,
+        DC_MISS_WAIT,
+        DC_MISS_REPLAY
+    } state_e;
+
+    state_e state_q;
+
+    logic [LINE_COUNT-1:0] valid_q;
+    // v08 partitions the 19-bit tag into LUT-sized groups. Each group has an
+    // independently registered read index, cutting the former address[5]
+    // fanout of 194 and replacing the long monolithic equality chain.
+    (* ram_style = "distributed" *) logic [4:0] tag_q0 [0:LINE_COUNT-1];
+    (* ram_style = "distributed" *) logic [4:0] tag_q1 [0:LINE_COUNT-1];
+    (* ram_style = "distributed" *) logic [4:0] tag_q2 [0:LINE_COUNT-1];
+    (* ram_style = "distributed" *) logic [3:0] tag_q3 [0:LINE_COUNT-1];
+
+    // Four word banks, each split into four byte-lane LUTRAMs. The ordinary
+    // response remains registered; the asynchronous word is exposed only to
+    // the timing-bounded LW/simple-ALU late-bypass path.
+    logic [31:0] data_word_read_c [0:WORDS_PER_LINE-1];
+    logic        data_write_cmd_en_c;
+    logic [INDEX_W-1:0] data_write_cmd_index_c;
+    logic [1:0]  data_write_cmd_word_c;
+    logic [31:0] data_write_cmd_data_c;
+    logic [3:0]  data_write_cmd_mask_c;
+
+    // Register one write command at the DCache boundary, then distribute it to
+    // four word-local copies.  The old combinational implementation drove the
+    // write-enable pins of all sixteen byte-bank LUTRAMs directly from the tag
+    // lookup/hit chain.  Besides making that chain the WNS path, the shared
+    // write address reached roughly two thousand physical RAM pins.
+    //
+    // Payload registers deliberately have no reset.  The word enable is the
+    // validity state and masks them until a real store-hit/refill command has
+    // been captured.
+    logic [WORDS_PER_LINE-1:0] data_write_word_en_q;
+    logic [INDEX_W-1:0] data_write_index_q [0:WORDS_PER_LINE-1];
+    logic [31:0] data_write_data_q [0:WORDS_PER_LINE-1];
+    logic [3:0]  data_write_mask_q [0:WORDS_PER_LINE-1];
+    logic [31:0] probe_word_q [0:WORDS_PER_LINE-1];
+    logic        probe_pending_valid_q;
+    logic [1:0]  probe_pending_word_q;
+    logic [31:0] probe_pending_data_q;
+    logic [3:0]  probe_pending_mask_q;
+    logic [4:0]  probe_tag_q0;
+    logic [4:0]  probe_tag_q1;
+    logic [4:0]  probe_tag_q2;
+    logic [3:0]  probe_tag_q3;
+    logic        probe_line_valid_q;
+    logic        probe_valid_q;
+
+    logic [31:0] miss_addr_q;
+    logic [1:0]  miss_target_word_q;
+    logic [1:0]  fill_word_q;
+    logic [2:0]  fill_count_q;
+    logic [31:0] resp_rdata_q;
+    logic        resp_valid_q;
+
+    logic [INDEX_W-1:0] req_index_c;
+    logic [INDEX_W-1:0] probe_index_c;
+    logic [31:TAG_LSB]  req_tag_c;
+    logic [1:0]         req_word_c;
+    logic               req_cacheable_c;
+    logic               req_crosses_word_c;
+    logic [2:0]         req_access_bytes_c;
+    logic               req_hit_c;
+    logic [3:0]         req_tag_match_c;
+    logic [31:0]        cache_word_c;
+
+    logic [INDEX_W-1:0] miss_index_c;
+    logic [31:TAG_LSB]  miss_tag_c;
+    logic [1:0]         next_fill_word_c;
+    logic [31:0]        fill_resp_shifted_c;
+    logic [31:0]        store_shifted_data_c;
+    logic [3:0]         store_shifted_mask_c;
+
+    generate
+        for (genvar word_idx = 0; word_idx < WORDS_PER_LINE; word_idx++) begin : gen_data_word
+            for (genvar byte_idx = 0; byte_idx < 4; byte_idx++) begin : gen_data_byte
+                DCacheDataByteBank #(
+                    .LINE_COUNT(LINE_COUNT),
+                    .INDEX_W   (INDEX_W)
+                ) u_data_byte_bank (
+                    .clk       (clk),
+                    .read_addr (cpu_req_data_indices[word_idx*INDEX_W +: INDEX_W]),
+                    .read_data (data_word_read_c[word_idx][byte_idx*8 +: 8]),
+                    .write_en  (data_write_word_en_q[word_idx] &&
+                                data_write_mask_q[word_idx][byte_idx]),
+                    .write_addr(data_write_index_q[word_idx]),
+                    .write_data(data_write_data_q[word_idx][byte_idx*8 +: 8])
+                );
+            end
+        end
+    endgenerate
+
+    assign req_access_bytes_c = cpu_req_wstrb[3] ? 3'd4 :
+                                cpu_req_wstrb[1] ? 3'd2 : 3'd1;
+    assign req_crosses_word_c = ({1'b0, cpu_req_addr[1:0]} +
+                                 req_access_bytes_c) > 3'd4;
+    // A cross-word access is kept off the single-word cache hit path.  The HXI
+    // adapter splits it into two ordered bus transactions; aligned and
+    // within-word accesses retain the original zero-extra-cycle cache path.
+    assign req_cacheable_c = !cpu_req_uncached && !req_crosses_word_c &&
+                             (cpu_req_addr >= CACHE_ADDR_START) &&
+                             (cpu_req_addr < CACHE_ADDR_END);
+    assign req_index_c = cpu_req_addr[TAG_LSB-1:4];
+    assign req_tag_c   = cpu_req_addr[31:TAG_LSB];
+    assign req_word_c  = cpu_req_addr[3:2];
+    assign req_tag_match_c[0] = probe_tag_q0 == cpu_req_addr[17:13];
+    assign req_tag_match_c[1] = probe_tag_q1 == cpu_req_addr[22:18];
+    assign req_tag_match_c[2] = probe_tag_q2 == cpu_req_addr[27:23];
+    assign req_tag_match_c[3] = probe_tag_q3 == cpu_req_addr[31:28];
+    assign req_hit_c   = req_cacheable_c &&
+                         probe_valid_q && probe_line_valid_q &&
+                         (&req_tag_match_c);
+    assign probe_index_c = cpu_probe_addr[TAG_LSB-1:4];
+    // Register every asynchronous word-bank output directly at the EX/M1
+    // boundary. Selecting one of four words after this boundary removes both
+    // the word mux and the pending-write byte mux from the LUTRAM capture path.
+    // A write that reaches the RAM on this edge is carried as compact bypass
+    // metadata and merged on the registered M1 side below.
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            probe_line_valid_q <= 1'b0;
+            probe_valid_q      <= 1'b0;
+            probe_pending_valid_q <= 1'b0;
+        end else if (cpu_probe_advance) begin
+            if (cpu_probe_kill) begin
+                probe_valid_q <= 1'b0;
+                probe_pending_valid_q <= 1'b0;
+            end else begin
+                for (int word_idx = 0; word_idx < WORDS_PER_LINE; word_idx++) begin
+                    probe_word_q[word_idx] <= data_word_read_c[word_idx];
+                end
+                probe_tag_q0       <= tag_q0[cpu_req_tag_indices[0*INDEX_W +: INDEX_W]];
+                probe_tag_q1       <= tag_q1[cpu_req_tag_indices[1*INDEX_W +: INDEX_W]];
+                probe_tag_q2       <= tag_q2[cpu_req_tag_indices[2*INDEX_W +: INDEX_W]];
+                probe_tag_q3       <= tag_q3[cpu_req_tag_indices[3*INDEX_W +: INDEX_W]];
+                probe_line_valid_q <= valid_q[probe_index_c];
+                probe_valid_q      <= 1'b1;
+                probe_pending_valid_q <= 1'b0;
+                for (int word_idx = 0; word_idx < WORDS_PER_LINE; word_idx++) begin
+                    if (data_write_word_en_q[word_idx] &&
+                        (data_write_index_q[word_idx] == probe_index_c)) begin
+                        probe_pending_valid_q <= 1'b1;
+                        probe_pending_word_q  <= 2'(word_idx);
+                        probe_pending_data_q  <= data_write_data_q[word_idx];
+                        probe_pending_mask_q  <= data_write_mask_q[word_idx];
+                    end
+                end
+            end
+        end
+    end
+
+    // Merge the write that coincided with probe capture first, then the newer
+    // live write command. This preserves consecutive store/load ordering even
+    // though the raw LUTRAM outputs are captured without a byte mux.
+    always_comb begin
+        cache_word_c = probe_word_q[req_word_c];
+        if (probe_pending_valid_q && (probe_pending_word_q == req_word_c)) begin
+            for (int byte_idx = 0; byte_idx < 4; byte_idx++) begin
+                if (probe_pending_mask_q[byte_idx]) begin
+                    cache_word_c[byte_idx*8 +: 8] =
+                        probe_pending_data_q[byte_idx*8 +: 8];
+                end
+            end
+        end
+        if (data_write_word_en_q[req_word_c] &&
+            (data_write_index_q[req_word_c] == req_index_c)) begin
+            for (int byte_idx = 0; byte_idx < 4; byte_idx++) begin
+                if (data_write_mask_q[req_word_c][byte_idx]) begin
+                    cache_word_c[byte_idx*8 +: 8] =
+                        data_write_data_q[req_word_c][byte_idx*8 +: 8];
+                end
+            end
+        end
+    end
+
+    assign miss_index_c = miss_addr_q[TAG_LSB-1:4];
+    assign miss_tag_c   = miss_addr_q[31:TAG_LSB];
+    assign next_fill_word_c = fill_word_q + 2'd1;
+    assign fill_resp_shifted_c = mem_resp_rdata >> {miss_addr_q[1:0], 3'b000};
+    assign store_shifted_data_c = cpu_req_wdata << {cpu_req_addr[1:0], 3'b000};
+    assign store_shifted_mask_c = (cpu_req_wstrb << cpu_req_addr[1:0]) & 4'hf;
+
+    // Present exactly one logical write port to all byte banks.  Store hits and
+    // refill responses occur in mutually exclusive states.  Store data remains
+    // low-bit aligned at the CPU/SoC interface; only the cached copy is shifted
+    // into its addressed byte lanes here, matching DramBramAdapter semantics.
+    always_comb begin
+        data_write_cmd_en_c    = 1'b0;
+        data_write_cmd_index_c = '0;
+        data_write_cmd_word_c  = 2'd0;
+        data_write_cmd_data_c  = 32'd0;
+        data_write_cmd_mask_c  = 4'b0000;
+
+        if (!rst) begin
+            if ((state_q == DC_IDLE) && cpu_req_valid && cpu_req_write &&
+                mem_req_ready && req_cacheable_c && req_hit_c) begin
+                data_write_cmd_en_c    = 1'b1;
+                data_write_cmd_index_c = req_index_c;
+                data_write_cmd_word_c  = req_word_c;
+                data_write_cmd_data_c  = store_shifted_data_c;
+                data_write_cmd_mask_c  = store_shifted_mask_c;
+            end else if ((state_q == DC_MISS_WAIT) && mem_resp_valid) begin
+                data_write_cmd_en_c    = 1'b1;
+                data_write_cmd_index_c = miss_index_c;
+                data_write_cmd_word_c  = fill_word_q;
+                data_write_cmd_data_c  = mem_resp_rdata;
+                data_write_cmd_mask_c  = 4'b1111;
+            end
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            data_write_word_en_q <= '0;
+        end else begin
+            for (int word_idx = 0; word_idx < WORDS_PER_LINE; word_idx++) begin
+                data_write_word_en_q[word_idx] <= data_write_cmd_en_c &&
+                                                   (data_write_cmd_word_c == 2'(word_idx));
+                if (data_write_cmd_en_c &&
+                    (data_write_cmd_word_c == 2'(word_idx))) begin
+                    data_write_index_q[word_idx] <= data_write_cmd_index_c;
+                    data_write_data_q[word_idx]  <= data_write_cmd_data_c;
+                    data_write_mask_q[word_idx]  <= data_write_cmd_mask_c;
+                end
+            end
+        end
+    end
+
+    always_comb begin
+        cpu_req_ready   = 1'b0;
+        mem_req_valid   = 1'b0;
+        mem_req_write   = 1'b0;
+        mem_req_addr    = 32'd0;
+        mem_req_wdata   = 32'd0;
+        mem_req_wstrb   = 4'b0000;
+        mem_req_uncached = 1'b0;
+
+        unique case (state_q)
+            DC_IDLE: begin
+                if (cpu_req_valid) begin
+                    if (cpu_req_write) begin
+                        mem_req_valid    = 1'b1;
+                        mem_req_write    = 1'b1;
+                        mem_req_addr     = cpu_req_addr;
+                        mem_req_wdata    = cpu_req_wdata;
+                        mem_req_wstrb    = cpu_req_wstrb;
+                        mem_req_uncached = !req_cacheable_c;
+                        cpu_req_ready    = mem_req_ready;
+                    end else if (req_cacheable_c && req_hit_c) begin
+                        cpu_req_ready    = 1'b1;
+                    end else if (req_cacheable_c) begin
+                        // Cacheable misses are captured on this edge and issued
+                        // from DC_MISS_REQ on the following cycle.
+                        cpu_req_ready    = 1'b0;
+                    end else begin
+                        mem_req_valid    = 1'b1;
+                        mem_req_write    = 1'b0;
+                        mem_req_addr     = cpu_req_addr;
+                        mem_req_wstrb    = cpu_req_wstrb;
+                        mem_req_uncached = 1'b1;
+                        cpu_req_ready    = 1'b0;
+                    end
+                end
+            end
+
+            DC_UNCACHED_REPLAY,
+            DC_MISS_REPLAY: begin
+                cpu_req_ready = 1'b1;
+            end
+
+            DC_MISS_REQ: begin
+                mem_req_valid    = 1'b1;
+                mem_req_write    = 1'b0;
+                mem_req_addr     = {miss_addr_q[31:4], fill_word_q, 2'b00};
+                mem_req_wstrb    = 4'b1111;
+                mem_req_uncached = 1'b0;
+            end
+
+            default: begin
+            end
+        endcase
+    end
+
+    assign cpu_resp_valid = resp_valid_q ||
+                            (state_q == DC_UNCACHED_REPLAY) ||
+                            (state_q == DC_MISS_REPLAY);
+    assign cpu_resp_rdata = resp_rdata_q;
+    assign cpu_m1_rdata = (state_q == DC_IDLE) ?
+                          (cache_word_c >> {cpu_req_addr[1:0], 3'b000}) :
+                          resp_rdata_q;
+
+    // The only combinational cache-data export is an aligned 32-bit word.
+    // Byte/halfword rotation and extension stay on the registered M2 path, so
+    // they cannot expand the late-bypass timing cone.
+    assign cpu_fast_word = (state_q == DC_IDLE) ? cache_word_c : resp_rdata_q;
+
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            state_q <= DC_IDLE;
+            miss_addr_q <= 32'd0;
+            miss_target_word_q <= 2'd0;
+            fill_word_q <= 2'd0;
+            fill_count_q <= 3'd0;
+            resp_rdata_q <= 32'd0;
+            resp_valid_q <= 1'b0;
+            perf_dcache_access <= 64'd0;
+            perf_dcache_miss <= 64'd0;
+            perf_stall_mem <= 64'd0;
+            valid_q <= '0;
+        end else begin
+            resp_valid_q <= 1'b0;
+
+            if ((state_q != DC_IDLE) || (cpu_req_valid && !cpu_req_ready)) begin
+                perf_stall_mem <= perf_stall_mem + 64'd1;
+            end
+
+            unique case (state_q)
+                DC_IDLE: begin
+                    if (cpu_req_valid) begin
+                        if (cpu_req_write) begin
+                            if (mem_req_ready) begin
+                                if (req_cacheable_c) begin
+                                    perf_dcache_access <= perf_dcache_access + 64'd1;
+                                    if (!req_hit_c) begin
+                                        perf_dcache_miss <= perf_dcache_miss + 64'd1;
+                                    end
+                                end else if (req_crosses_word_c &&
+                                             (cpu_req_addr >= CACHE_ADDR_START) &&
+                                             (cpu_req_addr < CACHE_ADDR_END)) begin
+                                    // The HXI adapter splits this store.  Drop
+                                    // any cached copies so a following load
+                                    // cannot observe the pre-split contents.
+                                    valid_q[req_index_c] <= 1'b0;
+                                    if (({1'b0, cpu_req_addr[3:0]} +
+                                         {2'b0, req_access_bytes_c}) > 5'd16)
+                                      valid_q[req_index_c + 1'b1] <= 1'b0;
+                                end
+                            end
+                        end else if (req_cacheable_c && req_hit_c) begin
+                            perf_dcache_access <= perf_dcache_access + 64'd1;
+                            resp_rdata_q <= cache_word_c >> {cpu_req_addr[1:0], 3'b000};
+                            resp_valid_q <= 1'b1;
+                        end else if (req_cacheable_c) begin
+                            perf_dcache_access <= perf_dcache_access + 64'd1;
+                            perf_dcache_miss <= perf_dcache_miss + 64'd1;
+                            miss_addr_q <= cpu_req_addr;
+                            miss_target_word_q <= req_word_c;
+                            fill_word_q <= 2'd0;
+                            fill_count_q <= 3'd0;
+                            state_q <= DC_MISS_REQ;
+                        end else if (mem_req_ready) begin
+                            state_q <= DC_UNCACHED_WAIT;
+                        end
+                    end
+                end
+
+                DC_UNCACHED_WAIT: begin
+                    if (mem_resp_valid) begin
+                        resp_rdata_q <= mem_resp_rdata;
+                        state_q <= DC_UNCACHED_REPLAY;
+                    end
+                end
+
+                DC_UNCACHED_REPLAY: begin
+                    if (cpu_req_valid) begin
+                        state_q <= DC_IDLE;
+                    end
+                end
+
+                DC_MISS_REQ: begin
+                    if (mem_req_ready) begin
+                        state_q <= DC_MISS_WAIT;
+                    end
+                end
+
+                DC_MISS_WAIT: begin
+                    if (mem_resp_valid) begin
+                        if (fill_word_q == miss_target_word_q) begin
+                            resp_rdata_q <= fill_resp_shifted_c;
+                        end
+
+                        if (fill_count_q == 3'(WORDS_PER_LINE - 1)) begin
+                            tag_q0[miss_index_c] <= miss_addr_q[17:13];
+                            tag_q1[miss_index_c] <= miss_addr_q[22:18];
+                            tag_q2[miss_index_c] <= miss_addr_q[27:23];
+                            tag_q3[miss_index_c] <= miss_addr_q[31:28];
+                            valid_q[miss_index_c] <= 1'b1;
+                            fill_count_q <= 3'd0;
+                            fill_word_q <= miss_target_word_q;
+                            state_q <= DC_MISS_REPLAY;
+                        end else begin
+                            fill_count_q <= fill_count_q + 3'd1;
+                            fill_word_q <= next_fill_word_c;
+                            state_q <= DC_MISS_REQ;
+                        end
+                    end
+                end
+
+                DC_MISS_REPLAY: begin
+                    if (cpu_req_valid) begin
+                        state_q <= DC_IDLE;
+                    end
+                end
+
+                default: begin
+                    state_q <= DC_IDLE;
+                end
+            endcase
+        end
+    end
+
+endmodule

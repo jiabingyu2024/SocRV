@@ -20,7 +20,7 @@ def expand(path: Path, seen_lists: set[Path], sources: list[Path]) -> None:
             if not nested.exists():
                 raise ValueError(f"{path}:{line_number}: missing nested filelist {nested}")
             expand(nested, seen_lists, sources)
-        elif line.startswith("-"):
+        elif line.startswith(("-", "+")):
             continue
         else:
             source = repo_path(line)

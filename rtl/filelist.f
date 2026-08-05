@@ -7,8 +7,7 @@ rtl/cpu/pkg/cpu_config_pkg.sv
 rtl/cpu/pkg/cpu_types_pkg.sv
 rtl/common/sync/reset_sync.sv
 rtl/common/util/skid_buffer.sv
-rtl/cpu/demo/demo_cpu_core.sv
-rtl/cpu/cpu_subsystem.sv
+-f rtl/cpu/filelist.f
 rtl/bus/hxi/hxi_default_slave.sv
 rtl/bus/hxi/hxi_crossbar.sv
 rtl/bus/bridge/hxi_to_apb.sv

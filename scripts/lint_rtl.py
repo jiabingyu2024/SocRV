@@ -20,7 +20,7 @@ def main() -> int:
         "--top-module",
         "soc_top_generic",
         "-f",
-        "rtl/filelist.f",
+        "sim/filelists/soc_verilator.f",
     ]
     result = bash(in_repo(repo_path(), argv), timeout=120, check=False)
     print(result.stdout, end="")
