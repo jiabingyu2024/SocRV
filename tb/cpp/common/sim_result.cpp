@@ -114,6 +114,7 @@ void SimResult::write_json(const SimConfig& config) const {
         output << "null";
     }
     output << ",\n"
+           << "    \"prompt_count\": " << checker.prompt_count << ",\n"
            << "    \"command_sent\": " << boolean(checker.command_sent)
            << ",\n"
            << "    \"command_cycle\": ";
@@ -123,6 +124,8 @@ void SimResult::write_json(const SimConfig& config) const {
         output << "null";
     }
     output << ",\n"
+           << "    \"command_complete\": "
+           << boolean(checker.command_complete) << ",\n"
            << "    \"framing_error\": "
            << boolean(checker.framing_error) << ",\n"
            << "    \"decoded_bytes\": " << checker.decoded_bytes << ",\n"
@@ -131,6 +134,41 @@ void SimResult::write_json(const SimConfig& config) const {
     output << ",\n"
            << "    \"forbidden_seen\": ";
     write_string_array(output, checker.forbidden_seen);
+    output << "\n"
+           << "  },\n"
+           << "  \"difftest\": {\n"
+           << "    \"enabled\": " << boolean(difftest.enabled) << ",\n"
+           << "    \"passed\": " << boolean(difftest.passed) << ",\n"
+           << "    \"backend\": \"" << escape_json(difftest.backend)
+           << "\",\n"
+           << "    \"backend_version\": \""
+           << escape_json(difftest.backend_version) << "\",\n"
+           << "    \"mode\": \"" << escape_json(difftest.mode) << "\",\n"
+           << "    \"isa\": \"" << escape_json(difftest.isa) << "\",\n"
+           << "    \"compared_events\": " << difftest.compared_events << ",\n"
+           << "    \"retired_instructions\": "
+           << difftest.retired_instructions << ",\n"
+           << "    \"mmio_syncs\": " << difftest.mmio_syncs << ",\n"
+           << "    \"last_order\": ";
+    if (difftest.has_last_order) {
+        output << difftest.last_order;
+    } else {
+        output << "null";
+    }
+    output << ",\n"
+           << "    \"log\": ";
+    if (difftest.enabled) {
+        output << "\"" << escape_json(difftest.log_path) << "\"";
+    } else {
+        output << "null";
+    }
+    output << ",\n"
+           << "    \"trace\": ";
+    if (difftest.enabled) {
+        output << "\"" << escape_json(difftest.trace_path) << "\"";
+    } else {
+        output << "null";
+    }
     output << "\n"
            << "  },\n"
            << "  \"artifacts\": {\n"
@@ -149,8 +187,22 @@ void SimResult::write_json(const SimConfig& config) const {
         output << "{\n"
                << "    \"reason\": \"" << escape_json(exit_reason)
                << "\",\n"
-               << "    \"message\": \"" << escape_json(checker.message)
-               << "\"\n"
+               << "    \"message\": \""
+               << escape_json(
+                      status == "DIFF_MISMATCH"
+                          ? difftest.failure_message
+                          : checker.message)
+               << "\"";
+        if (status == "DIFF_MISMATCH") {
+            output << ",\n"
+                   << "    \"kind\": \""
+                   << escape_json(difftest.failure_kind) << "\",\n"
+                   << "    \"cycle\": " << difftest.failure_cycle << ",\n"
+                   << "    \"order\": " << difftest.failure_order << "\n";
+        } else {
+            output << "\n";
+        }
+        output
                << "  },\n";
     }
     output

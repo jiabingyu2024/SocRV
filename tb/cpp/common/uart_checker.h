@@ -13,8 +13,10 @@ struct UartCheckSnapshot {
     std::string message;
     bool prompt_seen = false;
     std::uint64_t prompt_cycle = 0;
+    std::uint64_t prompt_count = 0;
     bool command_sent = false;
     std::uint64_t command_cycle = 0;
+    bool command_complete = false;
     bool framing_error = false;
     std::uint64_t decoded_bytes = 0;
     std::vector<std::string> missing;
@@ -30,6 +32,7 @@ public:
     void mark_framing_error();
 
     bool prompt_seen() const;
+    bool command_complete() const;
     UartCheckSnapshot evaluate(
         bool test_passed,
         bool performance_complete) const;
@@ -41,6 +44,7 @@ private:
     std::string transcript_;
     bool prompt_seen_ = false;
     std::uint64_t prompt_cycle_ = 0;
+    std::uint64_t prompt_count_ = 0;
     bool command_sent_ = false;
     std::uint64_t command_cycle_ = 0;
     bool framing_error_ = false;

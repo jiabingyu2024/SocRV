@@ -46,8 +46,10 @@
         "message",
         "prompt_seen",
         "prompt_cycle",
+        "prompt_count",
         "command_sent",
         "command_cycle",
+        "command_complete",
         "framing_error",
         "decoded_bytes",
         "missing",
@@ -62,11 +64,13 @@
           "type": ["integer", "null"],
           "minimum": 0
         },
+        "prompt_count": {"type": "integer", "minimum": 0},
         "command_sent": {"type": "boolean"},
         "command_cycle": {
           "type": ["integer", "null"],
           "minimum": 0
         },
+        "command_complete": {"type": "boolean"},
         "framing_error": {"type": "boolean"},
         "decoded_bytes": {"type": "integer", "minimum": 0},
         "missing": {
@@ -118,6 +122,38 @@
           "type": ["number", "null"],
           "minimum": 0
         }
+      }
+    },
+    "difftest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "passed",
+        "backend",
+        "backend_version",
+        "mode",
+        "isa",
+        "compared_events",
+        "retired_instructions",
+        "mmio_syncs",
+        "last_order",
+        "log",
+        "trace"
+      ],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "passed": {"type": "boolean"},
+        "backend": {"type": "string"},
+        "backend_version": {"type": "string"},
+        "mode": {"type": "string"},
+        "isa": {"type": "string"},
+        "compared_events": {"type": "integer", "minimum": 0},
+        "retired_instructions": {"type": "integer", "minimum": 0},
+        "mmio_syncs": {"type": "integer", "minimum": 0},
+        "last_order": {"type": ["integer", "null"], "minimum": 0},
+        "log": {"type": ["string", "null"]},
+        "trace": {"type": ["string", "null"]}
       }
     },
     "artifacts": {"type": "object"},

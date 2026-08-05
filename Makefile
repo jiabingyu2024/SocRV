@@ -5,6 +5,9 @@ SUITE ?= smoke
 TRACE ?= 0
 ISA_GATE ?= current
 COREMARK_ITERATIONS ?= 3
+DIFFTEST ?= 0
+DIFFTEST_MODE ?= ram-strict
+DIFFTEST_ISA ?= rv32im_zicsr_zicntr_zifencei
 
 .DEFAULT_GOAL := help
 
@@ -14,6 +17,7 @@ COREMARK_ITERATIONS ?= 3
 	rtl-lint check software software-smoke software-trap-timer \
 	software-rtthread software-fpga sim sim-smoke sim-trap-timer \
 	sim-rtthread sim-coremark sim-isa sim-quick sim-full regression \
+	difftest-build difftest-selftest diff-isa diff-smoke diff-rtthread diff-replay \
 	fpga-build fpga-bitstream fpga-check fpga-program check-images \
 	release release-check clean-software clean-images clean-sim \
 	clean-regression clean-fpga clean
@@ -90,18 +94,22 @@ software-fpga: deps-check
 # Focused simulations. TRACE=1 is intended for a failing focused test.
 sim: deps-check
 	@$(PYTHON) scripts/run_verilator.py --profile $(PROFILE) \
+		$(if $(filter 1,$(DIFFTEST)),--difftest --difftest-mode $(DIFFTEST_MODE) --difftest-isa $(DIFFTEST_ISA),) \
 		$(if $(filter 1,$(TRACE)),--trace,)
 
 sim-smoke:
 	@$(PYTHON) scripts/run_verilator.py --profile smoke \
+		$(if $(filter 1,$(DIFFTEST)),--difftest --difftest-mode soc-mmio --difftest-isa $(DIFFTEST_ISA),) \
 		$(if $(filter 1,$(TRACE)),--trace,)
 
 sim-trap-timer:
 	@$(PYTHON) scripts/run_verilator.py --profile trap-timer \
+		$(if $(filter 1,$(DIFFTEST)),--difftest --difftest-mode soc-mmio --difftest-isa $(DIFFTEST_ISA),) \
 		$(if $(filter 1,$(TRACE)),--trace,)
 
 sim-rtthread: deps-check
 	@$(PYTHON) scripts/run_verilator.py --profile rtthread \
+		$(if $(filter 1,$(DIFFTEST)),--difftest --difftest-mode soc-mmio --difftest-isa $(DIFFTEST_ISA),) \
 		$(if $(filter 1,$(TRACE)),--trace,)
 
 sim-coremark: deps-check
@@ -109,10 +117,40 @@ sim-coremark: deps-check
 		--test rtthread-coremark-command-$(COREMARK_ITERATIONS) \
 		--benchmark-iterations $(COREMARK_ITERATIONS) \
 		--uart-command "coremark $(COREMARK_ITERATIONS)" \
+		$(if $(filter 1,$(DIFFTEST)),--difftest --difftest-mode soc-mmio --difftest-isa $(DIFFTEST_ISA),) \
 		$(if $(filter 1,$(TRACE)),--trace,)
 
 sim-isa: isa-data-check
-	@$(PYTHON) scripts/run_isa_tests.py --gate $(ISA_GATE)
+	@$(PYTHON) scripts/run_isa_tests.py --gate $(ISA_GATE) \
+		$(if $(filter 1,$(DIFFTEST)),--difftest --difftest-isa $(DIFFTEST_ISA),)
+
+difftest-build: deps-check
+	@$(PYTHON) scripts/build_spike.py --jobs $(JOBS)
+	@$(PYTHON) scripts/run_verilator.py --profile smoke --build-only --difftest
+
+difftest-selftest: difftest-build
+	@$(PYTHON) scripts/difftest_selftest.py
+
+diff-isa: difftest-build isa-data-check
+	@$(PYTHON) scripts/run_isa_tests.py --gate $(ISA_GATE) \
+		--difftest --difftest-isa $(DIFFTEST_ISA) --no-rtl-build
+
+diff-smoke: difftest-build
+	@$(PYTHON) scripts/run_verilator.py --profile smoke --difftest \
+		--difftest-mode soc-mmio --difftest-isa $(DIFFTEST_ISA) \
+		--no-rtl-build
+
+diff-rtthread: difftest-build
+	@$(PYTHON) scripts/run_verilator.py --profile rtthread --difftest \
+		--difftest-mode soc-mmio --difftest-isa $(DIFFTEST_ISA) \
+		--uart-command socrv_info \
+		--uart-prompt "msh >" \
+		--checker uart-command-test-status-and-uart \
+		--uart-expect "SocRV march=rv32i_zicsr" --no-rtl-build
+
+diff-replay:
+	@$(PYTHON) scripts/replay_difftest.py --result "$(RESULT)" \
+		$(if $(filter 1,$(TRACE)),--trace,)
 
 # Daily CPU edit loop: current ISA gate, bare-metal, RT-Thread, CoreMark 3.
 sim-quick:

@@ -48,6 +48,17 @@
               "iterations": {"type": "integer", "minimum": 1}
             }
           },
+          "difftest": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["enabled", "backend", "mode"],
+            "properties": {
+              "enabled": {"type": "boolean"},
+              "backend": {"const": "spike"},
+              "mode": {"enum": ["ram-strict", "soc-mmio"]},
+              "isa": {"type": "string", "minLength": 1}
+            }
+          },
           "model": {"type": "object"}
         }
       }

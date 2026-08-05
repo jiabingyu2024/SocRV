@@ -35,6 +35,21 @@ DEPENDENCIES = {
             repo_path("software", "coremark", "dependency.lock.json"),
             repo_path("software", "coremark", "upstream"),
         ),
+        Dependency(
+            "spike",
+            repo_path("sim", "reference", "spike", "dependency.lock.json"),
+            repo_path("sim", "reference", "spike", "upstream"),
+        ),
+        Dependency(
+            "ibex-cosim",
+            repo_path(
+                "sim",
+                "reference",
+                "ibex-cosim",
+                "dependency.lock.json",
+            ),
+            repo_path("sim", "reference", "ibex-cosim", "upstream"),
+        ),
     )
 }
 
@@ -239,6 +254,8 @@ def initialize_checkout(
 
     commands = (
         ("init",),
+        ("config", "core.autocrlf", "false"),
+        ("config", "core.symlinks", "false"),
         ("remote", "add", "origin", str(lock["url"])),
     )
     for command in commands:

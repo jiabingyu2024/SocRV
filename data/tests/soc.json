@@ -7,6 +7,12 @@
       "suite": ["smoke", "correctness", "baremetal"],
       "image": "smoke",
       "checker": "test-status-and-uart",
+      "difftest": {
+        "enabled": true,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
       "uart_expect": ["SocRV smoke PASS"],
       "max_cycles": 200000,
       "seed": 1
@@ -17,9 +23,19 @@
       "suite": ["smoke", "correctness", "rtthread", "os"],
       "image": "rtthread",
       "checker": "test-status-and-uart",
+      "difftest": {
+        "enabled": true,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_command": "socrv_info",
+      "uart_prompt": "msh >",
+      "uart_prompt_timeout": 5000000,
       "uart_expect": [
         "Thread Nano Operating System",
         "SocRV RT-Thread boot",
+        "SocRV march=rv32i_zicsr",
         "msh >"
       ],
       "max_cycles": 2000000,
@@ -31,6 +47,12 @@
       "suite": ["smoke", "correctness", "baremetal", "bsp"],
       "image": "trap-timer",
       "checker": "test-status",
+      "difftest": {
+        "enabled": true,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
       "max_cycles": 500000,
       "seed": 1
     },
@@ -46,6 +68,12 @@
       ],
       "image": "rtthread-coremark",
       "checker": "uart-command-coremark-crc-test-status-and-perf-window",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
       "uart_command": "coremark 3",
       "uart_prompt": "msh >",
       "uart_prompt_timeout": 5000000,
@@ -70,6 +98,12 @@
       "suite": ["coremark", "performance", "benchmark", "rtthread"],
       "image": "rtthread-coremark",
       "checker": "uart-command-coremark-crc-test-status-and-perf-window",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
       "uart_command": "coremark 10",
       "uart_prompt": "msh >",
       "uart_prompt_timeout": 5000000,

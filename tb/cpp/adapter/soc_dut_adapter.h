@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
+
+#include "difftest_types.h"
 
 class VerilatedContext;
 class VerilatedVcdC;
@@ -25,6 +28,8 @@ public:
     bool uart_tx() const;
     bool commit_valid() const;
     std::uint32_t commit_pc() const;
+    std::vector<ArchEvent> arch_events() const;
+    std::vector<IrqEvent> irq_events() const;
     bool cpu_fault() const;
     bool test_done() const;
     bool test_pass() const;

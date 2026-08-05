@@ -89,6 +89,9 @@ def main() -> int:
     )
     parser.add_argument("--max-cycles", type=int, default=300_000)
     parser.add_argument("--no-rtl-build", action="store_true")
+    parser.add_argument("--difftest", action="store_true")
+    parser.add_argument("--difftest-isa")
+    parser.add_argument("--trace", action="store_true")
     args = parser.parse_args()
 
     manifest = read_json(repo_path("data", "isa", "manifest.json"))
@@ -126,16 +129,25 @@ def main() -> int:
             f"--gate {gate_name} --tests {suite}/{name} "
             f"--max-cycles {args.max_cycles} --no-rtl-build"
         )
+        if args.difftest:
+            reproduce += " --difftest"
+            if args.difftest_isa:
+                reproduce += f" --difftest-isa {args.difftest_isa}"
+        if args.trace:
+            reproduce += " --trace"
         result_path = run_image(
             image_dir,
             f"isa-{suite}-{name}",
             args.max_cycles,
             rebuild_model=(index == 0 and not args.no_rtl_build),
-            trace=False,
+            trace=args.trace,
             require_pass=False,
             profile=f"isa/{suite}",
             seed=1,
             reproduce=reproduce,
+            difftest=args.difftest,
+            difftest_mode="ram-strict",
+            difftest_isa=args.difftest_isa or "",
         )
         result = json.loads(result_path.read_text(encoding="utf-8"))
         result["isa_suite"] = suite

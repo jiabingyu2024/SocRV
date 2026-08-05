@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "perf_stats.h"
+#include "difftest_checker.h"
 #include "soc_dut_adapter.h"
 #include "uart_checker.h"
 #include "uart_decoder.h"
@@ -19,7 +20,9 @@ SimResult SimControl::run() {
     UartStimulus uart_stimulus(
         config_.uart_command,
         config_.uart_cycles_per_bit);
+    DiffTestChecker difftest(config_);
     std::uint32_t last_commit_pc = 0;
+    bool difftest_fault_injected = false;
 
     dut_.set_reset(false);
     dut_.set_uart_rx(true);
@@ -45,10 +48,63 @@ SimResult SimControl::run() {
         if (uart.framing_error()) {
             checker.mark_framing_error();
         }
-        if (dut_.commit_valid()) {
-            last_commit_pc = dut_.commit_pc();
+        std::vector<ArchEvent> arch_events = dut_.arch_events();
+        const std::vector<IrqEvent> irq_events = dut_.irq_events();
+        std::uint32_t retired_count = 0;
+        for (const ArchEvent& event : arch_events) {
+            if (event.valid) {
+                last_commit_pc = event.pc_rdata;
+            }
+            if (event.valid && event.retired) {
+                ++retired_count;
+            }
         }
-        stats.observe(cycle, dut_.commit_valid(), dut_.test_code());
+        if (!difftest_fault_injected &&
+            !config_.difftest_fault_kind.empty()) {
+            for (ArchEvent& event : arch_events) {
+                if (!event.valid ||
+                    event.order < config_.difftest_fault_order) {
+                    continue;
+                }
+                if (config_.difftest_fault_kind == "order") {
+                    ++event.order;
+                } else if (config_.difftest_fault_kind == "pc") {
+                    event.pc_wdata ^= 4u;
+                } else if (config_.difftest_fault_kind == "rd") {
+                    if (!event.retired || !event.rd_wen) {
+                        continue;
+                    }
+                    event.rd_wdata ^= 1u;
+                } else if (config_.difftest_fault_kind == "mem") {
+                    if (!event.mem_valid) {
+                        continue;
+                    }
+                    if (event.mem_wmask != 0) {
+                        event.mem_wmask ^= 1u;
+                    } else {
+                        event.mem_rmask ^= 1u;
+                    }
+                }
+                difftest_fault_injected = true;
+                std::cerr << "\nDiffTest self-test injected "
+                          << config_.difftest_fault_kind
+                          << " fault at order " << event.order << "\n";
+                break;
+            }
+        }
+        difftest.observe_cycle(cycle, arch_events, irq_events);
+        stats.observe(cycle, retired_count, dut_.test_code());
+
+        if (!difftest.passed()) {
+            std::cerr << "\nDIFF_MISMATCH: "
+                      << difftest.snapshot().failure_kind << ": "
+                      << difftest.snapshot().failure_message << "\n";
+            result.status = "DIFF_MISMATCH";
+            result.exit_reason =
+                "difftest_" + difftest.snapshot().failure_kind;
+            result.cycles = cycle;
+            break;
+        }
 
         if (dut_.cpu_fault()) {
             std::cerr << "\nFAIL: CPU bus fault at cycle " << cycle << "\n";
@@ -60,6 +116,11 @@ SimResult SimControl::run() {
         }
         if (dut_.test_done()) {
             const bool passed = dut_.test_pass();
+            if (passed &&
+                !config_.uart_command.empty() &&
+                !checker.command_complete()) {
+                continue;
+            }
             std::cout << "\n" << (passed ? "PASS" : "FAIL")
                       << ": test_code=" << dut_.test_code()
                       << " cycles=" << cycle << "\n";
@@ -106,6 +167,8 @@ SimResult SimControl::run() {
         result.status = "FAIL";
         result.exit_reason = "checker_failed";
     }
+    difftest.finish();
+    result.difftest = difftest.snapshot();
     dut_.finish();
     return result;
 }

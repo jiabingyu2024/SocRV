@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "difftest_types.h"
+
 struct SimConfig {
     std::uint64_t max_cycles = 200000;
     std::uint64_t benchmark_iterations = 0;
@@ -26,6 +28,19 @@ struct SimConfig {
     std::string checker = "test-status";
     std::vector<std::string> uart_expect;
     std::vector<std::string> uart_reject;
+    bool difftest_enabled = false;
+    std::string difftest_backend = "spike";
+    std::string difftest_backend_version;
+    std::string difftest_mode = "ram-strict";
+    std::string difftest_isa = "rv32im_zicsr_zicntr_zifencei";
+    std::string difftest_log_path;
+    std::string difftest_trace_path;
+    std::string difftest_reference_trace_path;
+    std::string difftest_fault_kind;
+    std::uint64_t difftest_fault_order = 0;
+    std::uint32_t difftest_reset_pc = 0;
+    std::uint32_t difftest_reset_mtvec = 0;
+    std::vector<DiffMemoryRegion> difftest_regions;
 
     static SimConfig parse(int argc, char** argv);
     bool performance_enabled() const;

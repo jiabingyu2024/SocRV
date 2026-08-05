@@ -7,7 +7,7 @@ from pathlib import Path
 from lib.hashing import sha256_file
 from lib.manifest import read_json, write_json_atomic
 from lib.repo import repo_path
-from run_verilator import run_profile
+from run_verilator import model_paths, run_profile
 
 
 def display_testlist_path(path: Path) -> str:
@@ -42,6 +42,9 @@ def main() -> int:
     )
     parser.add_argument("--suite", default="smoke")
     parser.add_argument("--no-rtl-build", action="store_true")
+    difftest_group = parser.add_mutually_exclusive_group()
+    difftest_group.add_argument("--difftest", action="store_true")
+    difftest_group.add_argument("--no-difftest", action="store_true")
     args = parser.parse_args()
     document = read_json(args.testlist)
     tests = [test for test in document["tests"] if args.suite in test["suite"]]
@@ -52,11 +55,17 @@ def main() -> int:
     performance_results = []
     for index, test in enumerate(tests):
         performance = test.get("performance", {})
+        difftest_config = test.get("difftest", {})
+        difftest_enabled = difftest_config.get("enabled", False)
+        if args.difftest:
+            difftest_enabled = True
+        elif args.no_difftest:
+            difftest_enabled = False
         result_path = run_profile(
             test["image"],
             test["name"],
             test["max_cycles"],
-            rebuild_model=(index == 0 and not args.no_rtl_build),
+            rebuild_model=not args.no_rtl_build,
             build_sw=True,
             trace=False,
             seed=test.get("seed", 1),
@@ -73,6 +82,13 @@ def main() -> int:
             checker=test["checker"],
             uart_expect=tuple(test.get("uart_expect", [])),
             uart_reject=tuple(test.get("uart_reject", [])),
+            difftest=difftest_enabled,
+            difftest_mode=difftest_config.get(
+                "mode",
+                "soc-mmio" if test["image"].startswith("rtthread")
+                else "ram-strict",
+            ),
+            difftest_isa=difftest_config.get("isa", ""),
         )
         result = json.loads(result_path.read_text(encoding="utf-8"))
         results.append(result)
@@ -88,9 +104,11 @@ def main() -> int:
 
     passed = all(result["status"] == "PASS" for result in results)
     summary_path = repo_path("build", "regression", args.suite, "summary.json")
-    model_manifest = read_json(
-        repo_path("build", "verilator", "soc", "build_manifest.json")
+    any_difftest = any(
+        result.get("difftest", {}).get("enabled", False)
+        for result in results
     )
+    model_manifest = read_json(model_paths(any_difftest)[1])
     write_json_atomic(
         summary_path,
         {

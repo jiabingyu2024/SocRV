@@ -18,10 +18,23 @@ Daily CPU iteration:
       Run the four checks above in sequence.
   make sim-full
       Run RV32UI/RV32MI/RV32UM, RT-Thread and CoreMark 10 milestone checks.
+  make diff-smoke
+      Lockstep the bare-metal smoke image against pinned Spike.
+  make diff-isa ISA_GATE=current
+      Run the selected riscv-tests gate with retirement-level Spike DiffTest.
+  make diff-rtthread
+      Boot RT-Thread with explicit MMIO/interrupt synchronization to Spike.
+  make diff-replay RESULT=<result.json> TRACE=1
+      Reproduce the first architectural mismatch with trace artifacts.
 
 Software:
   make deps
-      Clone or update pinned RT-Thread, CoreMark and riscv-tests dependencies.
+      Clone or update pinned RT-Thread, CoreMark, riscv-tests, Spike and
+      the minimal Ibex co-simulation adapter.
+  make difftest-build
+      Build pinned Spike locally and the separate Verilator DiffTest model.
+  make difftest-selftest
+      Inject known commit faults and verify ORDER/PC/GPR/MEM diagnosis.
   make software-fpga
       Build the unified RT-Thread + FinSH + CoreMark board image.
   make software PROFILE=<name>
@@ -51,6 +64,8 @@ Useful variables:
   ISA_GATE=current|final-base|fp-single|fp-double|final
   COREMARK_ITERATIONS=3
   TRACE=0|1
+  DIFFTEST=0|1
+  DIFFTEST_MODE=ram-strict|soc-mmio
   JOBS=4
 
 Generated files are under build/. Use scoped clean targets where possible:

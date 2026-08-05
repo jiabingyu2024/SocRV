@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "name": "spike",
+  "url": "https://github.com/lowRISC/riscv-isa-sim.git",
+  "ref": "ibex-cosim-v0.3",
+  "commit": "9af9730baf7b956c3072c1b436d867aca5ef8f4c",
+  "required_paths": [
+    "configure",
+    "riscv/processor.h",
+    "riscv/processor.cc",
+    "riscv/devices.h",
+    "riscv/log_file.h",
+    "LICENSE"
+  ]
+}

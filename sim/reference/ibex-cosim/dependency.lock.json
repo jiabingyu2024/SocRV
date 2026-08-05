@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "name": "ibex-cosim",
+  "url": "https://github.com/lowRISC/ibex.git",
+  "ref": "e1f614887eef3ae089292d2ce8470c6eb80a1ae9",
+  "commit": "e1f614887eef3ae089292d2ce8470c6eb80a1ae9",
+  "sparse_paths": [
+    "dv/cosim/cosim.h",
+    "dv/cosim/spike_cosim.h",
+    "dv/cosim/spike_cosim.cc",
+    "LICENSE"
+  ],
+  "required_paths": [
+    "dv/cosim/cosim.h",
+    "dv/cosim/spike_cosim.h",
+    "dv/cosim/spike_cosim.cc",
+    "LICENSE"
+  ]
+}

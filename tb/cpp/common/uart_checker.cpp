@@ -24,10 +24,13 @@ UartChecker::UartChecker(const SimConfig& config)
 
 void UartChecker::observe(char byte, std::uint64_t cycle) {
     transcript_.push_back(byte);
-    if (!prompt_seen_ && !config_.uart_prompt.empty() &&
+    if (!config_.uart_prompt.empty() &&
         ends_with(transcript_, config_.uart_prompt)) {
-        prompt_seen_ = true;
-        prompt_cycle_ = cycle;
+        ++prompt_count_;
+        if (!prompt_seen_) {
+            prompt_seen_ = true;
+            prompt_cycle_ = cycle;
+        }
     }
 }
 
@@ -42,6 +45,10 @@ void UartChecker::mark_framing_error() {
 
 bool UartChecker::prompt_seen() const {
     return prompt_seen_;
+}
+
+bool UartChecker::command_complete() const {
+    return command_sent_ && prompt_count_ >= 2;
 }
 
 bool UartChecker::contains_number_after(
@@ -63,8 +70,10 @@ UartCheckSnapshot UartChecker::evaluate(
     snapshot.name = config_.checker;
     snapshot.prompt_seen = prompt_seen_;
     snapshot.prompt_cycle = prompt_cycle_;
+    snapshot.prompt_count = prompt_count_;
     snapshot.command_sent = command_sent_;
     snapshot.command_cycle = command_cycle_;
+    snapshot.command_complete = command_complete();
     snapshot.framing_error = framing_error_;
     snapshot.decoded_bytes = transcript_.size();
 
@@ -86,6 +95,10 @@ UartCheckSnapshot UartChecker::evaluate(
         }
         if (!command_sent_) {
             snapshot.missing.push_back("UART command transmission");
+        }
+        if (!command_complete()) {
+            snapshot.missing.push_back(
+                "second UART prompt after command completion");
         }
     }
 

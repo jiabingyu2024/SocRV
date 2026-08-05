@@ -1,0 +1,18 @@
+diff --git a/riscv/decode.h b/riscv/decode.h
+index aeb0ac3..a61df58 100644
+--- a/riscv/decode.h
++++ b/riscv/decode.h
+@@ -422,9 +422,11 @@ do { \
+ #define DECLARE_XENVCFG_VARS(field) \
+   reg_t m##field = get_field(STATE.menvcfg->read(), MENVCFG_##field); \
+   reg_t s##field = get_field(STATE.senvcfg->read(), SENVCFG_##field); \
+   reg_t h##field = get_field(STATE.henvcfg->read(), HENVCFG_##field)
+ 
+-#define DEBUG_START             0x0
+-#define DEBUG_END               (0x1000 - 1)
++// SocRV executes CODE from address zero. Keep Spike's debug window outside
++// the generated SoC Memory Map so normal reset-vector fetches are permitted.
++#define DEBUG_START             0xFFFF0000
++#define DEBUG_END               (DEBUG_START + 0x1000 - 1)
+ 
+ #endif

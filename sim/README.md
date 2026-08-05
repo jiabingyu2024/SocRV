@@ -1,5 +1,8 @@
 # Simulation
 
+The retirement-level Spike DiffTest implementation and commands are documented
+in [`../docs/difftest_spike_integration_and_debug_guide.md`](../docs/difftest_spike_integration_and_debug_guide.md).
+
 常用入口：
 
 ```text

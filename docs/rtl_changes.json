@@ -53,6 +53,46 @@
         "current ISA gate PASS: 40 RV32UI tests"
       ],
       "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-05",
+      "scope": [
+        "rtl/cpu/pkg/cpu_types_pkg.sv",
+        "rtl/cpu/demo/demo_cpu_core.sv",
+        "tb/soc/soc_sim_top.sv"
+      ],
+      "summary": "Added a single-slot retirement event contract for Spike DiffTest, including ordered normal/synchronous-trap events, architectural memory effects, pre-instruction Machine CSR snapshots, and ordered asynchronous interrupt notifications.",
+      "interface_change": true,
+      "timing_behavior_change": false,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "normal Verilator model build PASS",
+        "normal baremetal smoke PASS"
+      ],
+      "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-05",
+      "scope": [
+        "rtl/cpu/demo/demo_cpu_core.sv"
+      ],
+      "summary": "Completed the demo core functional DiffTest baseline: RV32M arithmetic, fence.i, precise alignment traps, U/M privilege transitions, Machine CSR legality and WARL behavior, counters, minimal PMP state, and trigger CSR discovery state.",
+      "interface_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "frequency_note": "The demo RV32M multiply/divide implementation is combinational and is a correctness scaffold, not a final FPGA timing implementation.",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "RV32UI DiffTest PASS: 41/41",
+        "RV32UM DiffTest PASS: 8/8",
+        "RV32MI DiffTest PASS: 16/16, including independently validated address-trigger breakpoint traps",
+        "baremetal smoke DiffTest PASS",
+        "trap/timer DiffTest PASS",
+        "RT-Thread UART command DiffTest PASS",
+        "RT-Thread CoreMark 3 command and CRC PASS"
+      ],
+      "vivado_invoked": false
     }
   ],
   "assumptions": [

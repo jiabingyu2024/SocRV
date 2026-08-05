@@ -7,6 +7,7 @@
 #include "perf_stats.h"
 #include "sim_config.h"
 #include "uart_checker.h"
+#include "difftest_types.h"
 
 struct SimResult {
     std::string status = "NO_RESULT";
@@ -17,6 +18,7 @@ struct SimResult {
     std::uint32_t last_commit_pc = 0;
     PerfSnapshot performance;
     UartCheckSnapshot checker;
+    DiffTestSnapshot difftest;
 
     void write_json(const SimConfig& config) const;
     int exit_code() const;

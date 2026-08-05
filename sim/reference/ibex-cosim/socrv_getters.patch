@@ -1,0 +1,64 @@
+diff --git a/cosim.h b/cosim.h
+index 224f74c..357d6ca 100644
+--- a/cosim.h
++++ b/cosim.h
+@@ -2,6 +2,7 @@
+ // Licensed under the Apache License, Version 2.0, see LICENSE for details.
+ // SPDX-License-Identifier: Apache-2.0
+ 
++#include <cstdint>
+ #include <string>
+ #include <vector>
+ 
+diff --git a/spike_cosim.h b/spike_cosim.h
+index 5ccfa7a..73d9f10 100644
+--- a/spike_cosim.h
++++ b/spike_cosim.h
+@@ -105,6 +105,12 @@ class SpikeCosim : public simif_t, public Cosim {
+   const std::vector<std::string> &get_errors() override;
+   void clear_errors() override;
+   int get_insn_cnt() override;
++  uint32_t get_pc() const;
++  uint32_t get_gpr(unsigned int index) const;
++  uint32_t get_csr_value(int csr_num);
++  void force_pc(uint32_t value);
++  void force_privilege(uint32_t value);
++  void force_csr_value(int csr_num, uint32_t value);
+ };
+ 
+ #endif  // SPIKE_COSIM_H_
+diff --git a/spike_cosim.cc b/spike_cosim.cc
+index 6db405e..a2f06c5 100644
+--- a/spike_cosim.cc
++++ b/spike_cosim.cc
+@@ -636,3 +636,30 @@ void SpikeCosim::leave_nmi_mode() {
+ }
+ 
+ int SpikeCosim::get_insn_cnt() { return insn_cnt; }
++
++uint32_t SpikeCosim::get_pc() const {
++  return static_cast<uint32_t>(
++      processor->get_state()->pc & static_cast<reg_t>(0xffffffff));
++}
++
++uint32_t SpikeCosim::get_gpr(unsigned int index) const {
++  assert(index < 32);
++  return static_cast<uint32_t>(
++      processor->get_state()->XPR[index] & static_cast<reg_t>(0xffffffff));
++}
++
++uint32_t SpikeCosim::get_csr_value(int csr_num) {
++  return static_cast<uint32_t>(processor->get_csr(csr_num));
++}
++
++void SpikeCosim::force_pc(uint32_t value) {
++  processor->get_state()->pc = static_cast<reg_t>(value);
++}
++
++void SpikeCosim::force_privilege(uint32_t value) {
++  processor->set_privilege(static_cast<reg_t>(value));
++}
++
++void SpikeCosim::force_csr_value(int csr_num, uint32_t value) {
++  processor->put_csr(csr_num, static_cast<reg_t>(value));
++}

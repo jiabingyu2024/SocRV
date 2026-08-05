@@ -6,6 +6,8 @@
 /software/rt-thread/upstream/
 /software/riscv-tests/upstream/
 /software/coremark/upstream/
+/sim/reference/spike/upstream/
+/sim/reference/ibex-cosim/upstream/
 
 # Python
 __pycache__/

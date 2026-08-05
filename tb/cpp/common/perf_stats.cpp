@@ -9,11 +9,9 @@ PerfStats::PerfStats(const SimConfig& config)
 
 void PerfStats::observe(
     std::uint64_t cycle,
-    bool commit_valid,
+    std::uint32_t retired_count,
     std::uint32_t test_code) {
-    if (commit_valid) {
-        ++total_commits_;
-    }
+    total_commits_ += retired_count;
     if (!requested_) {
         return;
     }

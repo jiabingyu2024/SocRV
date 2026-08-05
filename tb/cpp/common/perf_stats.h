@@ -25,7 +25,7 @@ public:
     explicit PerfStats(const SimConfig& config);
     void observe(
         std::uint64_t cycle,
-        bool commit_valid,
+        std::uint32_t retired_count,
         std::uint32_t test_code);
     std::uint64_t total_commits() const;
     PerfSnapshot snapshot() const;
