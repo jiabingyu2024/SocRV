@@ -55,6 +55,7 @@ make check
 make sim-smoke
 make sim-isa ISA_GATE=current
 make sim-rtthread
+make sim-msh
 make sim-coremark COREMARK_ITERATIONS=3
 ```
 
@@ -344,11 +345,30 @@ no parity
 no flow control
 ```
 
-看到 `msh >` 后输入：
+看到 `msh >` 后可使用以下基础命令：
 
 ```text
+help             # 显示当前固件实际注册的全部 MSH 命令
+ps               # 查看线程状态、优先级和栈使用率
+free             # 查看 RT-Thread 堆使用情况
+version          # 显示 RT-Thread 版本
+list thread      # 列出线程对象，ps 的详细命令族入口
+uptime           # 显示 tick 和运行秒数
+socrv_info       # 显示 SocRV ISA、时钟和 UART 合同
 coremark 10000
 ```
+
+最终 FPGA 镜像注册了 `help`、`ps`、`free`、`version`、`list`、`clear`、
+`uptime`、`socrv_info` 和 `coremark`。上板前执行：
+
+```text
+make sim-msh
+```
+
+该回归加载与 FPGA 相同的 `rtthread-coremark` 镜像，通过真实 UART RX 分别输入
+`help`、`ps` 和 `uptime`，检查命令输出并确认每条命令结束后再次出现 `msh >`。
+结果位于 `build/regression/msh/summary.json`，各命令的完整串口日志位于
+`build/log/soc/rtthread-msh-*.log`。
 
 命令会输出上游 CoreMark 信息，以及 SocRV 的 64 位精确 total ticks、total time
 和 ticks/iteration。结束后返回 shell，可以继续执行 `socrv_info` 或再次运行

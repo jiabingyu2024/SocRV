@@ -18,3 +18,18 @@ static int cmd_socrv_info(int argc, char **argv)
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(cmd_socrv_info, socrv_info, show SocRV contract);
+
+static int cmd_uptime(int argc, char **argv)
+{
+    const rt_tick_t ticks = rt_tick_get();
+
+    RT_UNUSED(argc);
+    RT_UNUSED(argv);
+    rt_kprintf(
+        "uptime: %u ticks (%u seconds)\n",
+        (unsigned int)ticks,
+        (unsigned int)(ticks / RT_TICK_PER_SECOND)
+    );
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(cmd_uptime, uptime, show system uptime);

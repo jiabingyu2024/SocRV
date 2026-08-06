@@ -42,6 +42,7 @@ def main() -> int:
     )
     parser.add_argument("--suite", default="smoke")
     parser.add_argument("--no-rtl-build", action="store_true")
+    parser.add_argument("--trace", action="store_true")
     difftest_group = parser.add_mutually_exclusive_group()
     difftest_group.add_argument("--difftest", action="store_true")
     difftest_group.add_argument("--no-difftest", action="store_true")
@@ -67,7 +68,7 @@ def main() -> int:
             test["max_cycles"],
             rebuild_model=not args.no_rtl_build,
             build_sw=True,
-            trace=False,
+            trace=args.trace,
             seed=test.get("seed", 1),
             performance=performance.get("enabled", False),
             benchmark_iterations=performance.get("iterations", 0),

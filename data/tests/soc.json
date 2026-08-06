@@ -57,6 +57,75 @@
       "seed": 1
     },
     {
+      "name": "rtthread-msh-help",
+      "target": "soc",
+      "suite": ["msh", "correctness", "rtthread", "os", "fpga-software"],
+      "image": "rtthread-coremark",
+      "checker": "uart-command-test-status-and-uart",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_command": "help",
+      "uart_prompt": "msh >",
+      "uart_prompt_timeout": 5000000,
+      "uart_expect": [
+        "RT-Thread shell commands:",
+        "ps               - List threads",
+        "free             - Show the memory usage",
+        "uptime           - show system uptime",
+        "socrv_info       - show SocRV contract",
+        "coremark         - run CoreMark"
+      ],
+      "max_cycles": 5000000,
+      "seed": 1
+    },
+    {
+      "name": "rtthread-msh-ps",
+      "target": "soc",
+      "suite": ["msh", "correctness", "rtthread", "os", "fpga-software"],
+      "image": "rtthread-coremark",
+      "checker": "uart-command-test-status-and-uart",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_command": "ps",
+      "uart_prompt": "msh >",
+      "uart_prompt_timeout": 5000000,
+      "uart_expect": [
+        "thread   pri  status",
+        "tshell",
+        "tidle0",
+        "running"
+      ],
+      "max_cycles": 5000000,
+      "seed": 1
+    },
+    {
+      "name": "rtthread-msh-uptime",
+      "target": "soc",
+      "suite": ["msh", "correctness", "rtthread", "os", "fpga-software"],
+      "image": "rtthread-coremark",
+      "checker": "uart-command-test-status-and-uart",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_command": "uptime",
+      "uart_prompt": "msh >",
+      "uart_prompt_timeout": 5000000,
+      "uart_expect": ["uptime:", "ticks", "seconds"],
+      "max_cycles": 3000000,
+      "seed": 1
+    },
+    {
       "name": "rtthread-coremark-command-3",
       "target": "soc",
       "suite": [

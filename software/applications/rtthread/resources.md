@@ -10,3 +10,8 @@
 The CoreMark RT-Thread profile reuses the main thread and a 2 KiB static
 benchmark data area.  It does not place the CoreMark data block on a thread
 stack.
+
+The FPGA `rtthread-coremark` image registers these MSH commands:
+`help`, `ps`, `free`, `version`, `list`, `clear`, `uptime`, `socrv_info`, and
+`coremark`. Run `make sim-msh` to verify the help table, thread listing, and
+uptime output through the real UART path before programming the board.

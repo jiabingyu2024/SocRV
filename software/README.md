@@ -49,8 +49,20 @@ build/images/rtthread-coremark/{code.mem,data.mem,image.json}
 板上进入 `msh >` 后运行：
 
 ```text
+help
+ps
+free
+version
+list thread
+uptime
+socrv_info
 coremark 10000
 ```
+
+`help` 显示当前固件实际注册的命令；`ps` 查看线程状态和栈使用率；`free`
+查看堆使用情况；`uptime` 显示 RT-Thread tick 和运行秒数。使用
+`make sim-msh` 可在不上板的情况下，对最终 `rtthread-coremark` FPGA 镜像验证
+`help`、`ps` 和 `uptime` 的真实 UART 交互。
 
 当前参考 core 使用 `rv32i_zicsr/ilp32`。最终整数目标是 RV32IM + Zicsr +
 Zicntr + Zifencei，并通过 RV32UI/RV32MI/RV32UM；浮点在 F/FD 中后续确定。

@@ -3,6 +3,9 @@
 > **当前实现说明（2026-08-04）**：最终软件 profile 是
 > `rtthread-coremark`。固件启动后停留在 FinSH/MSH，由
 > `coremark [iterations]` 命令启动测试；板上目标命令为 `coremark 10000`。
+> 同一固件还提供 `help`、`ps`、`free`、`version`、`list`、`clear`、
+> `uptime` 和 `socrv_info`。`make sim-msh` 使用最终 FPGA 镜像，通过真实
+> UART 验证帮助表、线程表和 uptime 输出。
 > 原先自动运行的 `coremark-rtthread` 与 `coremark-rtthread-perf` 已移除。
 > 构建、产物和板上操作以
 > [`../cpu_iteration_sim_software_fpga_guide.md`](../cpu_iteration_sim_software_fpga_guide.md)

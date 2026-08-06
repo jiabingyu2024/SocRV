@@ -12,6 +12,8 @@ Daily CPU iteration:
       Fast ISA gate for the instructions implemented by the current core.
   make sim-rtthread
       Boot RT-Thread and verify scheduler/timer/basic BSP behavior.
+  make sim-msh
+      Verify help, ps and uptime on the exact FPGA RT-Thread/CoreMark image.
   make sim-coremark COREMARK_ITERATIONS=3
       Inject `coremark 3` through the real UART RX and collect CRC/timing data.
   make sim-quick
@@ -56,7 +58,7 @@ Project checks:
       Memory Map and RTL lint.
   make isa-gates
       List current/final-base/fp-single/fp-double/final ISA gates.
-  make regression SUITE=smoke|correctness|coremark|performance
+  make regression SUITE=smoke|msh|correctness|coremark|performance
       Run the controlled JSON testlist.
 
 Useful variables:

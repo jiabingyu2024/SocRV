@@ -16,7 +16,7 @@ DIFFTEST_ISA ?= rv32im_zicsr_zicntr_zifencei
 	test-scripts check-generated-tree check-filelists check-memory-map \
 	rtl-lint check software software-smoke software-trap-timer \
 	software-rtthread software-fpga sim sim-smoke sim-trap-timer \
-	sim-rtthread sim-coremark sim-isa sim-quick sim-full regression \
+	sim-rtthread sim-msh sim-coremark sim-isa sim-quick sim-full regression \
 	difftest-build difftest-selftest diff-isa diff-smoke diff-rtthread diff-replay \
 	fpga-build fpga-bitstream fpga-check fpga-program check-images \
 	release release-check clean-software clean-images clean-sim \
@@ -112,6 +112,11 @@ sim-rtthread: deps-check
 		$(if $(filter 1,$(DIFFTEST)),--difftest --difftest-mode soc-mmio --difftest-isa $(DIFFTEST_ISA),) \
 		$(if $(filter 1,$(TRACE)),--trace,)
 
+sim-msh: deps-check
+	@$(PYTHON) scripts/run_regression.py --suite msh \
+		$(if $(filter 1,$(DIFFTEST)),--difftest,) \
+		$(if $(filter 1,$(TRACE)),--trace,)
+
 sim-coremark: deps-check
 	@$(PYTHON) scripts/run_verilator.py --profile rtthread-coremark \
 		--test rtthread-coremark-command-$(COREMARK_ITERATIONS) \
@@ -163,6 +168,7 @@ sim-quick:
 sim-full:
 	@$(MAKE) sim-isa ISA_GATE=final-base
 	@$(MAKE) sim-rtthread
+	@$(MAKE) sim-msh
 	@$(MAKE) sim-coremark COREMARK_ITERATIONS=10
 
 regression: deps-check
