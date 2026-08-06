@@ -15,6 +15,7 @@ def find_vivado() -> Path:
     candidates = [
         Path(override) if override else None,
         Path(r"D:\AppMajor\xilinx\Vivado\2023.2\bin\vivado.bat"),
+        Path(r"D:\Xilinx\Vivado\2023.2\bin\vivado.bat"),
     ]
     for candidate in candidates:
         if candidate and candidate.exists():

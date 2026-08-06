@@ -79,7 +79,7 @@ module fpga_top #(
     .cpu_fault_i(cpu_fault),
     .clock_locked_i(clock_locked),
     .test_code_i(test_code),
-    .commit_pc_i(commit.pc),
+    .commit_pc_i(commit.pc_rdata),
     .virtual_led_o(virtual_led),
     .virtual_seg_o(virtual_seg)
   );

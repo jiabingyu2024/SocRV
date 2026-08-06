@@ -104,6 +104,7 @@ set_ip_config_required DIV_0 {FlowControl flow_control} {Blocking}
 
 create_ip -name floating_point -vendor xilinx.com -library ip -version 7.1 -module_name FP_FMA_0
 set_ip_config_required FP_FMA_0 {Operation_Type operation_type} {FMA}
+set_ip_config_required FP_FMA_0 {Add_Sub_Value add_sub_value} {Add}
 set_ip_config_required FP_FMA_0 {A_Precision_Type a_precision_type} {Single}
 set_ip_config_required FP_FMA_0 {Result_Precision_Type result_precision_type} {Single}
 set_ip_config_required FP_FMA_0 {Flow_Control flow_control} {NonBlocking}

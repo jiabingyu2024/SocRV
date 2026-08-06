@@ -269,6 +269,7 @@ def initialize_checkout(
     configure_sparse(dependency, lock)
     fetch = git(
         "fetch",
+        "--filter=blob:none",
         "--depth",
         "1",
         "origin",
