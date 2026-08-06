@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/zicntr/firmware.elf",
-    "sha256": "3904ca94121f12e10247a26c247aa7a0d734f8b7ee225e27e73bd4becae5d8f6"
+    "sha256": "6036db3f25bf39422d3cda06dd04333f2c7547ffe7a26625e50c4277629ebc79"
   },
   "endianness": "little",
   "entry": "0x00000000",

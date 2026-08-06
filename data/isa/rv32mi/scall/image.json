@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/scall/firmware.elf",
-    "sha256": "82b5b9fb3910c55ee7ebefd4773d009cd879848d6f97ebc89e939d882b53479d"
+    "sha256": "08ee85ad822ab4b89afd0e2958b02d7389b0bb8cba74631c222a329510089827"
   },
   "endianness": "little",
   "entry": "0x00000000",

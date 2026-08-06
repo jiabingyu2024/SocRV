@@ -1,0 +1,15 @@
+{
+  "artifacts": {
+    "bitstream": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark/project/socrv.runs/impl_1/fpga_top.bit",
+    "bitstream_sha256": "38891bce598cf02c972eb945a6ed4fdb769b2ee174db0f3f0e7b497f4c16427e",
+    "drc": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark/project/reports/post_impl_drc.rpt",
+    "timing": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark/project/reports/post_impl_timing_summary.rpt"
+  },
+  "drc_error_count": 0,
+  "drc_warning_count": 46,
+  "kind": "fpga",
+  "schema_version": 1,
+  "status": "PASS",
+  "target": "kintex7_competition",
+  "timing_met": true
+}

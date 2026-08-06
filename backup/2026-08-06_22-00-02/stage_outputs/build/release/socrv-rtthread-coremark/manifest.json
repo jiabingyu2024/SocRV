@@ -1,0 +1,61 @@
+{
+  "files": [
+    {
+      "path": "fpga/fpga_top.bit",
+      "sha256": "38891bce598cf02c972eb945a6ed4fdb769b2ee174db0f3f0e7b497f4c16427e",
+      "size": 11443717
+    },
+    {
+      "path": "fpga/post_impl_drc.rpt",
+      "sha256": "cd494254e8a228c17cfede70e77093a210b240f0391bbcd821c42cd6681a9b57",
+      "size": 34617
+    },
+    {
+      "path": "fpga/post_impl_timing_summary.rpt",
+      "sha256": "b94b71f6f5f43f04e5c95adda42c6577356e15213f81d4bdd6c95c25dd64d56a",
+      "size": 35927
+    },
+    {
+      "path": "image/code.mem",
+      "sha256": "0109bd521a8df22292dfb5da6d29f2a90f642bd79232278b09992ff09261a279",
+      "size": 147456
+    },
+    {
+      "path": "image/data.mem",
+      "sha256": "e980606d60cf5acd677f689fde20d9ccbdf3bc25e78963a3ca916452ca36b33f",
+      "size": 147456
+    },
+    {
+      "path": "image/image.json",
+      "sha256": "bbf56af6086e8c2953abce7f23218bd52f30759fc8fbe2bb64007f475d2c396d",
+      "size": 1586
+    },
+    {
+      "path": "software/build_manifest.json",
+      "sha256": "26c18a29ca2f803b93e9f273f3745b7ab95280120b9f161de7a1bf86485eef24",
+      "size": 8730
+    },
+    {
+      "path": "software/firmware.dis",
+      "sha256": "6ac4d6209a04c651331aa2208b37bcdc94dcd27f30ae1657707594eb0fa892c9",
+      "size": 831030
+    },
+    {
+      "path": "software/firmware.elf",
+      "sha256": "71aa1e402180954518e6cb0d05f7a9695334e02dcbcdd2d8a19747238a136639",
+      "size": 496432
+    },
+    {
+      "path": "software/firmware.map",
+      "sha256": "ee744b097f4069d0c880d65ce61427e824c489a960aa66a08d7dcc81d845430a",
+      "size": 319191
+    },
+    {
+      "path": "software/size.json",
+      "sha256": "648930ee57f23d6e4144483b94c8756a2d351340279b6a528eacc240c356a4c3",
+      "size": 203
+    }
+  ],
+  "profile": "rtthread-coremark",
+  "schema_version": 1
+}

@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/shamt/firmware.elf",
-    "sha256": "22be78ec77dc25bde1d05f0d6c4865b356f52d1ff7b9a3915e9c800ddefa23f0"
+    "sha256": "0ff9ffc3ea826e98f8155be6b9928390c957b3fdcabfc6fb3f83a739dabdcea3"
   },
   "endianness": "little",
   "entry": "0x00000000",

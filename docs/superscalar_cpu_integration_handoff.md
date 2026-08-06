@@ -15,8 +15,8 @@ backup/2026-08-06_20-56-36/rtl/cpu/demo/demo_cpu_core.sv
 
 SoC 侧 `cpu_subsystem` 端口、HXI Crossbar、memory subsystem、Timer、IRQ、APB、UART、
 GPIO、TestStatus、SoC top 和 FPGA top 均未为新 CPU 改动。为遵守“CPU 适配现有 SoC”
-边界，`data/soc/memory_map.json`、`data/soc/software_contract.json` 及其生成软件文件均保持
-原样；正式 core 身份和签核结果由本文及 `docs/rtl_changes.json` 记录。
+边界，`data/soc/memory_map.json` 保持原样；`data/soc/software_contract.json` 仅同步了正式
+core 身份和已签核的 RV32IM 软件能力，地址、时钟、中断与外设合同均未改变。
 
 ## 2. 地址与接口适配
 
@@ -50,17 +50,19 @@ store buffer/load queue、D-cache、CSR/trap/recovery、RV32M mul/div、性能�
 | Gate | 结果 | 证据 |
 | --- | --- | --- |
 | `make check` | PASS | 环境、依赖、生成物、schema、filelist、memory map、lint |
-| `make diff-isa ISA_GATE=final-base JOBS=4` | PASS，64/64 | `build/regression/isa/final-base/summary.json` |
-| RV32UI / RV32MI / RV32UM | 41/41、15/15、8/8 | 同上 |
+| `make diff-isa ISA_GATE=final-base JOBS=4` | PASS，65/65 | `build/regression/isa/final-base/summary.json` |
+| RV32UI / RV32MI / RV32UM | 41/41、16/16、8/8 | 同上 |
 | `make difftest-selftest` | PASS | ORDER/NEXT_PC/GPR/MEM 自检 |
 | `make diff-smoke` | PASS | `build/result/soc/baremetal-smoke-diff.json` |
 | `make sim-trap-timer` | PASS，53,871 cycles | `build/result/soc/baremetal-trap-timer.json` |
 | `make diff-rtthread` | PASS，进入并返回 `msh >` | `build/result/soc/rtthread-smoke-diff.json` |
 | `make sim-full` | PASS | final-base、RT-Thread、MSH、CoreMark 10 |
-| CoreMark 3 | CRC PASS，5,121,478 ticks | `build/result/soc/rtthread-coremark-command-3.json` |
-| CoreMark 10 | CRC PASS，17,070,246 ticks | `build/result/soc/rtthread-coremark-command-10.json` |
+| CoreMark 3 | CRC PASS，1,996,686 ticks | `build/result/soc/rtthread-coremark-command-3.json` |
+| CoreMark 10 | CRC PASS，6,653,657 ticks | `build/result/soc/rtthread-coremark-command-10.json` |
+| UART CRLF | PASS，UART newline 为原始 `0d 0a` | `build/evidence/uart-crlf-smoke.raw` |
 
 CoreMark 10 结束后再次出现 `msh >`。这是短轮功能/趋势运行，不是正式 CoreMark 分数。
+相对旧 RV32I 软件基线的 17,070,246 ticks，RV32IM 全量重编后降低 61.02%。
 
 ## 5. FPGA 产物
 
@@ -72,7 +74,9 @@ make fpga-build PROFILE=rtthread-coremark JOBS=4
 make fpga-check PROFILE=rtthread-coremark
 ```
 
-Vivado 结果：PASS，50 MHz timing met，DRC error 0，DRC warning 46。
+Vivado 结果：PASS，50 MHz timing met，WNS 6.926 ns，DRC error 0，DRC warning 46。
+`socrv.xpr` 与本轮 `synth_1/runme.log` 均确认 `MUL_0`、`DIV_0`、`muldiv_unit`
+已进入综合；乘法器使用 4 个 DSP48E1。它们是 SystemVerilog RTL，不需要单独 `read_ip` Tcl。
 
 ```text
 build/vivado/kintex7-rtthread-coremark/result.json
@@ -83,7 +87,7 @@ build/vivado/kintex7-rtthread-coremark/project/socrv.runs/impl_1/fpga_top.bit
 ```
 
 Bitstream：11,443,717 bytes  
-SHA256：`38891bce598cf02c972eb945a6ed4fdb769b2ee174db0f3f0e7b497f4c16427e`
+SHA256：`1bfab26c8c138fe778109c9b2790ad4c98ff17f2648259ef08367a60f6ef97fe`
 
 46 条 warning 是 D-cache tag RAM 地址由带异步 reset 的寄存器驱动引发的 `REQP-1840`
 风险提示；没有 DRC error，时序已满足。上板时应重点观察复位释放后的首次访存和稳定性。
@@ -102,8 +106,8 @@ Vivado 实现及仿真验证的镜像 SHA256 一致。
 
 - I-HXI `rsp_err` 会形成 instruction access fault；当前 D-HXI 的异常响应会置位
   `fault_o`。final-base/RT-Thread 回归未覆盖精确的 load/store access-fault 退休路径。
-- 当前软件仍按既有 `rv32i_zicsr/ilp32` 编译，以保持 SoC 软件基线不变；CPU 的 RV32M
-  能力由 RV32UM Spike DiffTest 独立签核。
+- 当前软件默认按 `rv32im_zicsr_zicntr_zifencei/ilp32` 编译；正式 ELF 已包含
+  `mul/div/divu/rem/remu`，CPU 的 RV32M 能力由 RV32UM Spike DiffTest 独立签核。
 - 本轮没有连接实体 FPGA 板，因此不能把 bitstream PASS 等同于板上 UART/CoreMark PASS。
 
 ## 7. 上板步骤

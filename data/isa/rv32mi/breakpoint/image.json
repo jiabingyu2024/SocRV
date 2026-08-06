@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/breakpoint/firmware.elf",
-    "sha256": "42cd99c7993caade60ec87d383d076b7fc55aceec94f21e9ab5ab0fbe3cb08d4"
+    "sha256": "5a0d9bffe4f0985c35cfbce0395a375749950e9adfac5c8555cd0acdd4e96259"
   },
   "endianness": "little",
   "entry": "0x00000000",

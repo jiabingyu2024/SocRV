@@ -1,0 +1,104 @@
+
+build/isa-data/generated/rv32ui/fence_i/firmware.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00000193          	li	gp,0
+   4:	00000297          	auipc	t0,0x0
+   8:	01028293          	addi	t0,t0,16 # 14 <trap_vector>
+   c:	30529073          	csrw	mtvec,t0
+  10:	02c0006f          	j	3c <unexpected_trap+0x1c>
+
+00000014 <trap_vector>:
+  14:	00000f13          	li	t5,0
+  18:	000f0463          	beqz	t5,20 <unexpected_trap>
+  1c:	000f0067          	jr	t5
+
+00000020 <unexpected_trap>:
+  20:	300022b7          	lui	t0,0x30002
+  24:	34202373          	csrr	t1,mcause
+  28:	0062a223          	sw	t1,4(t0) # 30002004 <__bss_end+0x20001fe4>
+  2c:	46415337          	lui	t1,0x46415
+  30:	94c30313          	addi	t1,t1,-1716 # 4641494c <__bss_end+0x3641492c>
+  34:	0062a023          	sw	t1,0(t0)
+  38:	0000006f          	j	38 <unexpected_trap+0x18>
+  3c:	06f00693          	li	a3,111
+  40:	10000517          	auipc	a0,0x10000
+  44:	fc051503          	lh	a0,-64(a0) # 10000000 <SOCRV_DATA_ORIGIN>
+  48:	10000597          	auipc	a1,0x10000
+  4c:	fba59583          	lh	a1,-70(a1) # 10000002 <SOCRV_DATA_ORIGIN+0x2>
+  50:	00000013          	nop
+  54:	00000013          	nop
+  58:	00000013          	nop
+  5c:	00000013          	nop
+  60:	00000013          	nop
+  64:	00000013          	nop
+  68:	00000013          	nop
+  6c:	00000013          	nop
+  70:	00000013          	nop
+  74:	00000013          	nop
+  78:	00000013          	nop
+  7c:	00000013          	nop
+  80:	10000297          	auipc	t0,0x10000
+  84:	f8a29223          	sh	a0,-124(t0) # 10000004 <SOCRV_DATA_ORIGIN+0x4>
+  88:	10000297          	auipc	t0,0x10000
+  8c:	f6b29f23          	sh	a1,-130(t0) # 10000006 <SOCRV_DATA_ORIGIN+0x6>
+  90:	0000100f          	fence.i
+  94:	10000797          	auipc	a5,0x10000
+  98:	f7078793          	addi	a5,a5,-144 # 10000004 <SOCRV_DATA_ORIGIN+0x4>
+  9c:	00078367          	jalr	t1,a5
+
+000000a0 <test_2>:
+  a0:	00200193          	li	gp,2
+  a4:	00000013          	nop
+  a8:	1bc00393          	li	t2,444
+  ac:	06769a63          	bne	a3,t2,120 <fail>
+  b0:	06400713          	li	a4,100
+  b4:	fff70713          	addi	a4,a4,-1
+  b8:	fe071ee3          	bnez	a4,b4 <test_2+0x14>
+  bc:	10000297          	auipc	t0,0x10000
+  c0:	f4a29823          	sh	a0,-176(t0) # 1000000c <SOCRV_DATA_ORIGIN+0xc>
+  c4:	10000297          	auipc	t0,0x10000
+  c8:	f4b29523          	sh	a1,-182(t0) # 1000000e <SOCRV_DATA_ORIGIN+0xe>
+  cc:	0000100f          	fence.i
+  d0:	00000013          	nop
+  d4:	00000013          	nop
+  d8:	00000013          	nop
+  dc:	00000013          	nop
+  e0:	00000013          	nop
+  e4:	00000013          	nop
+  e8:	00000013          	nop
+  ec:	00000013          	nop
+  f0:	00000013          	nop
+  f4:	00000013          	nop
+  f8:	00000013          	nop
+  fc:	00000013          	nop
+ 100:	10000797          	auipc	a5,0x10000
+ 104:	f0c78793          	addi	a5,a5,-244 # 1000000c <SOCRV_DATA_ORIGIN+0xc>
+ 108:	00078367          	jalr	t1,a5
+
+0000010c <test_3>:
+ 10c:	00300193          	li	gp,3
+ 110:	00000013          	nop
+ 114:	30900393          	li	t2,777
+ 118:	00769463          	bne	a3,t2,120 <fail>
+ 11c:	00301e63          	bne	zero,gp,138 <pass>
+
+00000120 <fail>:
+ 120:	300022b7          	lui	t0,0x30002
+ 124:	0032a223          	sw	gp,4(t0) # 30002004 <__bss_end+0x20001fe4>
+ 128:	46415337          	lui	t1,0x46415
+ 12c:	94c30313          	addi	t1,t1,-1716 # 4641494c <__bss_end+0x3641492c>
+ 130:	0062a023          	sw	t1,0(t0)
+ 134:	0000006f          	j	134 <fail+0x14>
+
+00000138 <pass>:
+ 138:	300022b7          	lui	t0,0x30002
+ 13c:	0002a223          	sw	zero,4(t0) # 30002004 <__bss_end+0x20001fe4>
+ 140:	50415337          	lui	t1,0x50415
+ 144:	35330313          	addi	t1,t1,851 # 50415353 <__bss_end+0x40415333>
+ 148:	0062a023          	sw	t1,0(t0)
+ 14c:	0000006f          	j	14c <pass+0x14>
+	...

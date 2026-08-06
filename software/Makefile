@@ -19,6 +19,7 @@ LDLIBS += -lgcc
 
 OBJECTS := $(addprefix $(OUT)/objects/,$(SOURCES:=.o))
 DEPFILES := $(OBJECTS:.o=.d)
+BUILD_CONFIG_FILES := $(MAKEFILE_LIST)
 ELF := $(OUT)/firmware.elf
 MAP := $(OUT)/firmware.map
 DIS := $(OUT)/firmware.dis
@@ -27,6 +28,12 @@ SIZE_TXT := $(OUT)/size.txt
 
 .PHONY: all clean print-sources print-flags print-kind
 all: $(ELF) $(BIN) $(DIS) $(SIZE_TXT)
+
+# Compiler/profile changes affect every object even when the C/assembly source
+# itself is unchanged. Track all parsed make fragments so switching ISA,
+# optimization, profile macros, or source lists cannot silently reuse stale
+# objects from an earlier software contract.
+$(OBJECTS): $(BUILD_CONFIG_FILES)
 
 $(OUT)/objects/%.S.o: %.S
 	@mkdir -p $(dir $@)

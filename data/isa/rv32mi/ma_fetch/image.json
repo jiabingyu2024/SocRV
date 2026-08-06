@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/ma_fetch/firmware.elf",
-    "sha256": "9568461829d8669229bdd35f5d105b516697e6e79c63e6aee82029ba3f9a90e3"
+    "sha256": "de05daaa552394afe5210aad0a8a6b8238594141d93a48ec3092507ee9650896"
   },
   "endianness": "little",
   "entry": "0x00000000",

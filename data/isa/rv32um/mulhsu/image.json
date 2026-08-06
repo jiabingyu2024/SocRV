@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32um/mulhsu/firmware.elf",
-    "sha256": "c7e8564ef0a3216280f25bd86b9e5095c48870f350caa280f238829ad65c4ac7"
+    "sha256": "b11b4ac8e18bf11107cd935fa5af6a4c11431e897abad5a16a54a642c737a33a"
   },
   "endianness": "little",
   "entry": "0x00000000",

@@ -96,15 +96,16 @@ build/regression/performance/summary.json
 
 ## ISA 状态说明
 
-当前参考 core 的软件构建能力仍是 `rv32i_zicsr/ilp32`。最终整数目标不变：
+2026-08-06 已完成 superscalar 正式 core 接入与整数 ISA 签核，当前默认软件构建为：
 
 ```text
-RV32IM + Zicsr + Zicntr + Zifencei
+rv32im_zicsr_zicntr_zifencei / ilp32
 required tests: RV32UI + RV32MI + RV32UM
 ```
 
-浮点在 F 或 FD 中后续确定。完整 ISA 数据已经准备好，不代表当前参考 core 已通过
-最终 gate。
+final-base Spike DiffTest 65/65、RT-Thread/MSH/CoreMark、50 MHz FPGA timing 与 DRC gate
+均已通过。CoreMark 10 的 RV32IM 仿真结果为 6,653,657 exact ticks；UART newline 已输出
+CRLF。浮点仍在 F 或 FD 中后续确定。
 
 详细操作见
 [`cpu_iteration_sim_software_fpga_guide.md`](cpu_iteration_sim_software_fpga_guide.md)。

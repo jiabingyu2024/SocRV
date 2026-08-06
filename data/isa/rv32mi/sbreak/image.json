@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/sbreak/firmware.elf",
-    "sha256": "1aa8df3c8c2d23ab06c13bc780ebb38505c9032f7eabdc9becbd194fbb7655b7"
+    "sha256": "7dd0ccdebce43be702a1a80a79602e5fee0f4d6a00e28fa91b621a1ff44810d1"
   },
   "endianness": "little",
   "entry": "0x00000000",

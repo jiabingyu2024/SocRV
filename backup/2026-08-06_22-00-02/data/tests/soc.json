@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "tests": [
+    {
+      "name": "baremetal-smoke",
+      "target": "soc",
+      "suite": ["smoke", "correctness", "baremetal"],
+      "image": "smoke",
+      "checker": "test-status-and-uart",
+      "difftest": {
+        "enabled": true,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_expect": ["SocRV smoke PASS"],
+      "max_cycles": 200000,
+      "seed": 1
+    },
+    {
+      "name": "rtthread-smoke",
+      "target": "soc",
+      "suite": ["smoke", "correctness", "rtthread", "os"],
+      "image": "rtthread",
+      "checker": "test-status-and-uart",
+      "difftest": {
+        "enabled": true,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_command": "socrv_info",
+      "uart_prompt": "msh >",
+      "uart_prompt_timeout": 5000000,
+      "uart_expect": [
+        "Thread Nano Operating System",
+        "SocRV RT-Thread boot",
+        "SocRV march=rv32i_zicsr",
+        "msh >"
+      ],
+      "max_cycles": 2000000,
+      "seed": 1
+    },
+    {
+      "name": "baremetal-trap-timer",
+      "target": "soc",
+      "suite": ["smoke", "correctness", "baremetal", "bsp"],
+      "image": "trap-timer",
+      "checker": "test-status",
+      "difftest": {
+        "enabled": true,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "max_cycles": 500000,
+      "seed": 1
+    },
+    {
+      "name": "rtthread-msh-help",
+      "target": "soc",
+      "suite": ["msh", "correctness", "rtthread", "os", "fpga-software"],
+      "image": "rtthread-coremark",
+      "checker": "uart-command-test-status-and-uart",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_command": "help",
+      "uart_prompt": "msh >",
+      "uart_prompt_timeout": 5000000,
+      "uart_expect": [
+        "RT-Thread shell commands:",
+        "ps               - List threads",
+        "free             - Show the memory usage",
+        "uptime           - show system uptime",
+        "socrv_info       - show SocRV contract",
+        "coremark         - run CoreMark"
+      ],
+      "max_cycles": 5000000,
+      "seed": 1
+    },
+    {
+      "name": "rtthread-msh-ps",
+      "target": "soc",
+      "suite": ["msh", "correctness", "rtthread", "os", "fpga-software"],
+      "image": "rtthread-coremark",
+      "checker": "uart-command-test-status-and-uart",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_command": "ps",
+      "uart_prompt": "msh >",
+      "uart_prompt_timeout": 5000000,
+      "uart_expect": [
+        "thread   pri  status",
+        "tshell",
+        "tidle0",
+        "running"
+      ],
+      "max_cycles": 5000000,
+      "seed": 1
+    },
+    {
+      "name": "rtthread-msh-uptime",
+      "target": "soc",
+      "suite": ["msh", "correctness", "rtthread", "os", "fpga-software"],
+      "image": "rtthread-coremark",
+      "checker": "uart-command-test-status-and-uart",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_command": "uptime",
+      "uart_prompt": "msh >",
+      "uart_prompt_timeout": 5000000,
+      "uart_expect": ["uptime:", "ticks", "seconds"],
+      "max_cycles": 3000000,
+      "seed": 1
+    },
+    {
+      "name": "rtthread-coremark-command-3",
+      "target": "soc",
+      "suite": [
+        "coremark",
+        "functional",
+        "correctness",
+        "rtthread",
+        "os"
+      ],
+      "image": "rtthread-coremark",
+      "checker": "uart-command-coremark-crc-test-status-and-perf-window",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_command": "coremark 3",
+      "uart_prompt": "msh >",
+      "uart_prompt_timeout": 5000000,
+      "uart_expect": ["SocRV RT-Thread ready"],
+      "uart_reject": [
+        "ERROR! list crc",
+        "ERROR! matrix crc",
+        "ERROR! state crc",
+        "Cannot validate operation",
+        "SocRV CoreMark CRC check FAIL"
+      ],
+      "max_cycles": 12000000,
+      "seed": 1,
+      "performance": {
+        "enabled": true,
+        "iterations": 3
+      }
+    },
+    {
+      "name": "rtthread-coremark-command-10",
+      "target": "soc",
+      "suite": ["coremark", "performance", "benchmark", "rtthread"],
+      "image": "rtthread-coremark",
+      "checker": "uart-command-coremark-crc-test-status-and-perf-window",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32im_zicsr_zicntr_zifencei"
+      },
+      "uart_command": "coremark 10",
+      "uart_prompt": "msh >",
+      "uart_prompt_timeout": 5000000,
+      "uart_expect": ["SocRV RT-Thread ready"],
+      "uart_reject": [
+        "ERROR! list crc",
+        "ERROR! matrix crc",
+        "ERROR! state crc",
+        "Cannot validate operation",
+        "SocRV CoreMark CRC check FAIL"
+      ],
+      "max_cycles": 33000000,
+      "max_wall_seconds": 900,
+      "seed": 1,
+      "performance": {
+        "enabled": true,
+        "iterations": 10
+      }
+    }
+  ]
+}

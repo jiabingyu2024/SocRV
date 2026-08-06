@@ -1,9 +1,9 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccBZrLmX.o
- .data          0x00000000        0x0 /tmp/ccBZrLmX.o
- .bss           0x00000000        0x0 /tmp/ccBZrLmX.o
+ .text          0x00000000        0x0 /tmp/ccRJDrlJ.o
+ .data          0x00000000        0x0 /tmp/ccRJDrlJ.o
+ .bss           0x00000000        0x0 /tmp/ccRJDrlJ.o
 
 Memory Configuration
 
@@ -14,7 +14,7 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccBZrLmX.o
+LOAD /tmp/ccRJDrlJ.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
@@ -22,7 +22,7 @@ LOAD /tmp/ccBZrLmX.o
 
 .text           0x00000000       0xd0
  *(.text.init)
- .text.init     0x00000000       0xd0 /tmp/ccBZrLmX.o
+ .text.init     0x00000000       0xd0 /tmp/ccRJDrlJ.o
                 0x00000000                _start
                 0x000000cc                mtvec_handler
  *(.text .text.*)
@@ -32,7 +32,7 @@ LOAD /tmp/ccBZrLmX.o
 
 .rela.dyn       0x000000d0        0x0
  .rela.text.init
-                0x000000d0        0x0 /tmp/ccBZrLmX.o
+                0x000000d0        0x0 /tmp/ccRJDrlJ.o
 
 .data           0x10000000        0x0
  *(.data .data.*)
@@ -53,4 +53,4 @@ OUTPUT(build/isa-data/generated/rv32mi/instret_overflow/firmware.elf elf32-littl
 .riscv.attributes
                 0x00000000       0x31
  .riscv.attributes
-                0x00000000       0x31 /tmp/ccBZrLmX.o
+                0x00000000       0x31 /tmp/ccRJDrlJ.o

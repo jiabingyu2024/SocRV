@@ -122,7 +122,7 @@
       "cascade_scope": "full_reverify",
       "verification": [
         "make check PASS",
-        "Spike DiffTest final-base PASS: RV32UI 41/41, RV32MI 15/15, RV32UM 8/8",
+        "Spike DiffTest final-base PASS: RV32UI 41/41, RV32MI 16/16, RV32UM 8/8",
         "difftest-selftest ORDER/NEXT_PC/GPR/MEM PASS",
         "diff-smoke PASS",
         "diff-rtthread PASS with socrv_info command and second msh prompt",
@@ -142,6 +142,65 @@
       "known_limitations": [
         "Unexpected D-HXI rsp_err responses are promoted to fault_o; precise load/store access-fault retirement is not covered by the current final-base or RT-Thread regression.",
         "Physical board UART validation must be performed after programming; no board was connected during this run."
+      ]
+    },
+    {
+      "date": "2026-08-06",
+      "scope": [
+        "software/bsp/drivers/drv_uart.c",
+        "software/Makefile",
+        "software/toolchain/common_flags.mk",
+        "software/profiles/coremark-baremetal.mk",
+        "software/profiles/coremark-smoke.mk",
+        "software/profiles/rtthread-coremark.mk",
+        "data/soc/software_contract.json",
+        "data/tests/soc.json",
+        "Makefile"
+      ],
+      "backup": "backup/2026-08-06_22-00-02/",
+      "summary": "Changed the formal software baseline to RV32IM + Zicsr + Zicntr + Zifencei, made UART newline output emit CRLF, and made every software object depend on all parsed make/profile fragments so ISA or profile changes cannot reuse stale objects.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "rtl_change": false,
+      "cascade_scope": "full_reverify",
+      "software": {
+        "march": "rv32im_zicsr_zicntr_zifencei",
+        "mabi": "ilp32",
+        "elf_sha256": "f5b3bcb74dec54250d02240947034422ff9426bb38ae71a107106334b77d098b",
+        "m_instruction_counts": {
+          "mul": 40,
+          "div": 2,
+          "divu": 18,
+          "rem": 1,
+          "remu": 14
+        }
+      },
+      "verification": [
+        "make check PASS",
+        "Spike DiffTest final-base PASS: RV32UI 41/41, RV32MI 16/16, RV32UM 8/8",
+        "diff-rtthread PASS with RV32IM software and second msh prompt",
+        "sim-full PASS: final-base, RT-Thread, MSH help/ps/uptime, CoreMark 10 CRC",
+        "CoreMark 3 PASS: 1996686 exact ticks",
+        "CoreMark 10 PASS: 6653657 exact ticks, 61.02% fewer than the previous 17070246-tick RV32I software baseline",
+        "Raw UART stdout confirms 0x0d 0x0a after newline",
+        "Vivado rtthread-coremark PASS: WNS 6.926 ns, 0 DRC errors, bitstream generated"
+      ],
+      "fpga": {
+        "profile": "rtthread-coremark",
+        "muldiv_sources": [
+          "rtl/cpu/superscalar/ip/MUL_0.sv",
+          "rtl/cpu/superscalar/ip/DIV_0.sv",
+          "rtl/cpu/superscalar/execute/muldiv_unit.sv"
+        ],
+        "synthesis_confirmation": "All three modules are present in socrv.xpr and synthesized; the multiplier maps to four DSP48E1 blocks.",
+        "bitstream_sha256": "1bfab26c8c138fe778109c9b2790ad4c98ff17f2648259ef08367a60f6ef97fe",
+        "wns_ns": 6.926,
+        "drc_errors": 0,
+        "drc_warnings": 46
+      },
+      "known_limitations": [
+        "Physical board UART and coremark 10000 validation remain a manual step; no board was programmed during this run."
       ]
     }
   ],

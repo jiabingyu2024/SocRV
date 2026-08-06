@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/andi/firmware.elf",
-    "sha256": "8cb0137b94b68b03aeb5d50553dab13e2a30c9213a6f3ea91e5caf50f949f094"
+    "sha256": "44e657b7537b103e0aff8b012972ce9e6a125fde5404badf4431ad200ebaa49b"
   },
   "endianness": "little",
   "entry": "0x00000000",

@@ -278,10 +278,10 @@ software/toolchain/common_flags.mk
 software/profiles/rtthread-coremark.mk
 ```
 
-注意：当前 `software/toolchain/common_flags.mk` 仍直接写有
-`-march=rv32i_zicsr -mabi=ilp32`。只修改 JSON 不会自动改变 GCC 的真实
-`-march`。新核完成 RV32IM 后，若希望 CoreMark 使用 M 指令，必须同时更新真实
-编译 flags 和 `COREMARK_FLAGS_TEXT`。
+当前 `software/toolchain/common_flags.mk` 已使用
+`-march=rv32im_zicsr_zicntr_zifencei -mabi=ilp32`，并与 CPU 合同一致。以后修改 ISA
+时仍必须同时更新 JSON、真实编译 flags 和 `COREMARK_FLAGS_TEXT`；`software/Makefile`
+已跟踪所有 profile/toolchain make 片段，避免增量构建复用旧 ISA 的对象文件。
 
 比较微架构版本时应固定同一个 ELF/hash。若同时改变 GCC 版本、优化参数或
 `-march`，这属于新的软件基线，不能把全部收益归因于 CPU。

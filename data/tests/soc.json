@@ -35,7 +35,7 @@
       "uart_expect": [
         "Thread Nano Operating System",
         "SocRV RT-Thread boot",
-        "SocRV march=rv32i_zicsr",
+        "SocRV march=rv32im_zicsr_zicntr_zifencei",
         "msh >"
       ],
       "max_cycles": 2000000,

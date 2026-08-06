@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/pmpaddr/firmware.elf",
-    "sha256": "1c6c2b4d980da1233cfe53c7512440b7bc6b0855f27efbe53439a4bb4a73bb6d"
+    "sha256": "d593125c7bd637cf7ac6aad139b1e681ac13019c680d6eb550a50fa3b26bb24b"
   },
   "endianness": "little",
   "entry": "0x00000000",

@@ -1,9 +1,9 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccdb3vyF.o
- .data          0x00000000        0x0 /tmp/ccdb3vyF.o
- .bss           0x00000000        0x0 /tmp/ccdb3vyF.o
+ .text          0x00000000        0x0 /tmp/ccvlRWDU.o
+ .data          0x00000000        0x0 /tmp/ccvlRWDU.o
+ .bss           0x00000000        0x0 /tmp/ccvlRWDU.o
 
 Memory Configuration
 
@@ -14,7 +14,7 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccdb3vyF.o
+LOAD /tmp/ccvlRWDU.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
@@ -22,7 +22,7 @@ LOAD /tmp/ccdb3vyF.o
 
 .text           0x00000000      0x178
  *(.text.init)
- .text.init     0x00000000      0x178 /tmp/ccdb3vyF.o
+ .text.init     0x00000000      0x178 /tmp/ccvlRWDU.o
                 0x00000000                _start
  *(.text .text.*)
  *(.rodata .rodata.*)
@@ -31,7 +31,7 @@ LOAD /tmp/ccdb3vyF.o
 
 .rela.dyn       0x00000178        0x0
  .rela.text.init
-                0x00000178        0x0 /tmp/ccdb3vyF.o
+                0x00000178        0x0 /tmp/ccvlRWDU.o
 
 .data           0x10000000        0x0
  *(.data .data.*)
@@ -52,4 +52,4 @@ OUTPUT(build/isa-data/generated/rv32uf/fclass/firmware.elf elf32-littleriscv)
 .riscv.attributes
                 0x00000000       0x3a
  .riscv.attributes
-                0x00000000       0x3a /tmp/ccdb3vyF.o
+                0x00000000       0x3a /tmp/ccvlRWDU.o

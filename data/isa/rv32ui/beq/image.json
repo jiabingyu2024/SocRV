@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/beq/firmware.elf",
-    "sha256": "8a71e5e39f6753103f46147291bd4b56b11555a775318ef6bf7109d98ec133c9"
+    "sha256": "e805d6349eecea534eee54c2e5770bf15bf2b0f144dcae0b35d58cd5f0b85f8e"
   },
   "endianness": "little",
   "entry": "0x00000000",

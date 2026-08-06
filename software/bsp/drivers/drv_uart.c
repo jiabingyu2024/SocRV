@@ -28,6 +28,9 @@ void uart_early_putc(char character)
 
 void uart_putc(char character)
 {
+    if (character == '\n') {
+        uart_early_putc('\r');
+    }
     uart_early_putc(character);
 }
 

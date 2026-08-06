@@ -1,0 +1,58 @@
+
+Discarded input sections
+
+ .text          0x00000000        0x0 /tmp/cc04QMcH.o
+ .bss           0x00000000        0x0 /tmp/cc04QMcH.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+CODE             0x00000000         0x00010000         xr
+DATA             0x10000000         0x00010000         xrw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD /tmp/cc04QMcH.o
+                0x00000000                        SOCRV_CODE_ORIGIN = 0x0
+                0x00010000                        SOCRV_CODE_LENGTH = 0x10000
+                0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
+                0x00010000                        SOCRV_DATA_LENGTH = 0x10000
+
+.text           0x00000000       0xf8
+ *(.text.init)
+ .text.init     0x00000000       0xf8 /tmp/cc04QMcH.o
+                0x00000000                _start
+                0x000000e4                mtvec_handler
+ *(.text .text.*)
+ *(.rodata .rodata.*)
+                0x000000f8                        . = ALIGN (0x4)
+                0x000000f8                        __code_end = .
+
+.rela.dyn       0x000000f8        0x0
+ .rela.text.init
+                0x000000f8        0x0 /tmp/cc04QMcH.o
+
+.data           0x10000000       0x10
+ *(.data .data.*)
+ .data          0x10000000       0x10 /tmp/cc04QMcH.o
+                0x10000000                begin_signature
+                0x10000010                end_signature
+ *(.sdata .sdata.*)
+                0x10000010                        . = ALIGN (0x10)
+                0x10000010                        __data_end = .
+
+.bss            0x10000010        0x0
+ *(.sbss .sbss.*)
+ *(.bss .bss.*)
+ *(COMMON)
+                0x10000010                        . = ALIGN (0x10)
+                0x10000010                        __bss_end = .
+                0x00000001                        ASSERT ((__code_end <= (ORIGIN (CODE) + LENGTH (CODE))), CODE region overflow)
+                0x00000001                        ASSERT ((__bss_end <= (ORIGIN (DATA) + LENGTH (DATA))), DATA region overflow)
+OUTPUT(build/isa-data/generated/rv32mi/sh-misaligned/firmware.elf elf32-littleriscv)
+
+.riscv.attributes
+                0x00000000       0x31
+ .riscv.attributes
+                0x00000000       0x31 /tmp/cc04QMcH.o

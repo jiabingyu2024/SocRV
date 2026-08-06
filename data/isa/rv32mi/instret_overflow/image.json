@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/instret_overflow/firmware.elf",
-    "sha256": "5f6c42f56cf7b3774e737117306c43b89f942ef8f2d63d340315558e4ef10904"
+    "sha256": "c0fbb0b88e709c957f5b29d37c3ac1dff47d185cc643ea422c8af820c7338c9b"
   },
   "endianness": "little",
   "entry": "0x00000000",

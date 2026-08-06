@@ -1,0 +1,1060 @@
+{
+  "default_gate": "current",
+  "gates": {
+    "current": {
+      "blocked_reason": null,
+      "description": "Tests implemented by the framework demo core",
+      "excluded_tests": [
+        "rv32ui/fence_i"
+      ],
+      "ready": true,
+      "suites": [
+        "rv32ui"
+      ]
+    },
+    "final": {
+      "blocked_reason": "Select single or double precision in the CPU contract",
+      "description": "Complete final CPU ISA acceptance gate",
+      "excluded_tests": [],
+      "ready": false,
+      "suites": [
+        "rv32ui",
+        "rv32mi",
+        "rv32um"
+      ]
+    },
+    "final-base": {
+      "blocked_reason": null,
+      "description": "Mandatory RV32UI, RV32MI and RV32UM CPU target",
+      "excluded_tests": [],
+      "ready": true,
+      "suites": [
+        "rv32ui",
+        "rv32mi",
+        "rv32um"
+      ]
+    },
+    "fp-double": {
+      "blocked_reason": null,
+      "description": "Candidate double-precision floating-point gate",
+      "excluded_tests": [],
+      "ready": true,
+      "suites": [
+        "rv32ud"
+      ]
+    },
+    "fp-single": {
+      "blocked_reason": null,
+      "description": "Candidate single-precision floating-point gate",
+      "excluded_tests": [],
+      "ready": true,
+      "suites": [
+        "rv32uf"
+      ]
+    }
+  },
+  "kind": "generated_isa_dataset",
+  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "schema_version": 2,
+  "selection_sha256": "5d73b124207d771ca0f8dd8de3bccfe0eaea7336a73602c0c1c99e0438709eda",
+  "software_contract_sha256": "4fd689b51e0d74444e595b24540136e716c3a8502d338667b5756c7519a4379e",
+  "suites": [
+    {
+      "excluded": [
+        {
+          "reason": "The frozen target contract permits misaligned accesses to trap",
+          "test": "ma_data"
+        }
+      ],
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "rv32ui",
+      "test_count": 41
+    },
+    {
+      "excluded": [],
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "rv32mi",
+      "test_count": 16
+    },
+    {
+      "excluded": [],
+      "mabi": "ilp32",
+      "march": "rv32im_zicsr",
+      "name": "rv32um",
+      "test_count": 8
+    },
+    {
+      "excluded": [],
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "rv32uf",
+      "test_count": 11
+    },
+    {
+      "excluded": [
+        {
+          "reason": "The pinned upstream rv32ud Makefrag excludes this test because the RV32 move case is not implemented",
+          "test": "move"
+        }
+      ],
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "rv32ud",
+      "test_count": 10
+    }
+  ],
+  "tests": [
+    {
+      "elf": "rv32ui/simple/firmware.elf",
+      "elf_sha256": "57c02cc4edbd23032c17f05f3e26c7c709f5893fa1d52eae86fa0e06abf4869a",
+      "image_manifest": "rv32ui/simple/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "simple",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/simple.S",
+      "source_sha256": "4b80ead0309195eae9723189274d54a8cf478d3922ba928c7c3c9bfe2a283def",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/add/firmware.elf",
+      "elf_sha256": "8e3d986faa86cf628ec7e813c4dfeb70bee6c0f48bfe41c159e046cc2d08b382",
+      "image_manifest": "rv32ui/add/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "add",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/add.S",
+      "source_sha256": "fc58a191fe5c59f95a6a7d28313e6ac43d30cd14683c5e12cf7c36f5afaf7e19",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/addi/firmware.elf",
+      "elf_sha256": "b2a594e035afa126c3856c07a1a887fb11fbfe3226115cfb84b5fa5c16257d54",
+      "image_manifest": "rv32ui/addi/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "addi",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/addi.S",
+      "source_sha256": "329cf3f4f9dd85ca49dfa3995f8124e5b88fcd2e1d5a60f048748d996d7a214a",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/and/firmware.elf",
+      "elf_sha256": "06e989265d0bc73d9462900ae3748ccc466e0284df361a5c3f80dc4c8e3f496d",
+      "image_manifest": "rv32ui/and/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "and",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/and.S",
+      "source_sha256": "530f0e60cddba6e71057284899a5abf3e2215e4839b54fc30665ebd6cdb970f6",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/andi/firmware.elf",
+      "elf_sha256": "8cb0137b94b68b03aeb5d50553dab13e2a30c9213a6f3ea91e5caf50f949f094",
+      "image_manifest": "rv32ui/andi/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "andi",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/andi.S",
+      "source_sha256": "152e3675938460bb1e151c7106db8b5b37c9d1504371d4486920699990b77b08",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/auipc/firmware.elf",
+      "elf_sha256": "ad60c23099dd52865da34096ee0247825108e05b1653d4131cf959f57cb1cde6",
+      "image_manifest": "rv32ui/auipc/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "auipc",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/auipc.S",
+      "source_sha256": "6ff9ffb624b5cb9ba09abc984e65db6a0ef21249c282f3075aae397fc0d0651b",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/beq/firmware.elf",
+      "elf_sha256": "8a71e5e39f6753103f46147291bd4b56b11555a775318ef6bf7109d98ec133c9",
+      "image_manifest": "rv32ui/beq/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "beq",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/beq.S",
+      "source_sha256": "6ac569afb793b0ef9a2b761f50c29ba62c58d2555471e198c5cc7eae37ecda78",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/bge/firmware.elf",
+      "elf_sha256": "ed597ae1491cf68608fb8d190c2b64e8b1a61c8853e9460a46fa31df31f80e70",
+      "image_manifest": "rv32ui/bge/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "bge",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/bge.S",
+      "source_sha256": "30aab0162b243fc5e1452ee797741b29ba67cd6b7d948c8f14a13593a89e92c6",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/bgeu/firmware.elf",
+      "elf_sha256": "eee008e38fa71c81796b8dcc7b9eaf5e94e10adeb3a15b0732379addf25c4ea4",
+      "image_manifest": "rv32ui/bgeu/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "bgeu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/bgeu.S",
+      "source_sha256": "f1eaaba930d3ddb6ad9a6e1f7b5b5d11589768d1a2f3f8a8562a7525a0465825",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/blt/firmware.elf",
+      "elf_sha256": "29298a4cc94c8a317d3734489a99639e675aafe840aa1ef43a43784abfa8166d",
+      "image_manifest": "rv32ui/blt/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "blt",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/blt.S",
+      "source_sha256": "94bfeef39f85b4d2efea6d090d35ebea078f7435902279dbed069797a0939a44",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/bltu/firmware.elf",
+      "elf_sha256": "0514d4026ea7bb048d972e32bd62605725f67c7c1c0e8bf4a2e94505d23b438e",
+      "image_manifest": "rv32ui/bltu/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "bltu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/bltu.S",
+      "source_sha256": "48aa29dde0e9b93ef7443b0cc447ce7e0ee5f012125b362bf999d6bb26dab2e7",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/bne/firmware.elf",
+      "elf_sha256": "ac471e6d27b96e8eeadf08c1d92fa6ee394f91892575bf8ca32041571c126792",
+      "image_manifest": "rv32ui/bne/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "bne",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/bne.S",
+      "source_sha256": "31009cea25fc08d7f28e8050a172b952eccb0d70c1a76037cec7fb75fecb6e99",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/fence_i/firmware.elf",
+      "elf_sha256": "563ba636867f593a496b5507c4f8ff02a61140f63ec6bb499ca5c560e101d287",
+      "image_manifest": "rv32ui/fence_i/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "fence_i",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/fence_i.S",
+      "source_sha256": "2c69707105f7e9a7788b5298df337c0fd90fb5ed553cbaf9a36f908cd5c9d3d8",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/jal/firmware.elf",
+      "elf_sha256": "02aea0b9f7c6e26c00391d21b4f59b804629e49079b78a2d8d52fa7b219b8eab",
+      "image_manifest": "rv32ui/jal/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "jal",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/jal.S",
+      "source_sha256": "c1363aaaa68a41629d7452e7d425b26310b5ce258c4eba0f3303be0006bf151f",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/jalr/firmware.elf",
+      "elf_sha256": "48611751dce4c3a5e1a84ce46d30be563592b65ba640fcfcd0e5f6dfeb91de75",
+      "image_manifest": "rv32ui/jalr/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "jalr",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/jalr.S",
+      "source_sha256": "7692a49f51472947d4a88ee820f7e61115e86ab874db09079447893d9535817f",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/lb/firmware.elf",
+      "elf_sha256": "5d9480a88d85c95cf32200fb935b4a6978fbbf4dd6aa58b694d2f369081e7405",
+      "image_manifest": "rv32ui/lb/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "lb",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lb.S",
+      "source_sha256": "3553f2d59de9e1496b17f135469597245105ab1a1bd2adeee6bf6e1e1c8a8055",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/lbu/firmware.elf",
+      "elf_sha256": "27421bcd0fa9d07ce175ab00bace14e383e1cec7a57f6e3cb4424cd838bd0655",
+      "image_manifest": "rv32ui/lbu/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "lbu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lbu.S",
+      "source_sha256": "1dff517dd2c33cc26678302a0d3949232faeb84222a8edf97bd0411d0b774542",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/ld_st/firmware.elf",
+      "elf_sha256": "344e31ff73c1b3156ff301b765dd7c01125817d915b08f2f17cc303c2abc8375",
+      "image_manifest": "rv32ui/ld_st/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "ld_st",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/ld_st.S",
+      "source_sha256": "afe2a6812b4b695e3e9e5ea36726d8c1de7982539eee22dc9312bf481cd1b911",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/lh/firmware.elf",
+      "elf_sha256": "756375c37c50b4b85af307ae08cb119091b14be0cba28695c4a07a99833fd77b",
+      "image_manifest": "rv32ui/lh/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "lh",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lh.S",
+      "source_sha256": "e7ae579858cec3b2b2f2d1cabbd48908a1fe862a8dfc5c7cd75eb418f14a05d4",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/lhu/firmware.elf",
+      "elf_sha256": "9398bdcee6f485dffa350b0f3d5232ba4466547859a08aa22f2ecfe5c4616e1c",
+      "image_manifest": "rv32ui/lhu/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "lhu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lhu.S",
+      "source_sha256": "95c1c2f0b76abaeb77602ba5f6d1e1fafd538986f7ed68eeaacf5418f4e2270a",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/lui/firmware.elf",
+      "elf_sha256": "b448308559d31449018ac8368529285dc7ad4fcbba441ded12cacb8497f6ad30",
+      "image_manifest": "rv32ui/lui/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "lui",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lui.S",
+      "source_sha256": "fe8dae76f1cd388b5d3b8b7e952205dfd2fc8fadf057f16de48ecda6eb1fe1ad",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/lw/firmware.elf",
+      "elf_sha256": "27fd91b0919b63ee31bdfac45f7e7ebe1dcb9840943a132c2c768054b533bd3f",
+      "image_manifest": "rv32ui/lw/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "lw",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/lw.S",
+      "source_sha256": "45287aaa4e0ca4962d15837e41255bd11e69da8477126f921132e6243fdc7824",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/or/firmware.elf",
+      "elf_sha256": "41b38632e43e6d16b67653b518e4db92f2ff36d9274f319a0ad4d7dcaabef201",
+      "image_manifest": "rv32ui/or/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "or",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/or.S",
+      "source_sha256": "12ccc0ebfa7a47738944e64a7789f8807b6d51619a705268e0d302049c2bb256",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/ori/firmware.elf",
+      "elf_sha256": "c49942214cc0202f3687d35ce806be9ab153b1ec5735af84e839a346133274ac",
+      "image_manifest": "rv32ui/ori/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "ori",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/ori.S",
+      "source_sha256": "64aa0e98ababcde5bb9666138b9b9ac361293b0cb030a046f2eb9eeb5d959910",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/sb/firmware.elf",
+      "elf_sha256": "16f348ae092b050983824171f52e06eeb876b1183aea7f4a017d26386a4a6485",
+      "image_manifest": "rv32ui/sb/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "sb",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sb.S",
+      "source_sha256": "57856776ad67d8bd1f568077b9ec16d67fd5de9a84000b16dce5aedba5a01f0d",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/sh/firmware.elf",
+      "elf_sha256": "a016613624a86f37dc0c67d9be69ba7196cfb31903aedbb8d10d239475175809",
+      "image_manifest": "rv32ui/sh/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "sh",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sh.S",
+      "source_sha256": "ce218a82fe2d04d8ffb256bfae30ddc0caa0f5dc392e2b3d8fcd8f87f9a490a8",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/sll/firmware.elf",
+      "elf_sha256": "9ddbb869f416cb14fc396d32f775cf21e78e55619e6d6dceb332cad02487502a",
+      "image_manifest": "rv32ui/sll/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "sll",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sll.S",
+      "source_sha256": "2d976803efe03ab56944a44d472c05d78e066690cb6d7b5d394d7d1378b5f3ce",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/slli/firmware.elf",
+      "elf_sha256": "5b5f726344b9e8ae5171e3bcf595d644bfc5af25533d2dce3072019c05cbbf78",
+      "image_manifest": "rv32ui/slli/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "slli",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/slli.S",
+      "source_sha256": "20ff3262292d98ef1810c944bcd0cc3d35f8e5b5f204f1d9cfc1eb7b8e1b52ff",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/slt/firmware.elf",
+      "elf_sha256": "0b6366008f58977a9849a22a2b46f39400c1387ac3dd17d38bdc66b48f21657a",
+      "image_manifest": "rv32ui/slt/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "slt",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/slt.S",
+      "source_sha256": "3d084fc64d2547d35d8a26dd634b1815fafee80e7e2b06fe17e9ca2d01bb03d6",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/slti/firmware.elf",
+      "elf_sha256": "a9504ddb0cc12cd83b66b63d1604936407ec9bb6a0203fadd352e2061a431f1a",
+      "image_manifest": "rv32ui/slti/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "slti",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/slti.S",
+      "source_sha256": "00d0b78142738211b57b54f9dd0969336ae27bc3cc60adc2f06fa771dfb26134",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/sltiu/firmware.elf",
+      "elf_sha256": "2bdb49235ea15643a9776c2bc7433d5ce319c2ad079350f5767c071c797469a1",
+      "image_manifest": "rv32ui/sltiu/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "sltiu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sltiu.S",
+      "source_sha256": "421c938784d370c8d59d81c24e0660f6d58c7c289f3a1f9512b1a56bf938de65",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/sltu/firmware.elf",
+      "elf_sha256": "058508ea34ce3a7f3d211b5e8edbdfc57f0d5dc6c233a2fefaab5eddaa1e3d53",
+      "image_manifest": "rv32ui/sltu/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "sltu",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sltu.S",
+      "source_sha256": "369112e43406e17e6c4f27b6f400f7ae98f0d63a1229db1d38a13ca31bf219e9",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/sra/firmware.elf",
+      "elf_sha256": "c5e1f41229348f9cdd6ded13a3e7d2eee841a974ef9c18ca60fd2197622d1fe4",
+      "image_manifest": "rv32ui/sra/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "sra",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sra.S",
+      "source_sha256": "0decaa9cbdde1029bd5c2b9e78cf9b28900c93c6be0fea5adedbcd940ef1cc83",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/srai/firmware.elf",
+      "elf_sha256": "5e80d09ca11612c08b36c41c9596aec9f3f1c0cfe2aa6e9c5c01463f10b81b53",
+      "image_manifest": "rv32ui/srai/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "srai",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/srai.S",
+      "source_sha256": "b9c078bd267a6c78f3b1a6931b9a35b4dd451eccaec3b4672aa42478b8d46e69",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/srl/firmware.elf",
+      "elf_sha256": "7ec1fcb1697cf5f26964a0b33142a13718ef70185434c8d0c65002d9fa16b7e8",
+      "image_manifest": "rv32ui/srl/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "srl",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/srl.S",
+      "source_sha256": "4b84f36d5293e440c00939a40eb5c90119dbef475d3d284fae8d116986a09c5c",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/srli/firmware.elf",
+      "elf_sha256": "7357168d66ba4f48e21f95a682df5f1077f58ab68edfc30035cc988deb95910a",
+      "image_manifest": "rv32ui/srli/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "srli",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/srli.S",
+      "source_sha256": "c06d33bbbd85fcd017836c0b316520908ee032b4edd2c69a867f0e85c7af219a",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/st_ld/firmware.elf",
+      "elf_sha256": "9b4f3b56b3b1725188b68a26b17a2b4b56c745107995a72e2f3638cf1b193da6",
+      "image_manifest": "rv32ui/st_ld/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "st_ld",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/st_ld.S",
+      "source_sha256": "d3c2fefeb4277882e87c282ebb99f64498ed75fec549478d9c070b92510d6616",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/sub/firmware.elf",
+      "elf_sha256": "a426d3733653d07f596f9d7399b7804a19a011b127f45d5bdc97a30fc549c1db",
+      "image_manifest": "rv32ui/sub/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "sub",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sub.S",
+      "source_sha256": "0f701137fef9db64b2b866dbfdb43f8f91d6368fb7f175a8bb5c20d52635d3c6",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/sw/firmware.elf",
+      "elf_sha256": "585e8667f5f8d6aa28421a2d85ce284c9b2a0a0f3a9ade45d3ea11979d43aa41",
+      "image_manifest": "rv32ui/sw/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "sw",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/sw.S",
+      "source_sha256": "0733c0630599f5eec4e91f53959e5f21f13f28b323feaef9e809f75194066da1",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/xor/firmware.elf",
+      "elf_sha256": "71bb422b23926ca754608ed955e47e78eac400ed38ca7e74f7617205a81dcb8d",
+      "image_manifest": "rv32ui/xor/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "xor",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/xor.S",
+      "source_sha256": "8db2b3215ab1915856e5ef48b91f78e0f40be39de7e51acd125749f4cea765d9",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32ui/xori/firmware.elf",
+      "elf_sha256": "d46ae0e3af65390850640800a16829e15b7e6d13be30e284255324f462b851ae",
+      "image_manifest": "rv32ui/xori/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zifencei",
+      "name": "xori",
+      "source": "software/riscv-tests/upstream/isa/rv32ui/xori.S",
+      "source_sha256": "9723c56e6552961078492c5b399d4f7d16292fc0245622de81ef8a2d3775b5d4",
+      "suite": "rv32ui"
+    },
+    {
+      "elf": "rv32mi/breakpoint/firmware.elf",
+      "elf_sha256": "42cd99c7993caade60ec87d383d076b7fc55aceec94f21e9ab5ab0fbe3cb08d4",
+      "image_manifest": "rv32mi/breakpoint/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "breakpoint",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/breakpoint.S",
+      "source_sha256": "24642a55f9bec01e205a9c61573d0d7229d7411fafe90f80682f3ec35d479c0a",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/csr/firmware.elf",
+      "elf_sha256": "f63d3765347877260c5728ec7663b90cf0dd079b12cb5be1f259b3db3a85d754",
+      "image_manifest": "rv32mi/csr/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "csr",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/csr.S",
+      "source_sha256": "dbba82db236250591eedf7bec5993001250feb70a83d7717dff42541d92c2386",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/illegal/firmware.elf",
+      "elf_sha256": "7153e0afff748819d89c93221b5ce35c03e82ff5c92b803435084dd5571e52e7",
+      "image_manifest": "rv32mi/illegal/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "illegal",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/illegal.S",
+      "source_sha256": "a33a752d13e999ce5d5c3eb66edf9b8ff4ee75954efac2063e117ecf3d6e7738",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/instret_overflow/firmware.elf",
+      "elf_sha256": "5f6c42f56cf7b3774e737117306c43b89f942ef8f2d63d340315558e4ef10904",
+      "image_manifest": "rv32mi/instret_overflow/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "instret_overflow",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/instret_overflow.S",
+      "source_sha256": "d77a6d7f2fa408006a60cdab8cb9b9cb7882be4675464ffb73d6c00bd5975419",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/lh-misaligned/firmware.elf",
+      "elf_sha256": "edcdaf0a8f1f5b4c55ab778731ef538f2a3793e237cbf46072a51930e36b4c8b",
+      "image_manifest": "rv32mi/lh-misaligned/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "lh-misaligned",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/lh-misaligned.S",
+      "source_sha256": "26be723405ce6e184ed3737748efb9a187f3cbad01852181ce611dd46470e513",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/lw-misaligned/firmware.elf",
+      "elf_sha256": "45bc57400a1d8c34cfd3b27b628062576155e64170e797b980a539deb57cad6f",
+      "image_manifest": "rv32mi/lw-misaligned/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "lw-misaligned",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/lw-misaligned.S",
+      "source_sha256": "ac69375775f262b6adae648886755af666a1eeeeb3784947f381274932099f64",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/ma_addr/firmware.elf",
+      "elf_sha256": "0e6442fcf092721bf9f63b7e6b8cda6e404018e9308d721558b824c18b6f8a6e",
+      "image_manifest": "rv32mi/ma_addr/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "ma_addr",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/ma_addr.S",
+      "source_sha256": "a0a26c27bd3d118b2618bc052852a3e6c30a4f5fa1589d77891c5781a6cafd8f",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/ma_fetch/firmware.elf",
+      "elf_sha256": "9568461829d8669229bdd35f5d105b516697e6e79c63e6aee82029ba3f9a90e3",
+      "image_manifest": "rv32mi/ma_fetch/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "ma_fetch",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/ma_fetch.S",
+      "source_sha256": "2ce0a168926523f2175a1c81451b65fa573eb2ab6ccccc4fc9c473e081698949",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/mcsr/firmware.elf",
+      "elf_sha256": "fb1e29c20d3e034d1b7365d24974b463e3666468eee72a8b296cb08d3122ed3f",
+      "image_manifest": "rv32mi/mcsr/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "mcsr",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/mcsr.S",
+      "source_sha256": "428c77d710760acc0f2f187a3b716d994fb48820f53e32a0fa164a71f0fc8fb9",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/pmpaddr/firmware.elf",
+      "elf_sha256": "1c6c2b4d980da1233cfe53c7512440b7bc6b0855f27efbe53439a4bb4a73bb6d",
+      "image_manifest": "rv32mi/pmpaddr/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "pmpaddr",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/pmpaddr.S",
+      "source_sha256": "c21f465c3dddd546b31c49e28b74033619269580fa269d4953f50ac19dc7257c",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/sbreak/firmware.elf",
+      "elf_sha256": "1aa8df3c8c2d23ab06c13bc780ebb38505c9032f7eabdc9becbd194fbb7655b7",
+      "image_manifest": "rv32mi/sbreak/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "sbreak",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/sbreak.S",
+      "source_sha256": "023f43554a4db05fd1c22972bb24cce704c7e83990530ccfb69a33190de06ce9",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/scall/firmware.elf",
+      "elf_sha256": "82b5b9fb3910c55ee7ebefd4773d009cd879848d6f97ebc89e939d882b53479d",
+      "image_manifest": "rv32mi/scall/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "scall",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/scall.S",
+      "source_sha256": "1b92c6e9fd2f6e610055f7ecd573fe9d1d9768dc9ccb53d5c73a443ff8bc7b7c",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/sh-misaligned/firmware.elf",
+      "elf_sha256": "b8cddb0baf8cf01fae65eb0edc7d5d197cc15c67e8f5f98eb25d9767b7584dde",
+      "image_manifest": "rv32mi/sh-misaligned/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "sh-misaligned",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/sh-misaligned.S",
+      "source_sha256": "f8ae987bf0e057cb20a6ae0e26d7ffe106b453914112664728d4524697983c29",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/shamt/firmware.elf",
+      "elf_sha256": "22be78ec77dc25bde1d05f0d6c4865b356f52d1ff7b9a3915e9c800ddefa23f0",
+      "image_manifest": "rv32mi/shamt/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "shamt",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/shamt.S",
+      "source_sha256": "da6d94f35afe8ea0ddf1637b91ad5c66189a80e4ea93f371c34033d674e51320",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/sw-misaligned/firmware.elf",
+      "elf_sha256": "e8cdd2488e297b822b3fc5dc790d8758514dc3195aed72e24c4103b629c29e97",
+      "image_manifest": "rv32mi/sw-misaligned/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "sw-misaligned",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/sw-misaligned.S",
+      "source_sha256": "343044826d2d04a8a4bbc592045e59b7d7d95862f4fc276b496cbb39dc36663a",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32mi/zicntr/firmware.elf",
+      "elf_sha256": "3904ca94121f12e10247a26c247aa7a0d734f8b7ee225e27e73bd4becae5d8f6",
+      "image_manifest": "rv32mi/zicntr/image.json",
+      "mabi": "ilp32",
+      "march": "rv32i_zicsr_zicntr",
+      "name": "zicntr",
+      "source": "software/riscv-tests/upstream/isa/rv32mi/zicntr.S",
+      "source_sha256": "91aa9aa040530ec09e7e17147679419f7a95a1751171890a21f35b350da2d3ac",
+      "suite": "rv32mi"
+    },
+    {
+      "elf": "rv32um/div/firmware.elf",
+      "elf_sha256": "32ae3a84c57cf72c033685a13aafc37694f84e5d25daef91d790f455af10e390",
+      "image_manifest": "rv32um/div/image.json",
+      "mabi": "ilp32",
+      "march": "rv32im_zicsr",
+      "name": "div",
+      "source": "software/riscv-tests/upstream/isa/rv32um/div.S",
+      "source_sha256": "79f8906baf488934fc7f9be627249dfc2f333a89cb23ef721c4eeee0d708b944",
+      "suite": "rv32um"
+    },
+    {
+      "elf": "rv32um/divu/firmware.elf",
+      "elf_sha256": "915892c299aaf6ed366a8c16a0f1297482994938cae2a82f1141c24d84bbc092",
+      "image_manifest": "rv32um/divu/image.json",
+      "mabi": "ilp32",
+      "march": "rv32im_zicsr",
+      "name": "divu",
+      "source": "software/riscv-tests/upstream/isa/rv32um/divu.S",
+      "source_sha256": "ad32e6924158705e4db1301aa853d8756f90cb43557db1e01c6322f71bbaae98",
+      "suite": "rv32um"
+    },
+    {
+      "elf": "rv32um/mul/firmware.elf",
+      "elf_sha256": "f07879105c907a432cb2653fbad6fc529b491a87291415ac29d0c3106f01ad03",
+      "image_manifest": "rv32um/mul/image.json",
+      "mabi": "ilp32",
+      "march": "rv32im_zicsr",
+      "name": "mul",
+      "source": "software/riscv-tests/upstream/isa/rv32um/mul.S",
+      "source_sha256": "391bc5a92e9b7c6618818904d115e0109f56f8964927fd6b502969e0d42676b2",
+      "suite": "rv32um"
+    },
+    {
+      "elf": "rv32um/mulh/firmware.elf",
+      "elf_sha256": "531c06339ca011c0cb78882789945ac19be17d37354866992a505d2edc3887e8",
+      "image_manifest": "rv32um/mulh/image.json",
+      "mabi": "ilp32",
+      "march": "rv32im_zicsr",
+      "name": "mulh",
+      "source": "software/riscv-tests/upstream/isa/rv32um/mulh.S",
+      "source_sha256": "c14e290f1ad053221d62292d02a5c05f8d711bf9aa85438eeddb0adf4db5d5e1",
+      "suite": "rv32um"
+    },
+    {
+      "elf": "rv32um/mulhsu/firmware.elf",
+      "elf_sha256": "c7e8564ef0a3216280f25bd86b9e5095c48870f350caa280f238829ad65c4ac7",
+      "image_manifest": "rv32um/mulhsu/image.json",
+      "mabi": "ilp32",
+      "march": "rv32im_zicsr",
+      "name": "mulhsu",
+      "source": "software/riscv-tests/upstream/isa/rv32um/mulhsu.S",
+      "source_sha256": "1fbb396fcbd425fe5cb90d5958353c3327696773dda7d03c01badb0c0afc8acc",
+      "suite": "rv32um"
+    },
+    {
+      "elf": "rv32um/mulhu/firmware.elf",
+      "elf_sha256": "db74f6b3a4498cd03e96ed1a5ef6cae48fc3b5663487ddbb07f52d51bd799321",
+      "image_manifest": "rv32um/mulhu/image.json",
+      "mabi": "ilp32",
+      "march": "rv32im_zicsr",
+      "name": "mulhu",
+      "source": "software/riscv-tests/upstream/isa/rv32um/mulhu.S",
+      "source_sha256": "cdd7cb8a43a97afc6c15b2de78632bf1b0e289109d8e2d1e8e99c8a694301acf",
+      "suite": "rv32um"
+    },
+    {
+      "elf": "rv32um/rem/firmware.elf",
+      "elf_sha256": "3361a3e84503f0991571d749db55973442a91e83fc9cb096fa2cc270b17c80e8",
+      "image_manifest": "rv32um/rem/image.json",
+      "mabi": "ilp32",
+      "march": "rv32im_zicsr",
+      "name": "rem",
+      "source": "software/riscv-tests/upstream/isa/rv32um/rem.S",
+      "source_sha256": "05a86c46c2a9a6b3b878eaa87c8c73cd6a3ed8598a57b9ea191d001e1afaf47c",
+      "suite": "rv32um"
+    },
+    {
+      "elf": "rv32um/remu/firmware.elf",
+      "elf_sha256": "bf74f1ba76b7c6fe0f6552aa28da4e6bfdb77fd05437fc9f21156b7f4752d593",
+      "image_manifest": "rv32um/remu/image.json",
+      "mabi": "ilp32",
+      "march": "rv32im_zicsr",
+      "name": "remu",
+      "source": "software/riscv-tests/upstream/isa/rv32um/remu.S",
+      "source_sha256": "7be2ce9dce2d1cb52ab2776a6941b6654df2b5ed9ea52fcd9a0445f24ada269b",
+      "suite": "rv32um"
+    },
+    {
+      "elf": "rv32uf/fadd/firmware.elf",
+      "elf_sha256": "1060eaf11dd414e285675a94e72a20d1449e4b4fa844d310ed70b16241956645",
+      "image_manifest": "rv32uf/fadd/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "fadd",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/fadd.S",
+      "source_sha256": "f05705065690cfd9fb03fef4379845b598c19b6cf82d98a8c8480514f8dd00dd",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32uf/fclass/firmware.elf",
+      "elf_sha256": "ab5807b7b206734b79dfa68cebb0fe1b0d1f54bbf360e5b436f34908e9aa3942",
+      "image_manifest": "rv32uf/fclass/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "fclass",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/fclass.S",
+      "source_sha256": "9ee643f5cc06bc27605df76af22aacb951166c4cf9241d70603b75251ec8a360",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32uf/fcmp/firmware.elf",
+      "elf_sha256": "f67566f5d4052340f4cae2eed01e011ddedef92bb1d615113b769e168c897cdf",
+      "image_manifest": "rv32uf/fcmp/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "fcmp",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/fcmp.S",
+      "source_sha256": "9ea6bc0806d5acb558c8ccd1ff1bd13e1f6aa4c0156ba8502f30031e0510beef",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32uf/fcvt/firmware.elf",
+      "elf_sha256": "bc7c345814478738e96d5a4b9113c4384b8a0e2b08fe4571b6f1e5f7bc4678c6",
+      "image_manifest": "rv32uf/fcvt/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "fcvt",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/fcvt.S",
+      "source_sha256": "515473d2fedcb5b9c14cf7549b8e68e984a88d15f6f8ff9249a52b52c8333f29",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32uf/fcvt_w/firmware.elf",
+      "elf_sha256": "5a4dd4846eff92969c50388eb9b7c38a7c06612ce454f006e3a7c58b2279bd6e",
+      "image_manifest": "rv32uf/fcvt_w/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "fcvt_w",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/fcvt_w.S",
+      "source_sha256": "877f4f6c00b90e56222176797e68678d8f7c454825949ea5b4c5a79cf91de3ee",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32uf/fdiv/firmware.elf",
+      "elf_sha256": "ae809ce2a08915a6d9ccf4be35b79222c25cd82fe1f092ca9052ca8e96553036",
+      "image_manifest": "rv32uf/fdiv/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "fdiv",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/fdiv.S",
+      "source_sha256": "72ddc9e81794ed006a967624460e8ecba64ae7f882c110f48266c832f54d9c84",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32uf/fmadd/firmware.elf",
+      "elf_sha256": "1a4e464e3da9312f73321edf76649ca79c81cd9903978ec226d4ffd5c33e8c33",
+      "image_manifest": "rv32uf/fmadd/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "fmadd",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/fmadd.S",
+      "source_sha256": "3402e10c0d34d609070a9719e3f3b8065129074355bdaf0dc696c9bd4abcddbf",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32uf/fmin/firmware.elf",
+      "elf_sha256": "d0982242c57abf925e03deb4559d0eea547f9f7f175b42690c2e6922989dc702",
+      "image_manifest": "rv32uf/fmin/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "fmin",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/fmin.S",
+      "source_sha256": "2176ea77c2cff0bef7ce48f1570b726eb98c3568378dc593cf8ddbe6c69ae697",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32uf/ldst/firmware.elf",
+      "elf_sha256": "5c3cdab4a278730c0b31d32568b1993a46b091f69297e5ef52c0b535b153a30d",
+      "image_manifest": "rv32uf/ldst/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "ldst",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/ldst.S",
+      "source_sha256": "20d2348fc0c9f38cd2e1bf46c9d11950f226b01c7b27872200751e6b28def94d",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32uf/move/firmware.elf",
+      "elf_sha256": "6d9b9de5335b0ed4bc5b9acf7002464b124cb172d02c6e57af76ecdcac81b98e",
+      "image_manifest": "rv32uf/move/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "move",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/move.S",
+      "source_sha256": "9f16c4df9a38e95bc458da4f704533be8fe0ca5d168fd04e1449310c1d518002",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32uf/recoding/firmware.elf",
+      "elf_sha256": "3be25b1450791d5b10f179313584f8c5d001b5af5d48dd13c8ef3b84b3ee26e5",
+      "image_manifest": "rv32uf/recoding/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imf_zicsr",
+      "name": "recoding",
+      "source": "software/riscv-tests/upstream/isa/rv32uf/recoding.S",
+      "source_sha256": "869d660b7cf856fe77e8ca5243a909175fa9f65fbc9791be30275d6b97e07d08",
+      "suite": "rv32uf"
+    },
+    {
+      "elf": "rv32ud/fadd/firmware.elf",
+      "elf_sha256": "b7291d933e071c99688635ea0f1f68105173e1a2c206007b3199331ea06682f6",
+      "image_manifest": "rv32ud/fadd/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "fadd",
+      "source": "software/riscv-tests/upstream/isa/rv32ud/fadd.S",
+      "source_sha256": "e7d8cf0c6aef09ba868a5c0c68ba9464d45172775ad6f77c11e7adb168932190",
+      "suite": "rv32ud"
+    },
+    {
+      "elf": "rv32ud/fclass/firmware.elf",
+      "elf_sha256": "5f8f99194a4818e5f7df35392d7df73126f58f375d37fc25be0ef2a1588ca69c",
+      "image_manifest": "rv32ud/fclass/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "fclass",
+      "source": "software/riscv-tests/upstream/isa/rv32ud/fclass.S",
+      "source_sha256": "6ad0401220b84671de68ed54a350308372b1d5c9b1163498d930395cbf9041a2",
+      "suite": "rv32ud"
+    },
+    {
+      "elf": "rv32ud/fcmp/firmware.elf",
+      "elf_sha256": "7d179f3b72032a16bac6a63cd723bad73c6d78171255eb3e3c757ab31fdbc6ac",
+      "image_manifest": "rv32ud/fcmp/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "fcmp",
+      "source": "software/riscv-tests/upstream/isa/rv32ud/fcmp.S",
+      "source_sha256": "8974ebc391425815a4449d7f0566c60242ac33aff2aac40eee5144e9a0e28a1d",
+      "suite": "rv32ud"
+    },
+    {
+      "elf": "rv32ud/fcvt/firmware.elf",
+      "elf_sha256": "89b4390150eb2fd5a8979c6863b9c515b290f778fb48f56ed9915c1372f4de02",
+      "image_manifest": "rv32ud/fcvt/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "fcvt",
+      "source": "software/riscv-tests/upstream/isa/rv32ud/fcvt.S",
+      "source_sha256": "3c0ca4be6141ed38764778cf6c96d427475144458579dbdae15bdbf9894e4512",
+      "suite": "rv32ud"
+    },
+    {
+      "elf": "rv32ud/fcvt_w/firmware.elf",
+      "elf_sha256": "e4067ffe5ca43b3b9f309d69c06640eebe96f76d186bf2dffe55f436e90cd867",
+      "image_manifest": "rv32ud/fcvt_w/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "fcvt_w",
+      "source": "software/riscv-tests/upstream/isa/rv32ud/fcvt_w.S",
+      "source_sha256": "9dd826b43bfc0dd38ba87b58060b3b4f2c3108a1c97385ba8c94bf930d8ce977",
+      "suite": "rv32ud"
+    },
+    {
+      "elf": "rv32ud/fdiv/firmware.elf",
+      "elf_sha256": "c96a86143d25d4c6992ca635d5a9c980716e63914ae2e04fd2104a6acda1ecaf",
+      "image_manifest": "rv32ud/fdiv/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "fdiv",
+      "source": "software/riscv-tests/upstream/isa/rv32ud/fdiv.S",
+      "source_sha256": "2dfd3709fcd795fc791a1b9bb3e31d40e3f60c8e79c5f30ea76c4aa6a6e05f6f",
+      "suite": "rv32ud"
+    },
+    {
+      "elf": "rv32ud/fmadd/firmware.elf",
+      "elf_sha256": "ec836811f9fe09ddc24300fdfb2d12266a4681d854e6278a251704afe9687cbc",
+      "image_manifest": "rv32ud/fmadd/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "fmadd",
+      "source": "software/riscv-tests/upstream/isa/rv32ud/fmadd.S",
+      "source_sha256": "f8a6bce660d5d56be65b6416ae59410bd1ea3159e38701ceef32230a2c284813",
+      "suite": "rv32ud"
+    },
+    {
+      "elf": "rv32ud/fmin/firmware.elf",
+      "elf_sha256": "861daae6572902b0800e53b08cd1b47cef7d59fa481e16544039b7d3a0e0d660",
+      "image_manifest": "rv32ud/fmin/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "fmin",
+      "source": "software/riscv-tests/upstream/isa/rv32ud/fmin.S",
+      "source_sha256": "1055e42d5d4b4d4bd085e2964e1bac2c053c31f3e232c8fdd9163afd89de2696",
+      "suite": "rv32ud"
+    },
+    {
+      "elf": "rv32ud/ldst/firmware.elf",
+      "elf_sha256": "a7b489fdd80352dacf503b123ca69f9e14d62546a2059706120bf84c22c77400",
+      "image_manifest": "rv32ud/ldst/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "ldst",
+      "source": "software/riscv-tests/upstream/isa/rv32ud/ldst.S",
+      "source_sha256": "029fe21583f4f5fe6ed3938cdb0c494d139a1723f4ff2bd452920130e41c4bb6",
+      "suite": "rv32ud"
+    },
+    {
+      "elf": "rv32ud/recoding/firmware.elf",
+      "elf_sha256": "c8103a4dffed181f8334157488a1d5434b507d0b77f027d4126ea626039f709e",
+      "image_manifest": "rv32ud/recoding/image.json",
+      "mabi": "ilp32",
+      "march": "rv32imfd_zicsr",
+      "name": "recoding",
+      "source": "software/riscv-tests/upstream/isa/rv32ud/recoding.S",
+      "source_sha256": "5ae23fd71eb001a89f9829893ff6302362e135e108a791288a54c5263c5a482c",
+      "suite": "rv32ud"
+    }
+  ],
+  "upstream": {
+    "commit": "447a5fcb8253627ddb5f6a226f64e43463afcdd5",
+    "url": "https://github.com/riscv-software-src/riscv-tests.git"
+  }
+}

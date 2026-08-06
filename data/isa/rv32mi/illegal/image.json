@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/illegal/firmware.elf",
-    "sha256": "7153e0afff748819d89c93221b5ce35c03e82ff5c92b803435084dd5571e52e7"
+    "sha256": "0441940fd98ae79f4b230c0d97db615f445cc7e23f98085bad4cdd3588a1088d"
   },
   "endianness": "little",
   "entry": "0x00000000",

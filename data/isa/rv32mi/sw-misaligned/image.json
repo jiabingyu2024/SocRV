@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/sw-misaligned/firmware.elf",
-    "sha256": "e8cdd2488e297b822b3fc5dc790d8758514dc3195aed72e24c4103b629c29e97"
+    "sha256": "b23d1f162380cc5752abb0d7025659d5c4e6586e9ee4019e9791988992a96d0d"
   },
   "endianness": "little",
   "entry": "0x00000000",

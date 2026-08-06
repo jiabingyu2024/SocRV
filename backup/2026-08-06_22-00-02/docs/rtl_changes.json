@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "change": "SocRV framework RTL generation and shared memory latency update",
+  "confirmed_contract": {
+    "hxi": {
+      "address_width": 32,
+      "data_width": 32,
+      "write_strobe_width": 4,
+      "masters": ["instruction", "data"],
+      "outstanding_per_master": 1,
+      "parallel_different_targets": true,
+      "same_target_arbitration": "per-slave round-robin",
+      "response": ["valid", "ready", "rdata", "error"]
+    },
+    "reset_vector": "0x00000000",
+    "clock_hz": 50000000,
+    "uart_baud": 115200
+  },
+  "incremental_changes": [
+    {
+      "date": "2026-08-04",
+      "scope": [
+        "rtl/common/pkg/soc_config_pkg.sv",
+        "rtl/memory/generic/generic_rom.sv",
+        "rtl/memory/generic/generic_spram.sv"
+      ],
+      "summary": "Added one shared configurable response latency for code and data memories.",
+      "defaults": {
+        "code_memory_response_cycles": 1,
+        "data_memory_response_cycles": 1
+      },
+      "consistency": "The Verilator SoC top and FPGA memory backends instantiate the same generic memory modules, so both paths use the same defaults.",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "rtthread-coremark UART command simulation PASS"
+      ],
+      "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-05",
+      "scope": [
+        "rtl/bus/hxi/hxi_crossbar.sv"
+      ],
+      "backup": "backup/20260805_095831/rtl/bus/hxi/hxi_crossbar.sv",
+      "summary": "Removed global HXI serialization. Instruction and data masters now each own one outstanding slot and may access different slaves concurrently; same-slave conflicts use per-slave round-robin arbitration.",
+      "interface_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "correctness regression PASS",
+        "performance regression PASS",
+        "current ISA gate PASS: 40 RV32UI tests"
+      ],
+      "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-05",
+      "scope": [
+        "rtl/cpu/pkg/cpu_types_pkg.sv",
+        "rtl/cpu/demo/demo_cpu_core.sv",
+        "tb/soc/soc_sim_top.sv"
+      ],
+      "summary": "Added a single-slot retirement event contract for Spike DiffTest, including ordered normal/synchronous-trap events, architectural memory effects, pre-instruction Machine CSR snapshots, and ordered asynchronous interrupt notifications.",
+      "interface_change": true,
+      "timing_behavior_change": false,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "normal Verilator model build PASS",
+        "normal baremetal smoke PASS"
+      ],
+      "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-05",
+      "scope": [
+        "rtl/cpu/demo/demo_cpu_core.sv"
+      ],
+      "summary": "Completed the demo core functional DiffTest baseline: RV32M arithmetic, fence.i, precise alignment traps, U/M privilege transitions, Machine CSR legality and WARL behavior, counters, minimal PMP state, and trigger CSR discovery state.",
+      "interface_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "frequency_note": "The demo RV32M multiply/divide implementation is combinational and is a correctness scaffold, not a final FPGA timing implementation.",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "RV32UI DiffTest PASS: 41/41",
+        "RV32UM DiffTest PASS: 8/8",
+        "RV32MI DiffTest PASS: 16/16, including independently validated address-trigger breakpoint traps",
+        "baremetal smoke DiffTest PASS",
+        "trap/timer DiffTest PASS",
+        "RT-Thread UART command DiffTest PASS",
+        "RT-Thread CoreMark 3 command and CRC PASS"
+      ],
+      "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-06",
+      "scope": [
+        "rtl/cpu/superscalar/",
+        "rtl/cpu/cpu_subsystem.sv",
+        "rtl/cpu/pkg/cpu_config_pkg.sv",
+        "rtl/cpu/pkg/cpu_types_pkg.sv",
+        "rtl/filelist.f",
+        "rtl/cpu/demo/demo_cpu_core.sv"
+      ],
+      "backup": [
+        "backup/2026-08-06_20-56-36/rtl/cpu/demo/demo_cpu_core.sv",
+        "backup/2026-08-06_21-14-09/docs/rtl_changes.json"
+      ],
+      "summary": "Replaced the demo CPU instance with the imported superscalar core, adapted the core locally to the unchanged SocRV reset vector, memory map, HXI protocol, interrupt inputs and commit-trace contract, and removed the validated demo RTL from the active tree.",
+      "address_contract": {
+        "reset_pc": "cpu_config_pkg::CPU_RESET_VECTOR (0x00000000)",
+        "code": "memory_map_pkg::CODE_BASE/SIZE (0x00000000, 64 KiB)",
+        "data_cacheable": "memory_map_pkg::DATA_BASE/SIZE (0x10000000, 64 KiB)",
+        "mmio": "all addresses outside DATA are uncached and ordered through D-HXI"
+      },
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "soc_contract_files_changed": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "make check PASS",
+        "Spike DiffTest final-base PASS: RV32UI 41/41, RV32MI 15/15, RV32UM 8/8",
+        "difftest-selftest ORDER/NEXT_PC/GPR/MEM PASS",
+        "diff-smoke PASS",
+        "diff-rtthread PASS with socrv_info command and second msh prompt",
+        "sim-trap-timer PASS",
+        "sim-full PASS: final-base, RT-Thread, MSH help/ps/uptime, CoreMark 10 CRC",
+        "CoreMark 3 PASS: 5121478 ticks",
+        "CoreMark 10 PASS: 17070246 ticks",
+        "Vivado rtthread-coremark PASS: timing met, 0 DRC errors, bitstream generated",
+        "check-images PASS and release-check PASS: 11 packaged files"
+      ],
+      "fpga": {
+        "profile": "rtthread-coremark",
+        "bitstream_sha256": "38891bce598cf02c972eb945a6ed4fdb769b2ee174db0f3f0e7b497f4c16427e",
+        "drc_warnings": 46,
+        "warning_note": "REQP-1840 warnings on D-cache tag RAM address drivers with asynchronous-reset registers; no DRC errors and timing met."
+      },
+      "known_limitations": [
+        "Unexpected D-HXI rsp_err responses are promoted to fault_o; precise load/store access-fault retirement is not covered by the current final-base or RT-Thread regression.",
+        "Physical board UART validation must be performed after programming; no board was connected during this run."
+      ]
+    }
+  ],
+  "assumptions": [
+    "Each HXI master permits one outstanding transaction; instruction and data requests to different slaves are independent.",
+    "Two masters contending for the same HXI slave are serialized by per-slave round-robin arbitration.",
+    "Code and data memory are each 64 KiB.",
+    "Memory response latency parameters must be at least one cycle.",
+    "The superscalar core is the active and final CPU implementation; the demo core has been removed after full regression."
+  ]
+}
