@@ -1,5 +1,8 @@
 # SocRV CPU 迭代、仿真、软件与 FPGA 操作说明
 
+> 后续 AI 接手、替换 CPU、进行 IPC/频率/CoreMark 闭环优化时，先阅读
+> [`ai_handoff_cpu_iteration_loop_engineer_harness.md`](ai_handoff_cpu_iteration_loop_engineer_harness.md)。
+
 ## 1. 目标与统一运行方式
 
 项目最终使用同一个 `rtthread-coremark` 固件完成两件事：
