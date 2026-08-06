@@ -1,0 +1,29 @@
+{
+  "kind": "regression",
+  "schema_version": 1,
+  "status": "PASS",
+  "suite": "coremark",
+  "target": "soc-verilator",
+  "tests": [
+    {
+      "cycles": 4496154,
+      "kind": "simulation",
+      "last_commit_pc": 1152,
+      "schema_version": 1,
+      "status": "PASS",
+      "target": "soc-verilator",
+      "test": "coremark-baremetal-functional",
+      "test_code": 0
+    },
+    {
+      "cycles": 5156562,
+      "kind": "simulation",
+      "last_commit_pc": 26424,
+      "schema_version": 1,
+      "status": "PASS",
+      "target": "soc-verilator",
+      "test": "coremark-rtthread-functional",
+      "test_code": 0
+    }
+  ]
+}

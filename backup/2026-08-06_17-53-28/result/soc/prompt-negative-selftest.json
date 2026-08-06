@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "kind": "simulation",
+  "target": "soc-verilator",
+  "test": "prompt-negative-selftest",
+  "profile": "rtthread-coremark",
+  "status": "FAIL",
+  "seed": 1,
+  "cycles": 1100000,
+  "commits": 262759,
+  "ipc": 0.238871818,
+  "exit_reason": "uart_prompt_timeout",
+  "max_cycles": 1200000,
+  "test_code": 0,
+  "last_commit_pc": 1904,
+  "image": "build/images/rtthread-coremark/image.json",
+  "performance": {
+    "requested": true,
+    "complete": false,
+    "iterations": 3,
+    "start_cycle": null,
+    "end_cycle": null,
+    "cycles": null,
+    "commits": null,
+    "ipc": null,
+    "seconds": null,
+    "cycles_per_iteration": null,
+    "commits_per_iteration": null,
+    "iterations_per_second": null
+  },
+  "checker": {
+    "name": "uart-command-coremark-crc-test-status-and-perf-window",
+    "passed": false,
+    "message": "missing: [passing Test Status] [UART prompt `__NEVER_MATCH_PROMPT__`] [UART command transmission] [Iterations       : 3] [[0]crclist       : 0xe714] [[0]crcmatrix     : 0x1fd7] [[0]crcstate      : 0x8e3a] [SocRV CoreMark CRC check PASS] [numeric SocRV exact total ticks] [complete performance window]",
+    "prompt_seen": false,
+    "prompt_cycle": null,
+    "command_sent": false,
+    "command_cycle": null,
+    "framing_error": false,
+    "decoded_bytes": 223,
+    "missing": ["passing Test Status", "UART prompt `__NEVER_MATCH_PROMPT__`", "UART command transmission", "Iterations       : 3", "[0]crclist       : 0xe714", "[0]crcmatrix     : 0x1fd7", "[0]crcstate      : 0x8e3a", "SocRV CoreMark CRC check PASS", "numeric SocRV exact total ticks", "complete performance window"],
+    "forbidden_seen": []
+  },
+  "artifacts": {
+    "log": "build/log/soc/prompt-negative-selftest.log",
+    "wave": null
+  },
+  "failure": {
+    "reason": "uart_prompt_timeout",
+    "message": "missing: [passing Test Status] [UART prompt `__NEVER_MATCH_PROMPT__`] [UART command transmission] [Iterations       : 3] [[0]crclist       : 0xe714] [[0]crcmatrix     : 0x1fd7] [[0]crcstate      : 0x8e3a] [SocRV CoreMark CRC check PASS] [numeric SocRV exact total ticks] [complete performance window]"
+  },
+  "reproduce": "python -B scripts/run_verilator.py --profile rtthread-coremark --test prompt-negative-selftest --max-cycles 1200000 --no-rtl-build --no-software-build --benchmark-iterations 3 --uart-command \"coremark 3\" --uart-prompt \"__NEVER_MATCH_PROMPT__\" --uart-prompt-timeout 1100000 --checker uart-command-coremark-crc-test-status-and-perf-window --uart-expect \"SocRV RT-Thread ready\" --uart-expect \"msh >\" --uart-reject \"ERROR! list crc\" --uart-reject \"ERROR! matrix crc\" --uart-reject \"ERROR! state crc\" --uart-reject \"Cannot validate operation\" --uart-reject \"SocRV CoreMark CRC check FAIL\""
+}

@@ -9,7 +9,7 @@ module cpu_subsystem (
   output cpu_types_pkg::commit_trace_t commit_o,
   output logic fault_o
 );
-  demo_cpu_core u_demo_core (
+  superscalar_cpu_core u_core (
     .clk_i,
     .rst_ni,
     .instr_hxi,

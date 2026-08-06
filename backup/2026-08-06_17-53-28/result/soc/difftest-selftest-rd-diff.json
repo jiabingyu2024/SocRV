@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "kind": "simulation",
+  "target": "soc-verilator",
+  "test": "difftest-selftest-rd",
+  "profile": "smoke",
+  "status": "DIFF_MISMATCH",
+  "seed": 1,
+  "cycles": 36,
+  "commits": 9,
+  "ipc": 0.250000000,
+  "exit_reason": "difftest_GPR",
+  "max_cycles": 100000,
+  "test_code": 0,
+  "last_commit_pc": 32,
+  "image": "build/images/smoke/image.json",
+  "performance": {
+    "requested": false,
+    "complete": false,
+    "iterations": 0,
+    "start_cycle": null,
+    "end_cycle": null,
+    "cycles": null,
+    "commits": null,
+    "ipc": null,
+    "seconds": null,
+    "cycles_per_iteration": null,
+    "commits_per_iteration": null,
+    "iterations_per_second": null
+  },
+  "checker": {
+    "name": "test-status-and-uart",
+    "passed": false,
+    "message": "missing: [passing Test Status] [SocRV smoke PASS]",
+    "prompt_seen": false,
+    "prompt_cycle": null,
+    "prompt_count": 0,
+    "command_sent": false,
+    "command_cycle": null,
+    "command_complete": false,
+    "framing_error": false,
+    "decoded_bytes": 0,
+    "missing": ["passing Test Status", "SocRV smoke PASS"],
+    "forbidden_seen": []
+  },
+  "difftest": {
+    "enabled": true,
+    "passed": false,
+    "backend": "spike",
+    "backend_version": "9af9730baf7b956c3072c1b436d867aca5ef8f4c",
+    "mode": "soc-mmio",
+    "isa": "rv32im_zicsr_zicntr_zifencei",
+    "compared_events": 9,
+    "retired_instructions": 9,
+    "mmio_syncs": 0,
+    "last_order": 8,
+    "log": "build/log/difftest/difftest-selftest-rd-diff.log",
+    "trace": "build/trace/difftest/difftest-selftest-rd-diff.jsonl"
+  },
+  "artifacts": {
+    "log": "build/log/soc/difftest-selftest-rd-diff.log",
+    "wave": null
+  },
+  "failure": {
+    "reason": "difftest_GPR",
+    "message": "Register write data mismatch to x5 DUT: 31 expected: 30",
+    "kind": "GPR",
+    "cycle": 36,
+    "order": 8
+  },
+  "reproduce": "python -B scripts/run_verilator.py --profile smoke --test difftest-selftest-rd --max-cycles 100000 --no-rtl-build --no-software-build --difftest-fault rd@8 --checker test-status-and-uart --uart-expect \"SocRV smoke PASS\" --difftest --difftest-mode soc-mmio --difftest-isa rv32im_zicsr_zicntr_zifencei"
+}

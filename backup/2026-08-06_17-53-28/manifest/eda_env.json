@@ -1,0 +1,65 @@
+{
+  "host": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.13",
+    "python_executable": "D:\\AppMajor\\miniconda3\\python.exe"
+  },
+  "ok_base": true,
+  "ok_fpga": true,
+  "schema_version": 1,
+  "windows": {
+    "git": {
+      "found": true,
+      "path": "D:\\AppMajor\\git\\Git\\cmd\\git.EXE"
+    },
+    "make": {
+      "found": true,
+      "path": "D:\\AppMajor\\make\\GnuWin32\\bin\\make.EXE"
+    },
+    "riscv64-unknown-elf-gcc": {
+      "found": true,
+      "path": "D:\\AppMajor\\toolchain\\toolchain_gcc_sifive_windows-master\\bin\\riscv64-unknown-elf-gcc.EXE"
+    },
+    "vivado": {
+      "found": true,
+      "path": "D:\\AppMajor\\xilinx\\Vivado\\2023.2\\bin\\vivado.BAT"
+    }
+  },
+  "wsl": {
+    "distro": "Ubuntu 24.04.3 LTS",
+    "found": true,
+    "ok": true,
+    "tools": {
+      "g++": {
+        "found": true,
+        "path": "/usr/bin/g++",
+        "version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+      },
+      "git": {
+        "found": true,
+        "path": "/usr/bin/git",
+        "version": "git version 2.43.0"
+      },
+      "make": {
+        "found": true,
+        "path": "/usr/bin/make",
+        "version": "GNU Make 4.3"
+      },
+      "python3": {
+        "found": true,
+        "path": "/usr/bin/python3",
+        "version": "Python 3.12.3"
+      },
+      "riscv64-unknown-elf-gcc": {
+        "found": true,
+        "path": "/usr/bin/riscv64-unknown-elf-gcc",
+        "version": "riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0"
+      },
+      "verilator": {
+        "found": true,
+        "path": "/usr/local/bin/verilator",
+        "version": "Verilator 5.046 2026-02-28 rev v5.046-55-g1264184fb"
+      }
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "kind": "simulation",
+  "target": "soc-verilator",
+  "test": "rtthread-smoke",
+  "profile": "rtthread",
+  "status": "PASS",
+  "seed": 1,
+  "cycles": 753340,
+  "commits": 177268,
+  "ipc": 0.235309422,
+  "exit_reason": "test_status",
+  "max_cycles": 2000000,
+  "test_code": 0,
+  "last_commit_pc": 23224,
+  "image": "build/images/rtthread/image.json",
+  "performance": {
+    "requested": false,
+    "complete": false,
+    "iterations": 0,
+    "start_cycle": null,
+    "end_cycle": null,
+    "cycles": null,
+    "commits": null,
+    "ipc": null,
+    "seconds": null,
+    "cycles_per_iteration": null,
+    "commits_per_iteration": null,
+    "iterations_per_second": null
+  },
+  "checker": {
+    "name": "test-status-and-uart",
+    "passed": true,
+    "message": "all configured checks passed",
+    "prompt_seen": true,
+    "prompt_cycle": 705254,
+    "command_sent": false,
+    "command_cycle": null,
+    "framing_error": false,
+    "decoded_bytes": 170,
+    "missing": [],
+    "forbidden_seen": []
+  },
+  "artifacts": {
+    "log": "build/log/soc/rtthread-smoke.log",
+    "wave": null
+  },
+  "failure": null,
+  "reproduce": "python -B scripts/run_verilator.py --profile rtthread --test rtthread-smoke --max-cycles 2000000 --no-rtl-build --no-software-build --checker test-status-and-uart --uart-expect \"Thread Nano Operating System\" --uart-expect \"SocRV RT-Thread boot\" --uart-expect \"msh >\""
+}

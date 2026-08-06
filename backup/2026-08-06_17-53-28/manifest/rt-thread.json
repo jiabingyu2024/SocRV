@@ -1,0 +1,17 @@
+{
+  "commit": "ddf52e2cdd977f14fc04035c88672ac204aec713",
+  "kind": "external_dependency",
+  "name": "rt-thread",
+  "ref": "v5.2.2",
+  "schema_version": 1,
+  "sparse_paths": [
+    "src",
+    "include",
+    "libcpu/risc-v",
+    "components/finsh",
+    "Kconfig",
+    "LICENSE",
+    "README.md"
+  ],
+  "url": "https://github.com/RT-Thread/rt-thread.git"
+}

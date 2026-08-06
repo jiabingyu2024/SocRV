@@ -93,6 +93,56 @@
         "RT-Thread CoreMark 3 command and CRC PASS"
       ],
       "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-06",
+      "scope": [
+        "rtl/cpu/superscalar/",
+        "rtl/cpu/cpu_subsystem.sv",
+        "rtl/cpu/pkg/cpu_config_pkg.sv",
+        "rtl/cpu/pkg/cpu_types_pkg.sv",
+        "rtl/filelist.f",
+        "rtl/cpu/demo/demo_cpu_core.sv"
+      ],
+      "backup": [
+        "backup/2026-08-06_20-56-36/rtl/cpu/demo/demo_cpu_core.sv",
+        "backup/2026-08-06_21-14-09/docs/rtl_changes.json"
+      ],
+      "summary": "Replaced the demo CPU instance with the imported superscalar core, adapted the core locally to the unchanged SocRV reset vector, memory map, HXI protocol, interrupt inputs and commit-trace contract, and removed the validated demo RTL from the active tree.",
+      "address_contract": {
+        "reset_pc": "cpu_config_pkg::CPU_RESET_VECTOR (0x00000000)",
+        "code": "memory_map_pkg::CODE_BASE/SIZE (0x00000000, 64 KiB)",
+        "data_cacheable": "memory_map_pkg::DATA_BASE/SIZE (0x10000000, 64 KiB)",
+        "mmio": "all addresses outside DATA are uncached and ordered through D-HXI"
+      },
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "soc_contract_files_changed": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "make check PASS",
+        "Spike DiffTest final-base PASS: RV32UI 41/41, RV32MI 15/15, RV32UM 8/8",
+        "difftest-selftest ORDER/NEXT_PC/GPR/MEM PASS",
+        "diff-smoke PASS",
+        "diff-rtthread PASS with socrv_info command and second msh prompt",
+        "sim-trap-timer PASS",
+        "sim-full PASS: final-base, RT-Thread, MSH help/ps/uptime, CoreMark 10 CRC",
+        "CoreMark 3 PASS: 5121478 ticks",
+        "CoreMark 10 PASS: 17070246 ticks",
+        "Vivado rtthread-coremark PASS: timing met, 0 DRC errors, bitstream generated",
+        "check-images PASS and release-check PASS: 11 packaged files"
+      ],
+      "fpga": {
+        "profile": "rtthread-coremark",
+        "bitstream_sha256": "38891bce598cf02c972eb945a6ed4fdb769b2ee174db0f3f0e7b497f4c16427e",
+        "drc_warnings": 46,
+        "warning_note": "REQP-1840 warnings on D-cache tag RAM address drivers with asynchronous-reset registers; no DRC errors and timing met."
+      },
+      "known_limitations": [
+        "Unexpected D-HXI rsp_err responses are promoted to fault_o; precise load/store access-fault retirement is not covered by the current final-base or RT-Thread regression.",
+        "Physical board UART validation must be performed after programming; no board was connected during this run."
+      ]
     }
   ],
   "assumptions": [
@@ -100,6 +150,6 @@
     "Two masters contending for the same HXI slave are serialized by per-slave round-robin arbitration.",
     "Code and data memory are each 64 KiB.",
     "Memory response latency parameters must be at least one cycle.",
-    "The demo core is verification infrastructure and is not the final CPU implementation."
+    "The superscalar core is the active and final CPU implementation; the demo core has been removed after full regression."
   ]
 }

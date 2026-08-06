@@ -1,0 +1,9 @@
+{
+  "commit": "cfa9ab377835911f23d9b0831c7be302ed1f58de",
+  "kind": "external_dependency",
+  "name": "coremark",
+  "ref": "v1.01",
+  "schema_version": 1,
+  "sparse_paths": [],
+  "url": "https://github.com/eembc/coremark.git"
+}

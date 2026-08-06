@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "kind": "simulation",
+  "target": "soc-verilator",
+  "test": "isa-rv32ui-lh",
+  "profile": "isa/rv32ui",
+  "status": "PASS",
+  "seed": 1,
+  "cycles": 778,
+  "commits": 237,
+  "ipc": 0.304627249,
+  "exit_reason": "test_status",
+  "max_cycles": 300000,
+  "test_code": 0,
+  "last_commit_pc": 764,
+  "image": "data/isa/rv32ui/lh/image.json",
+  "performance": {
+    "requested": false,
+    "complete": false,
+    "iterations": 0,
+    "start_cycle": null,
+    "end_cycle": null,
+    "cycles": null,
+    "commits": null,
+    "ipc": null,
+    "seconds": null,
+    "cycles_per_iteration": null,
+    "commits_per_iteration": null,
+    "iterations_per_second": null
+  },
+  "checker": {
+    "name": "test-status",
+    "passed": true,
+    "message": "all configured checks passed",
+    "prompt_seen": false,
+    "prompt_cycle": null,
+    "command_sent": false,
+    "command_cycle": null,
+    "framing_error": false,
+    "decoded_bytes": 0,
+    "missing": [],
+    "forbidden_seen": []
+  },
+  "artifacts": {
+    "log": "build/log/soc/isa-rv32ui-lh.log",
+    "wave": null
+  },
+  "failure": null,
+  "reproduce": "python -B scripts/run_isa_tests.py --gate current --tests rv32ui/lh --max-cycles 300000 --no-rtl-build"
+}

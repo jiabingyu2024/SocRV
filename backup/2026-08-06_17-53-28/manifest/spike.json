@@ -1,0 +1,9 @@
+{
+  "commit": "9af9730baf7b956c3072c1b436d867aca5ef8f4c",
+  "kind": "external_dependency",
+  "name": "spike",
+  "ref": "ibex-cosim-v0.3",
+  "schema_version": 1,
+  "sparse_paths": [],
+  "url": "https://github.com/lowRISC/riscv-isa-sim.git"
+}

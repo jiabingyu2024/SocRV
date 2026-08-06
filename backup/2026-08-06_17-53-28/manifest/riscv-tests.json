@@ -1,0 +1,9 @@
+{
+  "commit": "447a5fcb8253627ddb5f6a226f64e43463afcdd5",
+  "kind": "external_dependency",
+  "name": "riscv-tests",
+  "ref": "master",
+  "schema_version": 1,
+  "sparse_paths": [],
+  "url": "https://github.com/riscv-software-src/riscv-tests.git"
+}

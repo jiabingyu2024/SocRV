@@ -3,6 +3,8 @@ package cpu_types_pkg;
     logic        valid;
     logic        retired;
     logic [63:0] order;
+    // Legacy FPGA status-display alias; kept equal to pc_rdata by CPU cores.
+    logic [31:0] pc;
     logic [31:0] pc_rdata;
     logic [31:0] pc_wdata;
     logic [31:0] instruction;

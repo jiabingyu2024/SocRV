@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "kind": "simulation",
+  "target": "soc-verilator",
+  "test": "baremetal-trap-timer",
+  "profile": "trap-timer",
+  "status": "PASS",
+  "seed": 1,
+  "cycles": 52550,
+  "commits": 15709,
+  "ipc": 0.298934348,
+  "exit_reason": "test_status",
+  "max_cycles": 500000,
+  "test_code": 0,
+  "last_commit_pc": 1256,
+  "image": "build/images/trap-timer/image.json",
+  "performance": {
+    "requested": false,
+    "complete": false,
+    "iterations": 0,
+    "start_cycle": null,
+    "end_cycle": null,
+    "cycles": null,
+    "commits": null,
+    "ipc": null,
+    "seconds": null,
+    "cycles_per_iteration": null,
+    "commits_per_iteration": null,
+    "iterations_per_second": null
+  },
+  "checker": {
+    "name": "test-status",
+    "passed": true,
+    "message": "all configured checks passed",
+    "prompt_seen": false,
+    "prompt_cycle": null,
+    "command_sent": false,
+    "command_cycle": null,
+    "framing_error": false,
+    "decoded_bytes": 0,
+    "missing": [],
+    "forbidden_seen": []
+  },
+  "artifacts": {
+    "log": "build/log/soc/baremetal-trap-timer.log",
+    "wave": null
+  },
+  "failure": null,
+  "reproduce": "python -B scripts/run_verilator.py --profile trap-timer --test baremetal-trap-timer --max-cycles 500000 --no-rtl-build --no-software-build --checker test-status"
+}

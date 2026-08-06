@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "kind": "simulation",
+  "target": "soc-verilator",
+  "test": "rv32ui-jalr",
+  "profile": "isa",
+  "status": "PASS",
+  "seed": 1,
+  "cycles": 268,
+  "commits": 83,
+  "ipc": 0.309701493,
+  "exit_reason": "test_status",
+  "max_cycles": 300000,
+  "test_code": 0,
+  "last_commit_pc": 328,
+  "image": "data/isa/rv32ui/jalr/image.json",
+  "performance": {
+    "requested": false,
+    "complete": false,
+    "iterations": 0,
+    "start_cycle": null,
+    "end_cycle": null,
+    "cycles": null,
+    "commits": null,
+    "ipc": null,
+    "seconds": null,
+    "cycles_per_iteration": null,
+    "commits_per_iteration": null,
+    "iterations_per_second": null
+  },
+  "artifacts": {
+    "log": "build/log/soc/rv32ui-jalr.log",
+    "wave": null
+  },
+  "failure": null,
+  "reproduce": "python -B scripts/run_isa_tests.py --tests jalr --max-cycles 300000 --no-rtl-build"
+}

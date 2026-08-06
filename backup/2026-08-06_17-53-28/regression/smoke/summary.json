@@ -1,0 +1,39 @@
+{
+  "kind": "regression",
+  "schema_version": 1,
+  "status": "PASS",
+  "suite": "smoke",
+  "target": "soc-verilator",
+  "tests": [
+    {
+      "cycles": 74460,
+      "kind": "simulation",
+      "last_commit_pc": 1048,
+      "schema_version": 1,
+      "status": "PASS",
+      "target": "soc-verilator",
+      "test": "baremetal-smoke",
+      "test_code": 0
+    },
+    {
+      "cycles": 753340,
+      "kind": "simulation",
+      "last_commit_pc": 23224,
+      "schema_version": 1,
+      "status": "PASS",
+      "target": "soc-verilator",
+      "test": "rtthread-smoke",
+      "test_code": 0
+    },
+    {
+      "cycles": 52550,
+      "kind": "simulation",
+      "last_commit_pc": 1256,
+      "schema_version": 1,
+      "status": "PASS",
+      "target": "soc-verilator",
+      "test": "baremetal-trap-timer",
+      "test_code": 0
+    }
+  ]
+}

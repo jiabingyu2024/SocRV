@@ -1,0 +1,66 @@
+{
+  "$schema": "stage11_wave_debug",
+  "version": "1.1",
+  "design_name": "SocRV superscalar CPU integration",
+  "timestamp": "2026-08-06T19:31:00+08:00",
+  "eda_tool": {
+    "waveform_viewer": "textual VCD inspection",
+    "waveform_version": "VCD",
+    "dump_simulator": "Verilator 5.046",
+    "dump_format": "vcd",
+    "dump_compile_flags": "VM_TRACE=1",
+    "dump_runtime_flags": "--trace",
+    "actual_dump_command": "python -B scripts/run_isa_tests.py --gate final-base --tests rv32mi/breakpoint --no-rtl-build --trace",
+    "actual_wave_open_command": "textual VCD signal extraction",
+    "source": "inferred from scripts/run_verilator.py"
+  },
+  "failure_context": {
+    "from_triage": "directed rv32mi regression",
+    "failure_class": "register access and control recovery",
+    "suspected_area": "CPU CSR trigger state, exception completion, and redirect arbitration"
+  },
+  "dump_status": {
+    "dump_exists": true,
+    "dump_format": "vcd",
+    "dump_file": "build/wave/soc/isa-rv32mi-breakpoint.vcd",
+    "rerun_required": false,
+    "rerun_command": "python -B scripts/run_isa_tests.py --gate final-base --tests rv32mi/breakpoint --no-rtl-build --trace"
+  },
+  "signals_traced": [
+    {
+      "signal": "csr_tdata1_0/csr_tdata2_0/csr_tcontrol",
+      "module": "core_top.u_csr",
+      "reason": "confirm trigger programming and enable state"
+    },
+    {
+      "signal": "exec_mem_addr_calc/memory_trigger_match/exec_load_enqueue",
+      "module": "core_top",
+      "reason": "confirm load address match and side-effect suppression"
+    },
+    {
+      "signal": "fixed_completion_valid/full_flush/branch_miss/redirect_target",
+      "module": "core_top/recovery_ctrl",
+      "reason": "trace the precise exception through recovery"
+    }
+  ],
+  "observations": [
+    "At VCD time 4161 the load address is 0x10000000, memory_trigger_match asserts, raw load enqueue is suppressed, and an exception completion is produced.",
+    "The trap redirect initially selects mtvec 0x00000014, but a registered younger branch_miss remains asserted after full_flush and changes the later redirect target to 0x00000148.",
+    "The failing path reaches test code 4 only after the stale branch redirect bypasses the trap handler."
+  ],
+  "root_cause": {
+    "found": true,
+    "description": "full_flush clears execution state but does not clear registered branch recovery state, allowing a younger branch redirect to overwrite a precise trigger trap redirect on the following cycle",
+    "evidence": "memory_trigger_match=1 at time 4161; full_flush redirects to 0x14 at 4163; branch_miss remains 1 at 4165; subsequent redirect target becomes 0x148",
+    "affected_module": "rtl/cpu/superscalar/core_top.sv"
+  },
+  "fix_recommendation": {
+    "type": "rtl_fix",
+    "description": "Give full_flush priority over registered branch recovery state; separately enforce CSR privilege/read-only legality and suppress minstret auto-increment on direct counter writes.",
+    "target_files": [
+      "rtl/cpu/superscalar/core_top.sv",
+      "rtl/cpu/superscalar/commit/csr_file.sv"
+    ]
+  },
+  "rerun_path": "frontend-compile-sim-run"
+}

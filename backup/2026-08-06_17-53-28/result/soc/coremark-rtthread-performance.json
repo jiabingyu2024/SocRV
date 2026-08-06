@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "kind": "simulation",
+  "target": "soc-verilator",
+  "test": "coremark-rtthread-performance",
+  "profile": "coremark-rtthread-perf",
+  "status": "PASS",
+  "seed": 1,
+  "cycles": 26590577,
+  "commits": 8122257,
+  "ipc": 0.305456215,
+  "exit_reason": "test_status",
+  "max_cycles": 80000000,
+  "test_code": 0,
+  "last_commit_pc": 26436,
+  "image": "build/images/coremark-rtthread-perf/image.json",
+  "performance": {
+    "requested": true,
+    "complete": true,
+    "iterations": 10,
+    "start_cycle": 708652,
+    "end_cycle": 24495333,
+    "cycles": 23786681,
+    "commits": 7465961,
+    "ipc": 0.313871490,
+    "seconds": 0.475733620,
+    "cycles_per_iteration": 2378668.100000000,
+    "commits_per_iteration": 746596.100000000,
+    "iterations_per_second": 21.020166706
+  },
+  "artifacts": {
+    "log": "build/log/soc/coremark-rtthread-performance.log",
+    "wave": null
+  },
+  "failure": null,
+  "reproduce": "python -B scripts/run_verilator.py --profile coremark-rtthread-perf --test coremark-rtthread-performance --max-cycles 80000000 --no-rtl-build --no-software-build --benchmark-iterations 10"
+}

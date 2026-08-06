@@ -1,0 +1,81 @@
+{
+  "kind": "regression",
+  "model_fingerprint": "d91386766836697fc1d64dada45dd3904c1ba8da2ab9af655f219e73789abbc9",
+  "performance": [
+    {
+      "commits": 7465963,
+      "commits_per_iteration": 746596.3,
+      "complete": true,
+      "cycles": 23786691,
+      "cycles_per_iteration": 2378669.1,
+      "end_cycle": 25513364,
+      "ipc": 0.313871442,
+      "iterations": 10,
+      "iterations_per_second": 21.020157869,
+      "requested": true,
+      "seconds": 0.47573382,
+      "start_cycle": 1726673,
+      "test": "rtthread-coremark-command-10"
+    }
+  ],
+  "schema_version": 1,
+  "status": "PASS",
+  "suite": "performance",
+  "target": "soc-verilator",
+  "testlist": {
+    "path": "data/tests/soc.json",
+    "sha256": "dfc544f25e4e5050556019fd2895619e514cacf955f97447b8377ea3bf1d26b1"
+  },
+  "tests": [
+    {
+      "artifacts": {
+        "log": "build/log/soc/rtthread-coremark-command-10.log",
+        "wave": null
+      },
+      "checker": {
+        "command_cycle": 983538,
+        "command_sent": true,
+        "decoded_bytes": 897,
+        "forbidden_seen": [],
+        "framing_error": false,
+        "message": "all configured checks passed",
+        "missing": [],
+        "name": "uart-command-coremark-crc-test-status-and-perf-window",
+        "passed": true,
+        "prompt_cycle": 983104,
+        "prompt_seen": true
+      },
+      "commits": 8514775,
+      "cycles": 28177551,
+      "exit_reason": "test_status",
+      "failure": null,
+      "image": "build/images/rtthread-coremark/image.json",
+      "ipc": 0.302182933,
+      "kind": "simulation",
+      "last_commit_pc": 26424,
+      "max_cycles": 33000000,
+      "performance": {
+        "commits": 7465963,
+        "commits_per_iteration": 746596.3,
+        "complete": true,
+        "cycles": 23786691,
+        "cycles_per_iteration": 2378669.1,
+        "end_cycle": 25513364,
+        "ipc": 0.313871442,
+        "iterations": 10,
+        "iterations_per_second": 21.020157869,
+        "requested": true,
+        "seconds": 0.47573382,
+        "start_cycle": 1726673
+      },
+      "profile": "rtthread-coremark",
+      "reproduce": "python -B scripts/run_verilator.py --profile rtthread-coremark --test rtthread-coremark-command-10 --max-cycles 33000000 --no-rtl-build --no-software-build --benchmark-iterations 10 --uart-command \"coremark 10\" --uart-prompt \"msh >\" --uart-prompt-timeout 5000000 --checker uart-command-coremark-crc-test-status-and-perf-window --uart-expect \"SocRV RT-Thread ready\" --uart-reject \"ERROR! list crc\" --uart-reject \"ERROR! matrix crc\" --uart-reject \"ERROR! state crc\" --uart-reject \"Cannot validate operation\" --uart-reject \"SocRV CoreMark CRC check FAIL\" --wall-timeout 900",
+      "schema_version": 1,
+      "seed": 1,
+      "status": "PASS",
+      "target": "soc-verilator",
+      "test": "rtthread-coremark-command-10",
+      "test_code": 0
+    }
+  ]
+}

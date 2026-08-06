@@ -1,0 +1,356 @@
+#-----------------------------------------------------------
+# Vivado v2023.2 (64-bit)
+# SW Build 4029153 on Fri Oct 13 20:14:34 MDT 2023
+# IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+# SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+# Start of session at: Thu Aug  6 20:35:44 2026
+# Process ID: 4480
+# Current directory: E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark
+# Command line: vivado.exe -mode batch -source E:\Resources\03_competitions\26_03_jcs\2608round\SocRV\fpga\boards\kintex7_competition\tcl\build_bitstream.tcl -tclargs E:\Resources\03_competitions\26_03_jcs\2608round\SocRV\build\vivado\kintex7-rtthread-coremark\project E:\Resources\03_competitions\26_03_jcs\2608round\SocRV\build\images\rtthread-coremark\code.mem E:\Resources\03_competitions\26_03_jcs\2608round\SocRV\build\images\rtthread-coremark\data.mem 4
+# Log file: E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark/vivado.log
+# Journal file: E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark\vivado.jou
+# Running On: LAPTOP-6CG4KN49, OS: Windows, CPU Frequency: 1996 MHz, CPU Physical cores: 16, Host memory: 33413 MB
+#-----------------------------------------------------------
+source {E:\Resources\03_competitions\26_03_jcs\2608round\SocRV\fpga\boards\kintex7_competition\tcl\build_bitstream.tcl}
+# if {$argc < 4} {
+#     error "usage: build_bitstream.tcl BUILD_DIR CODE_MEM DATA_MEM JOBS"
+# }
+# set script_dir [file normalize [file dirname [info script]]]
+# set build_dir [file normalize [lindex $argv 0]]
+# set code_mem [file normalize [lindex $argv 1]]
+# set data_mem [file normalize [lindex $argv 2]]
+# set jobs [lindex $argv 3]
+# set argv [list $build_dir $code_mem $data_mem]
+# set argc 3
+# source [file join $script_dir create_project.tcl]
+## if {$argc < 3} {
+##     error "usage: create_project.tcl BUILD_DIR CODE_MEM DATA_MEM"
+## }
+## set script_dir [file normalize [file dirname [info script]]]
+## set repo_dir [file normalize [file join $script_dir .. .. .. ..]]
+## set build_dir [file normalize [lindex $argv 0]]
+## set code_mem [file normalize [lindex $argv 1]]
+## set data_mem [file normalize [lindex $argv 2]]
+## set part xc7k325tffg900-2
+## foreach required [list $code_mem $data_mem] {
+##     if {![file exists $required]} {
+##         error "required memory image does not exist: $required"
+##     }
+## }
+## proc read_socrv_filelist {repo_dir filelist_path} {
+##     set stream [open $filelist_path r]
+##     while {[gets $stream line] >= 0} {
+##         set line [string trim $line]
+##         if {$line eq "" || [string match "#*" $line]} {
+##             continue
+##         }
+##         if {[regexp {^-f[ \t]+(.+)$} $line -> nested]} {
+##             read_socrv_filelist $repo_dir [file normalize [file join $repo_dir $nested]]
+##         } else {
+##             set source_path [file normalize [file join $repo_dir $line]]
+##             if {![file exists $source_path]} {
+##                 error "filelist source does not exist: $source_path"
+##             }
+##             read_verilog -sv $source_path
+##         }
+##     }
+##     close $stream
+## }
+## file mkdir $build_dir
+## create_project -force socrv $build_dir -part $part
+INFO: [ProjectBase 1-489] The host OS only allows 260 characters in a normal path. The project is stored in a path with more than 80 characters. If you experience issues with IP, Block Designs, or files not being found, please consider moving the project to a location with a shorter path. Alternately consider using the OS subst command to map part of the path to a drive letter.
+Current project path is 'E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark/project'
+create_project: Time (s): cpu = 00:00:10 ; elapsed = 00:00:12 . Memory (MB): peak = 472.469 ; gain = 179.859
+## set_property target_language Verilog [current_project]
+## set_property simulator_language Mixed [current_project]
+## set_property default_lib xil_defaultlib [current_project]
+## set_property verilog_define {SYNTHESIS} [current_fileset]
+## read_socrv_filelist $repo_dir [file join $repo_dir sim filelists fpga_kintex7.f]
+## read_xdc [file join $repo_dir fpga boards kintex7_competition constraints pins.xdc]
+## read_xdc [file join $repo_dir fpga boards kintex7_competition constraints clocks.xdc]
+## read_xdc [file join $repo_dir fpga boards kintex7_competition constraints cdc.xdc]
+## set_property top fpga_top [current_fileset]
+## set_property generic [list "CODE_MEM_FILE=$code_mem" "DATA_MEM_FILE=$data_mem"] [current_fileset]
+## set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY rebuilt [get_runs synth_1]
+## update_compile_order -fileset sources_1
+## puts "SOCRV_PROJECT=[get_property DIRECTORY [current_project]]"
+SOCRV_PROJECT=E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark/project
+# close_project
+# set project_xpr [file join $build_dir socrv.xpr]
+# set argv [list $project_xpr $jobs]
+# set argc 2
+# source [file join $script_dir synth.tcl]
+## if {$argc < 1} {
+##     error "usage: synth.tcl PROJECT_XPR ?JOBS?"
+## }
+## set project_xpr [file normalize [lindex $argv 0]]
+## set jobs [expr {$argc >= 2 ? [lindex $argv 1] : 4}]
+## open_project $project_xpr
+INFO: [ProjectBase 1-489] The host OS only allows 260 characters in a normal path. The project is stored in a path with more than 80 characters. If you experience issues with IP, Block Designs, or files not being found, please consider moving the project to a location with a shorter path. Alternately consider using the OS subst command to map part of the path to a drive letter.
+Current project path is 'E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark/project'
+INFO: [filemgmt 56-3] Default IP Output Path : Could not find the directory 'E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark/project/socrv.gen/sources_1'.
+Scanning sources...
+Finished scanning sources
+## launch_runs synth_1 -jobs $jobs
+WARNING: [Vivado 12-7122] Auto Incremental Compile:: No reference checkpoint was found in run synth_1. Auto-incremental flow will not be run, the standard flow will be run instead.
+[Thu Aug  6 20:36:13 2026] Launched synth_1...
+Run output will be captured here: E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark/project/socrv.runs/synth_1/runme.log
+## wait_on_run synth_1
+[Thu Aug  6 20:36:13 2026] Waiting for synth_1 to finish...
+
+*** Running vivado
+    with args -log fpga_top.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source fpga_top.tcl
+
+
+ECHO is off.
+ECHO is off.
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:14:34 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source fpga_top.tcl -notrace
+create_project: Time (s): cpu = 00:00:09 ; elapsed = 00:00:11 . Memory (MB): peak = 473.879 ; gain = 183.977
+Command: synth_design -top fpga_top -part xc7k325tffg900-2
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7k325t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7k325t'
+INFO: [Device 21-403] Loading part xc7k325tffg900-2
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 2 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 45568
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:09 ; elapsed = 00:00:10 . Memory (MB): peak = 1373.941 ; gain = 440.008
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-11067] parameter 'SOC_ADDR_WIDTH' declared inside package 'soc_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/pkg/soc_config_pkg.sv:2]
+WARNING: [Synth 8-11067] parameter 'SOC_DATA_WIDTH' declared inside package 'soc_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/pkg/soc_config_pkg.sv:3]
+WARNING: [Synth 8-11067] parameter 'SOC_STRB_WIDTH' declared inside package 'soc_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/pkg/soc_config_pkg.sv:4]
+WARNING: [Synth 8-11067] parameter 'SOC_CLOCK_HZ' declared inside package 'soc_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/pkg/soc_config_pkg.sv:5]
+WARNING: [Synth 8-11067] parameter 'UART_BAUD' declared inside package 'soc_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/pkg/soc_config_pkg.sv:6]
+WARNING: [Synth 8-11067] parameter 'CODE_MEM_RESPONSE_LATENCY' declared inside package 'soc_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/pkg/soc_config_pkg.sv:7]
+WARNING: [Synth 8-11067] parameter 'DATA_MEM_RESPONSE_LATENCY' declared inside package 'soc_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/pkg/soc_config_pkg.sv:8]
+WARNING: [Synth 8-11067] parameter 'RESET_VECTOR' declared inside package 'soc_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/pkg/soc_config_pkg.sv:9]
+WARNING: [Synth 8-11067] parameter 'EXT_IRQ_COUNT' declared inside package 'soc_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/pkg/soc_config_pkg.sv:10]
+WARNING: [Synth 8-11067] parameter 'CPU_RESET_VECTOR' declared inside package 'cpu_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/pkg/cpu_config_pkg.sv:2]
+WARNING: [Synth 8-11067] parameter 'ENABLE_SUPERSCALAR_CORE' declared inside package 'cpu_config_pkg' shall be treated as localparam [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/pkg/cpu_config_pkg.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'fpga_top' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/boards/kintex7_competition/rtl/fpga_top.sv:1]
+	Parameter CODE_MEM_FILE bound to: E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/images/rtthread-coremark/code.mem - type: string 
+	Parameter DATA_MEM_FILE bound to: E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/images/rtthread-coremark/data.mem - type: string 
+INFO: [Synth 8-6157] synthesizing module 'mem_native_if' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/interface/mem_native_pkg.sv:10]
+INFO: [Synth 8-6155] done synthesizing module 'mem_native_if' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/interface/mem_native_pkg.sv:10]
+INFO: [Synth 8-6157] synthesizing module 'mem_native_if' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/interface/mem_native_pkg.sv:10]
+INFO: [Synth 8-6155] done synthesizing module 'mem_native_if' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/interface/mem_native_pkg.sv:10]
+INFO: [Synth 8-6157] synthesizing module 'board_clock_reset' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/boards/kintex7_competition/rtl/board_clock_reset.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'xilinx_clock_wrapper' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/common/rtl/xilinx_clock_wrapper.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'IBUFDS' [D:/AppMajor/xilinx/Vivado/2023.2/scripts/rt/data/unisim_comp.v:73646]
+INFO: [Synth 8-6155] done synthesizing module 'IBUFDS' (0#1) [D:/AppMajor/xilinx/Vivado/2023.2/scripts/rt/data/unisim_comp.v:73646]
+INFO: [Synth 8-6157] synthesizing module 'MMCME2_BASE' [D:/AppMajor/xilinx/Vivado/2023.2/scripts/rt/data/unisim_comp.v:82294]
+	Parameter BANDWIDTH bound to: OPTIMIZED - type: string 
+	Parameter CLKFBOUT_MULT_F bound to: 5.000000 - type: double 
+	Parameter CLKIN1_PERIOD bound to: 5.000000 - type: double 
+	Parameter CLKOUT0_DIVIDE_F bound to: 20.000000 - type: double 
+	Parameter DIVCLK_DIVIDE bound to: 1 - type: integer 
+	Parameter STARTUP_WAIT bound to: FALSE - type: string 
+INFO: [Synth 8-6155] done synthesizing module 'MMCME2_BASE' (0#1) [D:/AppMajor/xilinx/Vivado/2023.2/scripts/rt/data/unisim_comp.v:82294]
+INFO: [Synth 8-6157] synthesizing module 'BUFG' [D:/AppMajor/xilinx/Vivado/2023.2/scripts/rt/data/unisim_comp.v:1951]
+INFO: [Synth 8-6155] done synthesizing module 'BUFG' (0#1) [D:/AppMajor/xilinx/Vivado/2023.2/scripts/rt/data/unisim_comp.v:1951]
+INFO: [Synth 8-6155] done synthesizing module 'xilinx_clock_wrapper' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/common/rtl/xilinx_clock_wrapper.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'reset_sync' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/sync/reset_sync.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'reset_sync' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/common/sync/reset_sync.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'board_clock_reset' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/boards/kintex7_competition/rtl/board_clock_reset.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'soc_core' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/soc/soc_core.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'hxi_if' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_if' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6157] synthesizing module 'hxi_if' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_if' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6157] synthesizing module 'hxi_if' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_if' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6157] synthesizing module 'hxi_if' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_if' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6157] synthesizing module 'hxi_if' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_if' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6157] synthesizing module 'hxi_if' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_if' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6157] synthesizing module 'hxi_if' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_if' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6157] synthesizing module 'hxi_if' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_if' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_pkg.sv:12]
+INFO: [Synth 8-6157] synthesizing module 'cpu_subsystem' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/cpu_subsystem.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'superscalar_cpu_core' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/superscalar_cpu_core.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'core_top' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/core_top.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'perf_counters' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/perf/perf_counters.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'perf_counters' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/perf/perf_counters.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'frontend' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/frontend/frontend.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'branch_predictor' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/frontend/branch_predictor.sv:7]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/frontend/branch_predictor.sv:100]
+INFO: [Synth 8-6155] done synthesizing module 'branch_predictor' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/frontend/branch_predictor.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'fetch_queue' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/frontend/fetch_queue.sv:7]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/frontend/fetch_queue.sv:43]
+INFO: [Synth 8-6155] done synthesizing module 'fetch_queue' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/frontend/fetch_queue.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'frontend' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/frontend/frontend.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'decoder' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:7]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:54]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:76]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:90]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:101]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:148]
+INFO: [Synth 8-226] default block is never used [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:148]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:176]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:208]
+INFO: [Synth 8-226] default block is never used [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:208]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:234]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:244]
+INFO: [Synth 8-6155] done synthesizing module 'decoder' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/decode/decoder.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'regfile' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/issue/regfile.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'regfile' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/issue/regfile.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'scoreboard' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/issue/scoreboard.sv:3]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/issue/scoreboard.sv:164]
+INFO: [Synth 8-6155] done synthesizing module 'scoreboard' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/issue/scoreboard.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'operand_resolver' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/issue/operand_resolver.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'operand_resolver' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/issue/operand_resolver.sv:3]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/core_top.sv:199]
+INFO: [Synth 8-6157] synthesizing module 'issue_control' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/issue/issue_control.sv:3]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/issue/issue_control.sv:35]
+INFO: [Synth 8-6155] done synthesizing module 'issue_control' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/issue/issue_control.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'fixed_execute' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/fixed_execute.sv:7]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/fixed_execute.sv:40]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/fixed_execute.sv:42]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/fixed_execute.sv:75]
+INFO: [Synth 8-6155] done synthesizing module 'fixed_execute' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/fixed_execute.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'store_forwarding' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/store_forwarding.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'store_forwarding' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/store_forwarding.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'muldiv_unit' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/muldiv_unit.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'MUL_0' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/ip/MUL_0.sv:9]
+INFO: [Synth 8-6155] done synthesizing module 'MUL_0' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/ip/MUL_0.sv:9]
+INFO: [Synth 8-6157] synthesizing module 'DIV_0' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/ip/DIV_0.sv:11]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/ip/DIV_0.sv:72]
+INFO: [Synth 8-226] default block is never used [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/ip/DIV_0.sv:72]
+INFO: [Synth 8-6155] done synthesizing module 'DIV_0' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/ip/DIV_0.sv:11]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/muldiv_unit.sv:86]
+INFO: [Synth 8-226] default block is never used [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/muldiv_unit.sv:86]
+INFO: [Synth 8-6155] done synthesizing module 'muldiv_unit' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/muldiv_unit.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'bitmanip_unit' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/bitmanip_unit.sv:2]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/bitmanip_unit.sv:49]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/bitmanip_unit.sv:159]
+INFO: [Synth 8-6155] done synthesizing module 'bitmanip_unit' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/execute/bitmanip_unit.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'store_buffer' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/store_buffer.sv:3]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/store_buffer.sv:66]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/store_buffer.sv:82]
+INFO: [Synth 8-6155] done synthesizing module 'store_buffer' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/store_buffer.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'memory_request_arbiter' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/memory_request_arbiter.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'memory_request_arbiter' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/memory_request_arbiter.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'load_data_path' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/load_data_path.sv:3]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/load_data_path.sv:29]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/load_data_path.sv:53]
+INFO: [Synth 8-6155] done synthesizing module 'load_data_path' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/load_data_path.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'load_queue' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/load_queue.sv:3]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/load_queue.sv:70]
+INFO: [Synth 8-6155] done synthesizing module 'load_queue' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/load_queue.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'dcache' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/dcache.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'dcache_data_bank' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/dcache_data_bank.sv:4]
+	Parameter LINE_COUNT bound to: 32'b00000000000000000000100000000000 
+INFO: [Synth 8-6155] done synthesizing module 'dcache_data_bank' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/dcache_data_bank.sv:4]
+INFO: [Synth 8-6157] synthesizing module 'dcache_tag_bank' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/dcache_tag_bank.sv:6]
+	Parameter LINE_COUNT bound to: 32'b00000000000000000000100000000000 
+	Parameter TAG_WIDTH bound to: 32'b00000000000000000000000000000010 
+INFO: [Synth 8-6155] done synthesizing module 'dcache_tag_bank' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/dcache_tag_bank.sv:6]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/dcache.sv:181]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/dcache.sv:252]
+INFO: [Synth 8-6155] done synthesizing module 'dcache' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/dcache.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'dmem_regslice' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/dmem_regslice.sv:5]
+INFO: [Synth 8-6155] done synthesizing module 'dmem_regslice' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/memory/dmem_regslice.sv:5]
+INFO: [Synth 8-6157] synthesizing module 'recovery_ctrl' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/control/recovery_ctrl.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'recovery_ctrl' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/control/recovery_ctrl.sv:7]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/core_top.sv:621]
+INFO: [Synth 8-6157] synthesizing module 'csr_file' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/commit/csr_file.sv:7]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/commit/csr_file.sv:110]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/commit/csr_file.sv:183]
+INFO: [Synth 8-6155] done synthesizing module 'csr_file' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/commit/csr_file.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'commit_trace_probe' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/debug/commit_trace_probe.sv:3]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/debug/commit_trace_probe.sv:149]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/debug/commit_trace_probe.sv:208]
+INFO: [Synth 8-6155] done synthesizing module 'commit_trace_probe' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/debug/commit_trace_probe.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'core_top' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/core_top.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'superscalar_cpu_core' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/superscalar/superscalar_cpu_core.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'cpu_subsystem' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/cpu/cpu_subsystem.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'hxi_crossbar' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_crossbar.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_crossbar' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_crossbar.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'memory_subsystem' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/memory_subsystem.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'hxi_code_mem_slave' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/adapter/hxi_code_mem_slave.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_code_mem_slave' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/adapter/hxi_code_mem_slave.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'hxi_data_mem_slave' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/adapter/hxi_data_mem_slave.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_data_mem_slave' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/adapter/hxi_data_mem_slave.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'memory_subsystem' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/memory_subsystem.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'machine_timer' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/timer/machine_timer.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'machine_timer' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/timer/machine_timer.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'interrupt_controller' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/irq/interrupt_controller.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'interrupt_controller' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/irq/interrupt_controller.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'hxi_default_slave' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_default_slave.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_default_slave' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/hxi/hxi_default_slave.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'hxi_to_apb' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/bridge/hxi_to_apb.sv:1]
+INFO: [Synth 8-226] default block is never used [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/bridge/hxi_to_apb.sv:45]
+INFO: [Synth 8-6155] done synthesizing module 'hxi_to_apb' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/bridge/hxi_to_apb.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'apb_interconnect' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/bridge/apb_interconnect.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'apb_interconnect' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/bus/bridge/apb_interconnect.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'apb_uart' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/uart/apb_uart.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'uart_fifo' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/uart/uart_fifo.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'uart_fifo' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/uart/uart_fifo.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'uart_tx' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/uart/uart_tx.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'uart_tx' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/uart/uart_tx.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'uart_rx' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/uart/uart_rx.sv:1]
+INFO: [Synth 8-226] default block is never used [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/uart/uart_rx.sv:42]
+INFO: [Synth 8-6155] done synthesizing module 'uart_rx' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/uart/uart_rx.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'apb_uart' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/uart/apb_uart.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'apb_gpio' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/gpio/apb_gpio.sv:1]
+	Parameter WIDTH bound to: 32'b00000000000000000000000000010000 
+INFO: [Synth 8-6155] done synthesizing module 'apb_gpio' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/gpio/apb_gpio.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'apb_test_status' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/test_status/apb_test_status.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'apb_test_status' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/peripheral/test_status/apb_test_status.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'soc_core' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/soc/soc_core.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'xilinx_code_mem_backend' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/common/rtl/xilinx_code_mem_backend.sv:1]
+	Parameter BYTES bound to: 65536 - type: integer 
+	Parameter MEM_FILE bound to: E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/images/rtthread-coremark/code.mem - type: string 
+INFO: [Synth 8-6157] synthesizing module 'generic_rom' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/generic/generic_rom.sv:1]
+	Parameter BYTES bound to: 65536 - type: integer 
+	Parameter MEM_FILE bound to: E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/images/rtthread-coremark/code.mem - type: string 
+INFO: [Synth 8-3876] $readmem data file 'E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/images/rtthread-coremark/code.mem' is read successfully [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/generic/generic_rom.sv:34]
+INFO: [Synth 8-6155] done synthesizing module 'generic_rom' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/generic/generic_rom.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'xilinx_code_mem_backend' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/common/rtl/xilinx_code_mem_backend.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'xilinx_data_mem_backend' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/common/rtl/xilinx_data_mem_backend.sv:1]
+	Parameter BYTES bound to: 65536 - type: integer 
+	Parameter MEM_FILE bound to: E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/images/rtthread-coremark/data.mem - type: string 
+INFO: [Synth 8-6157] synthesizing module 'generic_spram' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/generic/generic_spram.sv:1]
+	Parameter BYTES bound to: 65536 - type: integer 
+	Parameter MEM_FILE bound to: E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/images/rtthread-coremark/data.mem - type: string 
+INFO: [Synth 8-3876] $readmem data file 'E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/images/rtthread-coremark/data.mem' is read successfully [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/generic/generic_spram.sv:35]
+INFO: [Synth 8-6155] done synthesizing module 'generic_spram' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/rtl/memory/generic/generic_spram.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'xilinx_data_mem_backend' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/common/rtl/xilinx_data_mem_backend.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'board_io_wrapper' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/boards/kintex7_competition/rtl/board_io_wrapper.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'board_io_wrapper' (0#1) [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/boards/kintex7_competition/rtl/board_io_wrapper.sv:1]
+ERROR: [Synth 8-467] no field 'pc' in struct type [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/boards/kintex7_competition/rtl/fpga_top.sv:82]
+ERROR: [Synth 8-6156] failed synthesizing module 'fpga_top' [E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/boards/kintex7_competition/rtl/fpga_top.sv:1]
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:12 ; elapsed = 00:00:14 . Memory (MB): peak = 1523.191 ; gain = 589.258
+---------------------------------------------------------------------------------
+RTL Elaboration failed
+INFO: [Common 17-83] Releasing license: Synthesis
+180 Infos, 11 Warnings, 0 Critical Warnings and 3 Errors encountered.
+synth_design failed
+ERROR: [Common 17-69] Command failed: Synthesis failed - please see the console or run log file for details
+INFO: [Common 17-206] Exiting Vivado at Thu Aug  6 20:37:06 2026...
+[Thu Aug  6 20:37:08 2026] synth_1 finished
+ERROR: [Vivado 12-13638] Failed runs(s) : 'synth_1'
+wait_on_runs: Time (s): cpu = 00:00:00 ; elapsed = 00:00:55 . Memory (MB): peak = 480.434 ; gain = 0.000
+ERROR: [Common 17-39] 'wait_on_runs' failed due to earlier errors.
+
+    while executing
+"wait_on_run synth_1"
+    (file "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/fpga/boards/kintex7_competition/tcl/synth.tcl" line 8)
+
+    while executing
+"source [file join $script_dir synth.tcl]"
+    (file "E:\Resources\03_competitions\26_03_jcs\2608round\SocRV\fpga\boards\kintex7_competition\tcl\build_bitstream.tcl" line 18)
+INFO: [Common 17-206] Exiting Vivado at Thu Aug  6 20:37:08 2026...
