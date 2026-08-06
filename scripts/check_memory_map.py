@@ -8,9 +8,9 @@ from lib.repo import repo_path
 
 
 SV_PATTERN = re.compile(
-    r"localparam\s+logic\s+\[31:0\]\s+([A-Z_]+)_(BASE|SIZE)\s*=\s*32'h([0-9a-fA-F_]+)"
+    r"localparam\s+logic\s+\[31:0\]\s+([A-Z0-9_]+)_(BASE|SIZE)\s*=\s*32'h([0-9a-fA-F_]+)"
 )
-C_PATTERN = re.compile(r"#define\s+SOCRV_([A-Z_]+)_(BASE|SIZE)\s+0x([0-9a-fA-F]+)u")
+C_PATTERN = re.compile(r"#define\s+SOCRV_([A-Z0-9_]+)_(BASE|SIZE)\s+0x([0-9a-fA-F]+)u")
 
 
 def parse_constants(text: str, pattern: re.Pattern[str]) -> dict[str, int]:

@@ -58,7 +58,8 @@
       "external": 11
     },
     "external_sources": {
-      "uart": 0
+      "uart": 0,
+      "i2c": 1
     }
   },
   "peripherals": {
@@ -192,6 +193,47 @@
           "access": "RW",
           "reset": "0x00000000",
           "side_effect": "software-defined diagnostic or architectural test number"
+        }
+      }
+    },
+    "I2C": {
+      "region": "I2C",
+      "registers": {
+        "CONTROL": {
+          "offset": "0x00000000",
+          "access": "RW",
+          "reset": "0x00000001",
+          "side_effect": "bit0 enables the controller, bit1 enables the completion IRQ, bit31 resets and releases the bus"
+        },
+        "STATUS": {
+          "offset": "0x00000004",
+          "access": "W1C",
+          "reset": "0x00000000",
+          "side_effect": "bit0 busy, bit1 done, bit2 ACK error, bit3 RX valid, bit4 bus active; writing bits1..3 clears them"
+        },
+        "CLKDIV": {
+          "offset": "0x00000008",
+          "access": "RW",
+          "reset": "0x000000fa",
+          "side_effect": "number of SoC clocks per I2C half-period; zero is coerced to one"
+        },
+        "TXDATA": {
+          "offset": "0x0000000c",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "low byte is transmitted by the next write command"
+        },
+        "RXDATA": {
+          "offset": "0x00000010",
+          "access": "RO",
+          "reset": "0x00000000",
+          "side_effect": "low byte contains the most recently received byte"
+        },
+        "COMMAND": {
+          "offset": "0x00000014",
+          "access": "WO",
+          "reset": "0x00000000",
+          "side_effect": "bit0 starts one byte operation; bits1..4 request START, STOP, read and read-NACK"
         }
       }
     }

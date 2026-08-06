@@ -24,6 +24,7 @@ rtl/peripheral/uart/uart_tx.sv
 rtl/peripheral/uart/uart_rx.sv
 rtl/peripheral/uart/apb_uart.sv
 rtl/peripheral/gpio/apb_gpio.sv
+rtl/peripheral/i2c/apb_i2c_master.sv
 rtl/peripheral/test_status/apb_test_status.sv
 rtl/soc/soc_core.sv
 rtl/soc/soc_top_generic.sv

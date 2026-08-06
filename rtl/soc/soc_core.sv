@@ -10,6 +10,10 @@ module soc_core #(
   input logic [GPIO_WIDTH-1:0] gpio_i,
   output logic [GPIO_WIDTH-1:0] gpio_o,
   output logic [GPIO_WIDTH-1:0] gpio_oe_o,
+  input logic i2c_scl_i,
+  input logic i2c_sda_i,
+  output logic i2c_scl_drive_low_o,
+  output logic i2c_sda_drive_low_o,
   input logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] ext_irq_i,
   output logic test_done_o,
   output logic test_pass_o,
@@ -30,6 +34,7 @@ module soc_core #(
   logic irq_timer;
   logic irq_external;
   logic uart_irq;
+  logic i2c_irq;
   logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] irq_sources;
 
   logic [31:0] paddr;
@@ -44,6 +49,7 @@ module soc_core #(
   logic uart_psel;
   logic gpio_psel;
   logic test_psel;
+  logic i2c_psel;
   logic [31:0] uart_prdata;
   logic uart_pready;
   logic uart_pslverr;
@@ -53,10 +59,14 @@ module soc_core #(
   logic [31:0] test_prdata;
   logic test_pready;
   logic test_pslverr;
+  logic [31:0] i2c_prdata;
+  logic i2c_pready;
+  logic i2c_pslverr;
 
   always_comb begin
     irq_sources = ext_irq_i;
     irq_sources[0] = ext_irq_i[0] | uart_irq;
+    irq_sources[1] = ext_irq_i[1] | i2c_irq;
   end
 
   cpu_subsystem u_cpu (
@@ -149,7 +159,11 @@ module soc_core #(
     .test_psel_o(test_psel),
     .test_prdata_i(test_prdata),
     .test_pready_i(test_pready),
-    .test_pslverr_i(test_pslverr)
+    .test_pslverr_i(test_pslverr),
+    .i2c_psel_o(i2c_psel),
+    .i2c_prdata_i(i2c_prdata),
+    .i2c_pready_i(i2c_pready),
+    .i2c_pslverr_i(i2c_pslverr)
   );
 
   apb_uart u_uart (
@@ -184,6 +198,25 @@ module soc_core #(
     .gpio_i,
     .gpio_o,
     .gpio_oe_o
+  );
+
+  apb_i2c_master u_i2c (
+    .clk_i,
+    .rst_ni,
+    .paddr_i(paddr),
+    .psel_i(i2c_psel),
+    .penable_i(penable),
+    .pwrite_i(pwrite),
+    .pwdata_i(pwdata),
+    .pstrb_i(pstrb),
+    .prdata_o(i2c_prdata),
+    .pready_o(i2c_pready),
+    .pslverr_o(i2c_pslverr),
+    .scl_i(i2c_scl_i),
+    .sda_i(i2c_sda_i),
+    .scl_drive_low_o(i2c_scl_drive_low_o),
+    .sda_drive_low_o(i2c_sda_drive_low_o),
+    .irq_o(i2c_irq)
   );
 
   apb_test_status u_test_status (

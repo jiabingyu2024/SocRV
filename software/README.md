@@ -52,5 +52,13 @@ build/images/rtthread-coremark/{code.mem,data.mem,image.json}
 coremark 10000
 ```
 
+The same image also contains the SHT30 temperature monitor:
+
+```text
+temp_start        # print once per second in a background thread
+temp_start 500    # select a 500 ms period
+temp_stop         # stop sampling and printing
+```
+
 当前参考 core 使用 `rv32i_zicsr/ilp32`。最终整数目标是 RV32IM + Zicsr +
 Zicntr + Zifencei，并通过 RV32UI/RV32MI/RV32UM；浮点在 F/FD 中后续确定。

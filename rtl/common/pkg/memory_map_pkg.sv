@@ -15,6 +15,8 @@ package memory_map_pkg;
   localparam logic [31:0] GPIO_SIZE        = 32'h0000_1000;
   localparam logic [31:0] TEST_STATUS_BASE = 32'h3000_2000;
   localparam logic [31:0] TEST_STATUS_SIZE = 32'h0000_1000;
+  localparam logic [31:0] I2C_BASE         = 32'h3000_3000;
+  localparam logic [31:0] I2C_SIZE         = 32'h0000_1000;
   localparam logic [31:0] APB_SLOT_SIZE    = UART_SIZE;
 
   function automatic logic in_region(

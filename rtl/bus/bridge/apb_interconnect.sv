@@ -20,7 +20,11 @@ module apb_interconnect (
   output logic        test_psel_o,
   input  logic [31:0] test_prdata_i,
   input  logic        test_pready_i,
-  input  logic        test_pslverr_i
+  input  logic        test_pslverr_i,
+  output logic        i2c_psel_o,
+  input  logic [31:0] i2c_prdata_i,
+  input  logic        i2c_pready_i,
+  input  logic        i2c_pslverr_i
 );
   import memory_map_pkg::*;
 
@@ -28,6 +32,7 @@ module apb_interconnect (
     uart_psel_o = psel_i && in_region(paddr_i, UART_BASE, APB_SLOT_SIZE);
     gpio_psel_o = psel_i && in_region(paddr_i, GPIO_BASE, APB_SLOT_SIZE);
     test_psel_o = psel_i && in_region(paddr_i, TEST_STATUS_BASE, APB_SLOT_SIZE);
+    i2c_psel_o = psel_i && in_region(paddr_i, I2C_BASE, APB_SLOT_SIZE);
     prdata_o    = 32'h0000_0000;
     pready_o    = 1'b1;
     pslverr_o   = psel_i;
@@ -44,6 +49,10 @@ module apb_interconnect (
       prdata_o  = test_prdata_i;
       pready_o  = test_pready_i;
       pslverr_o = test_pslverr_i;
+    end else if (i2c_psel_o) begin
+      prdata_o  = i2c_prdata_i;
+      pready_o  = i2c_pready_i;
+      pslverr_o = i2c_pslverr_i;
     end
   end
 

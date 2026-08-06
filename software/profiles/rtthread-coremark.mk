@@ -8,7 +8,7 @@ COREMARK_FLAGS_TEXT := O2-rv32i_zicsr-rtthread-command
 include profiles/coremark_sources.inc
 
 PROFILE_KIND := rtthread-coremark-command
-PROFILE_INCLUDES := $(RTTHREAD_INCLUDES) $(COREMARK_INCLUDES)
+PROFILE_INCLUDES := $(RTTHREAD_INCLUDES) $(COREMARK_INCLUDES) -Itemperature/include
 PROFILE_CFLAGS := $(RTTHREAD_CFLAGS) $(COREMARK_CFLAGS)
 PROFILE_ASFLAGS := -Irt-thread/port
 OPTIMIZATION := -O2
@@ -16,4 +16,7 @@ SOURCES := \
 	$(RTTHREAD_COMMON_SOURCES) \
 	$(COREMARK_SOURCES) \
 	applications/rtthread/shell_main.c \
+	bsp/drivers/drv_i2c.c \
+	temperature/sht30.c \
+	temperature/command.c \
 	coremark/port/rtthread/command.c

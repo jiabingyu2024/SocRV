@@ -48,11 +48,17 @@ module soc_sim_top (
   logic [15:0] gpio_i;
   logic [15:0] gpio_o;
   logic [15:0] gpio_oe;
+  tri1 i2c_scl;
+  tri1 i2c_sda;
+  logic i2c_scl_drive_low;
+  logic i2c_sda_drive_low;
   logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] ext_irq;
   cpu_types_pkg::commit_trace_t commit;
 
   assign gpio_i = '0;
   assign ext_irq = '0;
+  assign i2c_scl = i2c_scl_drive_low ? 1'b0 : 1'bz;
+  assign i2c_sda = i2c_sda_drive_low ? 1'b0 : 1'bz;
   assign commit_valid_o = commit.valid;
   assign commit_retired_o = commit.retired;
   assign commit_order_o = commit.order;
@@ -99,12 +105,21 @@ module soc_sim_top (
     .gpio_i,
     .gpio_o,
     .gpio_oe_o(gpio_oe),
+    .i2c_scl_i(i2c_scl),
+    .i2c_sda_i(i2c_sda),
+    .i2c_scl_drive_low_o(i2c_scl_drive_low),
+    .i2c_sda_drive_low_o(i2c_sda_drive_low),
     .ext_irq_i(ext_irq),
     .test_done_o,
     .test_pass_o,
     .test_code_o,
     .commit_o(commit),
     .cpu_fault_o
+  );
+
+  sht30_model u_sht30 (
+    .scl_io(i2c_scl),
+    .sda_io(i2c_sda)
   );
 
   logic unused;

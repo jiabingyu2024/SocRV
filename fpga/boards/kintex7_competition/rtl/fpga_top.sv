@@ -6,6 +6,8 @@ module fpga_top #(
   input  logic i_sys_clk_n,
   input  logic i_uart_rx,
   output logic o_uart_tx,
+  inout  wire  io_i2c_scl,
+  inout  wire  io_i2c_sda,
   output logic [31:0] virtual_led,
   output logic [39:0] virtual_seg
 );
@@ -17,6 +19,10 @@ module fpga_top #(
   logic [15:0] gpio_i;
   logic [15:0] gpio_o;
   logic [15:0] gpio_oe;
+  logic i2c_scl_i;
+  logic i2c_sda_i;
+  logic i2c_scl_drive_low;
+  logic i2c_sda_drive_low;
   logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] ext_irq;
   logic test_done;
   logic test_pass;
@@ -26,6 +32,20 @@ module fpga_top #(
 
   assign gpio_i = '0;
   assign ext_irq = '0;
+
+  IOBUF u_i2c_scl_iobuf (
+    .I(1'b0),
+    .T(!i2c_scl_drive_low),
+    .O(i2c_scl_i),
+    .IO(io_i2c_scl)
+  );
+
+  IOBUF u_i2c_sda_iobuf (
+    .I(1'b0),
+    .T(!i2c_sda_drive_low),
+    .O(i2c_sda_i),
+    .IO(io_i2c_sda)
+  );
 
   board_clock_reset u_clock_reset (
     .sys_clk_p_i(i_sys_clk_p),
@@ -45,6 +65,10 @@ module fpga_top #(
     .gpio_i,
     .gpio_o,
     .gpio_oe_o(gpio_oe),
+    .i2c_scl_i,
+    .i2c_sda_i,
+    .i2c_scl_drive_low_o(i2c_scl_drive_low),
+    .i2c_sda_drive_low_o(i2c_sda_drive_low),
     .ext_irq_i(ext_irq),
     .test_done_o(test_done),
     .test_pass_o(test_pass),

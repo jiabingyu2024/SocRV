@@ -143,6 +143,19 @@ def render_registers(contract: dict[str, object]) -> str:
             "#define SOCRV_UART_STATUS_RX_VALID       (1u << 16)",
             "#define SOCRV_UART_STATUS_RX_FRAME_ERROR (1u << 17)",
             "#define SOCRV_UART_CONTROL_RX_IRQ_ENABLE (1u << 0)",
+            "#define SOCRV_I2C_CONTROL_ENABLE          (1u << 0)",
+            "#define SOCRV_I2C_CONTROL_IRQ_ENABLE      (1u << 1)",
+            "#define SOCRV_I2C_CONTROL_SOFT_RESET      (1u << 31)",
+            "#define SOCRV_I2C_STATUS_BUSY             (1u << 0)",
+            "#define SOCRV_I2C_STATUS_DONE             (1u << 1)",
+            "#define SOCRV_I2C_STATUS_ACK_ERROR        (1u << 2)",
+            "#define SOCRV_I2C_STATUS_RX_VALID         (1u << 3)",
+            "#define SOCRV_I2C_STATUS_BUS_ACTIVE       (1u << 4)",
+            "#define SOCRV_I2C_COMMAND_GO              (1u << 0)",
+            "#define SOCRV_I2C_COMMAND_START           (1u << 1)",
+            "#define SOCRV_I2C_COMMAND_STOP            (1u << 2)",
+            "#define SOCRV_I2C_COMMAND_READ            (1u << 3)",
+            "#define SOCRV_I2C_COMMAND_NACK            (1u << 4)",
         ]
     )
     return header_guard("SOCRV_SOC_REGISTERS_H", body)

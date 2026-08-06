@@ -11,5 +11,7 @@
 
 #define SOCRV_EXT_IRQ_UART 0u
 #define SOCRV_EXT_IRQ_UART_MASK (1u << 0)
+#define SOCRV_EXT_IRQ_I2C 1u
+#define SOCRV_EXT_IRQ_I2C_MASK (1u << 1)
 
 #endif /* SOCRV_SOC_IRQ_H */
