@@ -14,11 +14,11 @@
 
 ## 当前 ISA 数据与总入口（2026-08-04）
 
-CPU 能力采用两层合同：
+CPU 能力采用分阶段合同：
 
-- 当前实现：demo core 使用 `rv32i_zicsr/ilp32`，保证已有软件和快速回归
-  不会生成尚未实现的指令；
-- 最终目标：RV32IM + Zicsr + Zicntr + Zifencei，并在 F 与 FD 中选择一种。
+- 当前整数实现：`rv32im_zicsr_zicntr_zifencei/ilp32`，以
+  RV32UI、RV32MI、RV32UM 作为正确性门槛；
+- 最终目标：在当前整数基线上，从 F 与 FD 中选择一种浮点方案。
 
 `software/riscv-tests/tests.json` 是套件选择，`data/soc/software_contract.json`
 是 CPU 目标合同，`data/isa/manifest.json` 是生成结果。生成器同时记录三者

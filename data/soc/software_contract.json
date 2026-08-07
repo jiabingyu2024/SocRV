@@ -3,7 +3,7 @@
   "cpu": {
     "xlen": 32,
     "privilege": "machine",
-    "march": "rv32i_zicsr",
+    "march": "rv32im_zicsr_zicntr_zifencei",
     "mabi": "ilp32",
     "implementation": {
       "name": "demo_cpu_core",
@@ -47,8 +47,8 @@
     "compressed": false
   },
   "clocks": {
-    "soc_hz": 50000000,
-    "timer_hz": 50000000,
+    "soc_hz": 200000000,
+    "timer_hz": 200000000,
     "uart_baud": 115200
   },
   "interrupts": {

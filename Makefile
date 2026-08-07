@@ -146,7 +146,7 @@ diff-rtthread: difftest-build
 		--uart-command socrv_info \
 		--uart-prompt "msh >" \
 		--checker uart-command-test-status-and-uart \
-		--uart-expect "SocRV march=rv32i_zicsr" --no-rtl-build
+		--uart-expect "SocRV march=rv32im_zicsr_zicntr_zifencei" --no-rtl-build
 
 diff-replay:
 	@$(PYTHON) scripts/replay_difftest.py --result "$(RESULT)" \

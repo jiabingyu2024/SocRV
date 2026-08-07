@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -33,7 +34,27 @@ def main() -> int:
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
-    build_root = repo_path("build", "vivado", f"kintex7-{args.profile}")
+    board_path = repo_path(
+        "fpga", "boards", "kintex7_competition", "board.json"
+    )
+    contract_path = repo_path("data", "soc", "software_contract.json")
+    board = json.loads(board_path.read_text(encoding="utf-8"))
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    board_hz = int(board["clock"]["soc_frequency_hz"])
+    contract_hz = int(contract["clocks"]["soc_hz"])
+    if board_hz != contract_hz:
+        parser.error(
+            f"board clock {board_hz} Hz does not match software contract "
+            f"{contract_hz} Hz"
+        )
+    frequency_tag = (
+        f"{board_hz // 1_000_000}mhz"
+        if board_hz % 1_000_000 == 0
+        else f"{board_hz}hz"
+    )
+    build_root = repo_path(
+        "build", "vivado", f"kintex7-{frequency_tag}-{args.profile}"
+    )
     if args.check_only:
         check(build_root)
         return 0

@@ -75,6 +75,6 @@ build/regression/    ISA/测试套件汇总
 build/vivado/        Vivado 工程、报告、result.json 和 bitstream
 ```
 
-当前参考 core 的软件 ISA 是 `rv32i_zicsr/ilp32`。最终整数目标是
-RV32IM + Zicsr + Zicntr + Zifencei，并通过 RV32UI/RV32MI/RV32UM；浮点在
-F 或 FD 中后续确定。
+当前 core 的软件 ISA 已提升为
+`rv32im_zicsr_zicntr_zifencei/ilp32`，并以 RV32UI/RV32MI/RV32UM 作为整数
+正确性门槛；浮点在 F 或 FD 中后续确定。

@@ -42,10 +42,10 @@ make isa-data
 make isa-regression
 ```
 
-合同现在分为“当前实现”和“最终目标”两层。当前 demo core 仍为
-RV32I + Zicsr、`ilp32`、Machine Mode，现有 smoke、RT-Thread 和 CoreMark
-Profile 继续用 `-march=rv32i_zicsr -mabi=ilp32`，不得提前生成 M/F/D 指令。
-最终 CPU 的整数基线为 RV32IM + Zicsr + Zicntr + Zifencei，必须通过
+整数 gate 通过后，当前软件构建已经提升到
+RV32IM + Zicsr + Zicntr + Zifencei、`ilp32`、Machine Mode；smoke、RT-Thread
+和 CoreMark Profile 统一使用
+`-march=rv32im_zicsr_zicntr_zifencei -mabi=ilp32`。整数基线必须通过
 RV32UI、RV32MI、RV32UM；浮点在 F 与 FD 之间待选。这里的 RV32MI 是
 riscv-tests 的 Machine Mode 测试套件，不是名为 “MI” 的 ISA 扩展。
 
@@ -140,7 +140,7 @@ DiffTest，还要增加 FP 写回目标、数据和 FP CSR side effect，不能�
 - 统一镜像目录采用已有工程约定 `build/images/`（复数）。
 - RT-Thread 复用上游 RISC-V context/trap 源，SocRV 只维护启动、Board/BSP
   适配；FinSH 符号表和组件初始化段由链接脚本显式 `KEEP`。
-- CoreMark 短仿真仅验证参考 CRC。正式 `coremark-baremetal` 使用 50 MHz
+- CoreMark 短仿真仅验证参考 CRC。正式 `coremark-baremetal` 使用 100 MHz
   硬件 Timer、2000 iterations，并面向 FPGA 测量。
 
 ### 本轮验证记录

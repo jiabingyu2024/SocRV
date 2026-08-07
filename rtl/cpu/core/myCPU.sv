@@ -10,7 +10,9 @@
 // cache's cpu_req_ready freezes M1 and upstream stages on misses or uncached
 // reads until the returned data is correctly aligned.
 //------------------------------------------------------------------------------
-module myCPU (
+module myCPU #(
+    parameter bit ENABLE_F = 1'b1
+) (
     input  logic        cpu_rst,
     input  logic        cpu_clk,
     input  logic        irq_software,
@@ -87,7 +89,9 @@ module myCPU (
         end
     end
 
-    core u_core (
+    core #(
+        .ENABLE_F(ENABLE_F)
+    ) u_core (
         .clk           (cpu_clk),
         .rst_n         (rst_n_int),
         .irq_software  (irq_software),

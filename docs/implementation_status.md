@@ -65,7 +65,7 @@ python -B scripts/run_verilator.py \
   --uart-command "coremark 3"
 ```
 
-3 轮命令仿真结果：
+切换到 RV32IM 前，3 轮命令仿真结果为：
 
 ```text
 status                  PASS
@@ -75,36 +75,56 @@ IPC                     0.313871
 simulated window time   0.142720 s @ 50 MHz
 ```
 
-10 轮 performance regression 也已通过：
+切换到 RV32IM、O2、50 MHz 后，10 轮 performance regression 通过：
 
 ```text
-CoreMark window         23,786,691 cycles
-cycles/iteration        2,378,669.10
-IPC                     0.313871
+CoreMark window          9,885,635 cycles
+cycles/iteration           988,563.50
+iterations/second            50.5784 @ 50 MHz
+IPC                          0.316965
+CRC check                 PASS
 ```
+
+与 RV32I 的 10 轮窗口相比，周期数下降约 58.4%，速度约为原来的 2.41 倍；
+`coremark 10000` 的线性预计时间由约 7 分 56 秒降到约 3 分 18 秒。
+
+当前全国赛整数配置使用 RV32IM、O3、100 MHz，并关闭软件合同未要求的 F
+执行单元。10 轮端到端回归结果：
+
+```text
+CoreMark window          9,449,972 cycles
+cycles/iteration           944,997.20
+iterations/second           105.8204 @ 100 MHz
+IPC                          0.317322
+CRC check                 PASS
+```
+
+相对 RV32IM/O2/50 MHz 版本，O3 减少约 4.4% 周期，时钟翻倍后总吞吐提升约
+2.09 倍；`coremark 10000` 的线性预计时间约为 94.5 秒。
 
 结果文件：
 
 ```text
-build/result/soc/rtthread-coremark-command-3.json
-build/log/soc/rtthread-coremark-command-3.log
-build/regression/performance/summary.json
+build/result/soc/rtthread-coremark-o3-100mhz-no-f-command-10.json
+build/log/soc/rtthread-coremark-o3-100mhz-no-f-command-10.log
+build/vivado/kintex7-100mhz-rtthread-coremark/result.json
 ```
 
-本轮未调用 Vivado。综合、bitstream 和板上 `coremark 10000` 仍需用户按操作文档
-显式执行。
+100 MHz Vivado 实现通过：WNS `+0.959 ns`、TNS 0、DRC Error 0，并已生成
+bitstream。板上 `coremark 10000` 仍需按操作文档实测。
 
 ## ISA 状态说明
 
-当前参考 core 的软件构建能力仍是 `rv32i_zicsr/ilp32`。最终整数目标不变：
+当前 core 的软件构建已提升为
+`rv32im_zicsr_zicntr_zifencei/ilp32`：
 
 ```text
 RV32IM + Zicsr + Zicntr + Zifencei
 required tests: RV32UI + RV32MI + RV32UM
 ```
 
-浮点在 F 或 FD 中后续确定。完整 ISA 数据已经准备好，不代表当前参考 core 已通过
-最终 gate。
+RV32UM 的 8 项乘除法测试均已通过；RT-Thread 和 CoreMark 也使用相同的 M 扩展
+编译目标。浮点在 F 或 FD 中后续确定，完整最终 gate 仍需等待浮点方案确定。
 
 详细操作见
 [`cpu_iteration_sim_software_fpga_guide.md`](cpu_iteration_sim_software_fpga_guide.md)。

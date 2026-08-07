@@ -9,7 +9,9 @@
 //==============================================================================
 `include "cpu_defines.svh"
 
-module core(
+module core #(
+    parameter bit ENABLE_F = 1'b1
+) (
     input  logic                                     clk,
     input  logic                                     rst_n,
     input  logic                                     irq_software,
@@ -494,7 +496,9 @@ module core(
         .o_csr_addr      (csr_addr_e)
     );
 
-    stage_ex u_stage_ex (
+    stage_ex #(
+        .ENABLE_F(ENABLE_F)
+    ) u_stage_ex (
         .i_clk           (clk),
         .i_rst_n         (rst_n),
         .i_flush_e       (branch_error_m),
@@ -535,9 +539,9 @@ module core(
         .i_inst_spec     (inst_spec_e),
         .i_is_m_ext      (is_m_ext_e),
         .i_m_op          (m_op_e),
-        .i_is_f_ext      (is_f_ext_e),
-        .i_f_reg_write   (f_reg_write_e),
-        .i_illegal       (illegal_e),
+        .i_is_f_ext      (ENABLE_F && is_f_ext_e),
+        .i_f_reg_write   (ENABLE_F && f_reg_write_e),
+        .i_illegal       (illegal_e || (!ENABLE_F && is_f_ext_e)),
         .i_valid         (valid_e),
         .i_irq_software  (irq_software),
         .i_irq_timer     (irq_timer),

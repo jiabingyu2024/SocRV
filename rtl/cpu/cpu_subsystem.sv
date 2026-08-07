@@ -27,7 +27,9 @@ module cpu_subsystem (
   logic instruction_fault;
   logic data_fault;
 
-  myCPU u_core (
+  myCPU #(
+    .ENABLE_F(1'b0)
+  ) u_core (
     .cpu_rst(~rst_ni),
     .cpu_clk(clk_i),
     .irq_software(irq_software_i),
@@ -50,7 +52,11 @@ module cpu_subsystem (
     .commit_o
   );
 
-  hxi_instruction_adapter u_instruction_adapter (
+  pipelined_instruction_adapter #(
+    .FETCH_DEPTH(4),
+    .EPOCH_WIDTH(8),
+    .CONTROL_GUARD_CYCLES(2)
+  ) u_instruction_adapter (
     .clk_i,
     .rst_ni,
     .core_req_valid_i(irom_enable),

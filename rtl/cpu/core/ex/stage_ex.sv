@@ -8,7 +8,9 @@
 //==============================================================================
 `include "cpu_defines.svh"
 
-module stage_ex(
+module stage_ex #(
+    parameter bit ENABLE_F = 1'b1
+) (
     input  logic                            i_clk,
     input  logic                            i_rst_n,
     input  logic                            i_flush_e,
@@ -509,7 +511,7 @@ module stage_ex(
 
     assign is_div_q      = is_m_ext_q && m_op_q[2];
     assign m_start_pulse = is_div_q && !m_busy_int && !m_issued;
-    assign is_f_compute_q = is_f_ext_q &&
+    assign is_f_compute_q = ENABLE_F && is_f_ext_q &&
                             (instr_q[6:0] != `OP_F_LOAD) &&
                             (instr_q[6:0] != `OP_F_STORE);
     assign f_start_pulse = is_f_compute_q && !f_busy_int && !f_issued;
@@ -578,33 +580,43 @@ module stage_ex(
         .o_res   (m_res)
     );
 
-    always_ff @(posedge i_clk) begin
-        if (!i_rst_n) begin
-            f_issued <= 1'b0;
-        end else if (i_flush_e || f_done_int || !is_f_compute_q) begin
-            f_issued <= 1'b0;
-        end else if (f_start_pulse) begin
-            f_issued <= 1'b1;
-        end
-    end
-
     logic [2:0] csr_frm;
-    rv32f_unit u_rv32f_unit (
-        .i_clk      (i_clk),
-        .i_rst_n    (i_rst_n),
-        .i_start    (f_start_pulse),
-        .i_flush    (i_flush_e),
-        .i_instr    (instr_q),
-        .i_frs1     (frs1_data_q),
-        .i_frs2     (frs2_data_q),
-        .i_frs3     (frs3_data_q),
-        .i_xrs1     (rs1_exec_registered),
-        .i_frm      (csr_frm),
-        .o_busy     (f_busy_int),
-        .o_done     (f_done_int),
-        .o_result   (f_result),
-        .o_fflags   (f_fflags)
-    );
+    generate
+        if (ENABLE_F) begin : gen_rv32f
+            always_ff @(posedge i_clk) begin
+                if (!i_rst_n) begin
+                    f_issued <= 1'b0;
+                end else if (i_flush_e || f_done_int || !is_f_compute_q) begin
+                    f_issued <= 1'b0;
+                end else if (f_start_pulse) begin
+                    f_issued <= 1'b1;
+                end
+            end
+
+            rv32f_unit u_rv32f_unit (
+                .i_clk      (i_clk),
+                .i_rst_n    (i_rst_n),
+                .i_start    (f_start_pulse),
+                .i_flush    (i_flush_e),
+                .i_instr    (instr_q),
+                .i_frs1     (frs1_data_q),
+                .i_frs2     (frs2_data_q),
+                .i_frs3     (frs3_data_q),
+                .i_xrs1     (rs1_exec_registered),
+                .i_frm      (csr_frm),
+                .o_busy     (f_busy_int),
+                .o_done     (f_done_int),
+                .o_result   (f_result),
+                .o_fflags   (f_fflags)
+            );
+        end else begin : gen_no_rv32f
+            assign f_issued   = 1'b0;
+            assign f_busy_int = 1'b0;
+            assign f_done_int = 1'b0;
+            assign f_result   = '0;
+            assign f_fflags   = '0;
+        end
+    endgenerate
 
     // ---- CSR file ----
     logic [31:0] csr_rdata;
@@ -760,7 +772,7 @@ module stage_ex(
     assign o_mem_write     = mem_write_q && !trap_any;
     assign o_wb_src        = wb_src_q;
     assign o_reg_write     = reg_write_q && !trap_any;
-    assign o_f_reg_write   = f_reg_write_q && !trap_any;
+    assign o_f_reg_write   = ENABLE_F && f_reg_write_q && !trap_any;
     assign o_mem_mask      = mem_mask_q;
     assign o_load_unsigned = load_unsigned_q;
     assign o_update_taken = branch_update_taken && !trap_any;
@@ -782,7 +794,7 @@ module stage_ex(
 
     always_comb begin
         o_mem_addr = rs1_exec_registered + imm_q;
-        o_a2_data = mem_write_q ? (is_f_ext_q ? frs2_data_q : rs2_exec_registered) :
+        o_a2_data = mem_write_q ? ((ENABLE_F && is_f_ext_q) ? frs2_data_q : rs2_exec_registered) :
                                   rs2_exec_final;
 
         if (is_f_compute_q) begin

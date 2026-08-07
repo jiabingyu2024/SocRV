@@ -52,5 +52,6 @@ build/images/rtthread-coremark/{code.mem,data.mem,image.json}
 coremark 10000
 ```
 
-当前参考 core 使用 `rv32i_zicsr/ilp32`。最终整数目标是 RV32IM + Zicsr +
-Zicntr + Zifencei，并通过 RV32UI/RV32MI/RV32UM；浮点在 F/FD 中后续确定。
+当前 core 使用 `rv32im_zicsr_zicntr_zifencei/ilp32`，CoreMark 会生成硬件
+乘除指令，并以 RV32UI/RV32MI/RV32UM 作为整数正确性门槛；浮点在 F/FD 中
+后续确定。

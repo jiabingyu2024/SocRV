@@ -10,8 +10,8 @@
 struct SimConfig {
     std::uint64_t max_cycles = 200000;
     std::uint64_t benchmark_iterations = 0;
-    std::uint64_t soc_hz = 50000000;
-    std::uint64_t uart_cycles_per_bit = 434;
+    std::uint64_t soc_hz = 200000000;
+    std::uint64_t uart_cycles_per_bit = 1736;
     std::uint64_t uart_prompt_timeout = 5000000;
     std::uint32_t perf_start_code = 0;
     std::uint32_t perf_stop_code = 0;

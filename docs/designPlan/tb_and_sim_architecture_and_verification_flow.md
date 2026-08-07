@@ -85,7 +85,7 @@ CoreMark 的 `start_time()`/`stop_time()` 在 Test Status CODE 寄存器写入
 cycles
 commits
 IPC
-seconds（按 50 MHz SoC 时钟换算）
+seconds（按 100 MHz SoC 时钟换算）
 cycles_per_iteration
 commits_per_iteration
 iterations_per_second
@@ -94,7 +94,7 @@ iterations_per_second
 短档和多轮档都必须先通过上游 CoreMark CRC 与最终 Test Status。为了让上游
 “运行时长”功能校验能在 RTL 仿真中实际完成，这两个仿真 profile 的
 `COREMARK_TICKS_PER_SEC=1` 是合成值；上面列出的 Harness 指标仍按真实
-50 MHz cycle window 计算。它们适合做同一 RTL/工具配置下的简单趋势比较，
+100 MHz cycle window 计算。它们适合做同一 RTL/工具配置下的简单趋势比较，
 不是可发布的官方 CoreMark 分数。正式分数仍应使用 FPGA Profile 和符合
 CoreMark 报告规则的轮次、计时与平台声明。
 

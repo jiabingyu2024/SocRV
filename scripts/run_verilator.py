@@ -239,12 +239,19 @@ def build_model(*, force: bool = False, difftest: bool = False) -> None:
     if object_dir.exists():
         shutil.rmtree(object_dir)
     object_dir.mkdir(parents=True, exist_ok=True)
-    cpp_sources = list(CPP_SOURCES)
+    cpp_sources = [
+        to_wsl_path(repo_path(*Path(relative).parts))
+        for relative in CPP_SOURCES
+    ]
+    common_include = to_wsl_path(repo_path("tb", "cpp", "common"))
+    adapter_include = to_wsl_path(repo_path("tb", "cpp", "adapter"))
+    difftest_include = to_wsl_path(repo_path("tb", "cpp", "difftest"))
+    object_dir_wsl = to_wsl_path(object_dir)
     cflags = (
         "-std=c++17 -O2 -frounding-math -fno-fast-math "
-        "-I../../../../tb/cpp/common "
-        "-I../../../../tb/cpp/adapter "
-        "-I../../../../tb/cpp/difftest"
+        f"-I{common_include} "
+        f"-I{adapter_include} "
+        f"-I{difftest_include}"
     )
     argv = [
         "verilator",
@@ -256,16 +263,17 @@ def build_model(*, force: bool = False, difftest: bool = False) -> None:
         "sim/filelists/soc_verilator.f",
         *cpp_sources,
         "--Mdir",
-        f"build/verilator/{target}/obj_dir",
+        object_dir_wsl,
         "-o",
         "soc_sim",
         "-CFLAGS",
         cflags,
     ]
     if difftest:
-        cpp_sources.append(SPIKE_COSIM_SOURCE)
+        spike_source_wsl = to_wsl_path(repo_path(*Path(SPIKE_COSIM_SOURCE).parts))
+        cpp_sources.append(spike_source_wsl)
         argv[argv.index("--Mdir") - 1:argv.index("--Mdir") - 1] = [
-            SPIKE_COSIM_SOURCE
+            spike_source_wsl
         ]
         spike_install = repo_path(
             "build", "reference", "spike", "install"

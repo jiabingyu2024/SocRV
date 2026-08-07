@@ -38,7 +38,7 @@
     }
   ],
   "cascade": [
-    "Keep active software profiles at rv32i_zicsr until the demo core is replaced.",
+    "Promote active software profiles to rv32im_zicsr_zicntr_zifencei after the integer RTL passes RV32UI, RV32MI and RV32UM.",
     "Generate RV32UI, RV32MI, RV32UM, RV32UF and RV32UD datasets against the current Memory Map.",
     "Require RV32UI, RV32MI and RV32UM for the final integer gate.",
     "Block the complete final gate until single or double precision is selected.",

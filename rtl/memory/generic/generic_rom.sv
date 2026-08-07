@@ -11,13 +11,13 @@ module generic_rom #(
   localparam int unsigned WORDS = BYTES / 4;
   localparam int unsigned INDEX_WIDTH = $clog2(WORDS);
   logic [31:0] storage [0:WORDS-1];
-  logic rsp_valid_q;
-  logic [31:0] rsp_rdata_q;
-  logic rsp_err_q;
-  localparam int unsigned LATENCY_COUNT_WIDTH =
-      (RESPONSE_LATENCY <= 1) ? 1 : $clog2(RESPONSE_LATENCY);
-  logic busy_q;
-  logic [LATENCY_COUNT_WIDTH-1:0] latency_count_q;
+  localparam int unsigned PIPE_STAGES =
+      (RESPONSE_LATENCY < 1) ? 1 : RESPONSE_LATENCY;
+  logic [PIPE_STAGES-1:0] pipe_valid_q;
+  logic [31:0] pipe_rdata_q [0:PIPE_STAGES-1];
+  logic [PIPE_STAGES-1:0] pipe_err_q;
+  logic pipe_advance;
+  logic req_fire;
 `ifndef SYNTHESIS
   string runtime_file;
 `endif
@@ -34,46 +34,52 @@ module generic_rom #(
     if (MEM_FILE != "") $readmemh(MEM_FILE, storage);
   end
 
-  assign mem.req_ready = !busy_q && !rsp_valid_q;
-  assign mem.rsp_valid = rsp_valid_q;
-  assign mem.rsp_rdata = rsp_rdata_q;
-  assign mem.rsp_err   = rsp_err_q;
+  // The complete fixed-latency pipe advances together.  With an accepting
+  // response sink this permits one synchronous BRAM address every cycle; if
+  // the sink backpressures, every stage holds and no response can be lost.
+  assign pipe_advance = !pipe_valid_q[PIPE_STAGES-1] || mem.rsp_ready;
+  assign mem.req_ready = pipe_advance;
+  assign req_fire = mem.req_valid && mem.req_ready;
+  assign mem.rsp_valid = pipe_valid_q[PIPE_STAGES-1];
+  assign mem.rsp_rdata = pipe_rdata_q[PIPE_STAGES-1];
+  assign mem.rsp_err   = pipe_err_q[PIPE_STAGES-1];
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      rsp_valid_q <= 1'b0;
-      rsp_err_q   <= 1'b0;
-      busy_q      <= 1'b0;
-      latency_count_q <= '0;
-    end else begin
-      if (rsp_valid_q && mem.rsp_ready) rsp_valid_q <= 1'b0;
-      if (busy_q) begin
-        if (latency_count_q == 1) begin
-          busy_q      <= 1'b0;
-          rsp_valid_q <= 1'b1;
-        end else begin
-          latency_count_q <= latency_count_q - 1'b1;
-        end
+      pipe_valid_q <= '0;
+      pipe_err_q <= '0;
+    end else if (pipe_advance) begin
+      for (int unsigned stage = PIPE_STAGES - 1; stage > 0; stage--) begin
+        pipe_valid_q[stage] <= pipe_valid_q[stage-1];
+        pipe_err_q[stage] <= pipe_err_q[stage-1];
       end
-      if (mem.req_valid && mem.req_ready) begin
-        if (RESPONSE_LATENCY == 1) begin
-          rsp_valid_q <= 1'b1;
-        end else begin
-          busy_q <= 1'b1;
-          latency_count_q <=
-              LATENCY_COUNT_WIDTH'(RESPONSE_LATENCY - 1);
-        end
-        rsp_err_q   <= mem.req_write || (mem.req_addr >= BYTES) || (mem.req_addr[1:0] != 2'b00);
+      pipe_valid_q[0] <= req_fire;
+      if (req_fire) begin
+        pipe_err_q[0] <= mem.req_write || (mem.req_addr >= BYTES) ||
+                         (mem.req_addr[1:0] != 2'b00);
+      end else begin
+        pipe_err_q[0] <= 1'b0;
       end
     end
   end
 
+  // Keep the inferred ROM read and data-pipe flops out of the asynchronous
+  // reset process.  Their validity is entirely governed by pipe_valid_q.
   always_ff @(posedge clk_i) begin
-    if (mem.req_valid && mem.req_ready) begin
-      if (!mem.req_write && mem.req_addr < BYTES && mem.req_addr[1:0] == 2'b00)
-        rsp_rdata_q <= storage[mem.req_addr[INDEX_WIDTH+1:2]];
-      else
-        rsp_rdata_q <= '0;
+    if (pipe_advance) begin
+      for (int unsigned stage = PIPE_STAGES - 1; stage > 0; stage--)
+        pipe_rdata_q[stage] <= pipe_rdata_q[stage-1];
+      if (req_fire) begin
+        if (!mem.req_write && mem.req_addr < BYTES &&
+            mem.req_addr[1:0] == 2'b00)
+          pipe_rdata_q[0] <= storage[mem.req_addr[INDEX_WIDTH+1:2]];
+        else
+          pipe_rdata_q[0] <= '0;
+      end
     end
   end
+
+`ifndef SYNTHESIS
+  initial assert (RESPONSE_LATENCY >= 1);
+`endif
 endmodule

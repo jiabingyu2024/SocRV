@@ -106,7 +106,7 @@ Runner 执行以下过程：
 2. 启动 `soc_sim_top`；
 3. 按配置的 UART 波特率逐位解码 `uart_tx_o`，等待 transcript 的末尾完整出现
    `msh >`；只看到 `msh`、`msh ` 或零散字符都不会触发；
-4. 检测到提示符后等待一个 UART bit time，再按 50 MHz、115200 baud 的真实
+4. 检测到提示符后等待一个 UART bit time，再按 100 MHz、115200 baud 的真实
    UART 帧向 `uart_rx_i` 发送
    `coremark 3\r`；
 5. CoreMark 通过硬件 timer 划定测量窗口；
@@ -285,19 +285,19 @@ make fpga-build PROFILE=rtthread-coremark JOBS=4
 bitstream：
 
 ```text
-build/vivado/kintex7-rtthread-coremark/project/socrv.runs/impl_1/fpga_top.bit
+build/vivado/kintex7-100mhz-rtthread-coremark/project/socrv.runs/impl_1/fpga_top.bit
 ```
 
 机器可读结果：
 
 ```text
-build/vivado/kintex7-rtthread-coremark/result.json
+build/vivado/kintex7-100mhz-rtthread-coremark/result.json
 ```
 
 报告目录：
 
 ```text
-build/vivado/kintex7-rtthread-coremark/project/reports/
+build/vivado/kintex7-100mhz-rtthread-coremark/project/reports/
 ```
 
 主要报告：

@@ -32,5 +32,6 @@ rtl/cpu/core/myCPU.sv
 
 # SoC protocol adapters remain inside the CPU subsystem boundary.
 rtl/cpu/adapter/hxi_instruction_adapter.sv
+rtl/cpu/adapter/pipelined_instruction_adapter.sv
 rtl/cpu/adapter/hxi_data_adapter.sv
 rtl/cpu/cpu_subsystem.sv

@@ -13,7 +13,7 @@
       "response": ["valid", "ready", "rdata", "error"]
     },
     "reset_vector": "0x00000000",
-    "clock_hz": 50000000,
+    "clock_hz": 100000000,
     "uart_baud": 115200
   },
   "incremental_changes": [
