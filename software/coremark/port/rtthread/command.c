@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "core_portme.h"
+#include "drv_timer.h"
 #include "drv_uart.h"
 #include "test_status.h"
 
@@ -87,6 +88,15 @@ static int cmd_coremark(int argc, char **argv)
         rt_kprintf("SocRV CoreMark CRC check FAIL: %d\n", result);
     }
     uart_flush();
+
+    /*
+     * The performance port deliberately disables the machine-timer IRQ while
+     * CoreMark is running.  Re-arm the RT-Thread tick from the current mtime
+     * value before FinSH returns to its blocking getchar loop; merely setting
+     * the IRQ-enable bit would leave the old compare deadline in the past and
+     * cause an interrupt storm.
+     */
+    RT_ASSERT(timer_init_tick(RT_TICK_PER_SECOND) != 0u);
     if (result == 0) {
         test_status_report_pass(0u);
     } else {

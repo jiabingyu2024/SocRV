@@ -1,8 +1,8 @@
 {
   "$schema": "stage11_wave_debug",
-  "version": "1.1",
-  "design_name": "SocRV superscalar CPU integration",
-  "timestamp": "2026-08-06T19:31:00+08:00",
+  "version": "1.2",
+  "design_name": "SocRV RV32IMFD RT-Thread integration",
+  "timestamp": "2026-08-07T00:50:35+08:00",
   "eda_tool": {
     "waveform_viewer": "textual VCD inspection",
     "waveform_version": "VCD",
@@ -10,57 +10,64 @@
     "dump_format": "vcd",
     "dump_compile_flags": "VM_TRACE=1",
     "dump_runtime_flags": "--trace",
-    "actual_dump_command": "python -B scripts/run_isa_tests.py --gate final-base --tests rv32mi/breakpoint --no-rtl-build --trace",
+    "actual_dump_command": "make sim-rtthread TRACE=1",
     "actual_wave_open_command": "textual VCD signal extraction",
-    "source": "inferred from scripts/run_verilator.py"
+    "source": "scripts/run_verilator.py"
   },
   "failure_context": {
-    "from_triage": "directed rv32mi regression",
-    "failure_class": "register access and control recovery",
-    "suspected_area": "CPU CSR trigger state, exception completion, and redirect arbitration"
+    "from_triage": "RT-Thread RV32D smoke simulation bus fault",
+    "failure_class": "misaligned floating-point context restore and recursive trap",
+    "suspected_area": "initial thread stack construction and RV32D context save/restore"
   },
   "dump_status": {
     "dump_exists": true,
     "dump_format": "vcd",
-    "dump_file": "build/wave/soc/isa-rv32mi-breakpoint.vcd",
+    "dump_file": "build/wave/soc/rtthread-smoke.vcd",
     "rerun_required": false,
-    "rerun_command": "python -B scripts/run_isa_tests.py --gate final-base --tests rv32mi/breakpoint --no-rtl-build --trace"
+    "rerun_command": "make sim-rtthread TRACE=1"
   },
   "signals_traced": [
     {
-      "signal": "csr_tdata1_0/csr_tdata2_0/csr_tcontrol",
-      "module": "core_top.u_csr",
-      "reason": "confirm trigger programming and enable state"
-    },
-    {
-      "signal": "exec_mem_addr_calc/memory_trigger_match/exec_load_enqueue",
+      "signal": "commit_pc/commit_instruction",
       "module": "core_top",
-      "reason": "confirm load address match and side-effect suppression"
+      "reason": "identify the first failing FLD in the initial thread restore path"
     },
     {
-      "signal": "fixed_completion_valid/full_flush/branch_miss/redirect_target",
-      "module": "core_top/recovery_ctrl",
-      "reason": "trace the precise exception through recovery"
+      "signal": "dmem_req_addr/dmem_req_write",
+      "module": "core_top/fp_memory_unit",
+      "reason": "confirm the effective address and alignment of RV32D context transfers"
+    },
+    {
+      "signal": "csr_mcause/csr_mtval/full_flush/redirect_target",
+      "module": "core_top/csr_file/recovery_ctrl",
+      "reason": "trace the initial alignment exception and recursive trap sequence"
     }
   ],
   "observations": [
-    "At VCD time 4161 the load address is 0x10000000, memory_trigger_match asserts, raw load enqueue is suppressed, and an exception completion is produced.",
-    "The trap redirect initially selects mtvec 0x00000014, but a registered younger branch_miss remains asserted after full_flush and changes the later redirect target to 0x00000148.",
-    "The failing path reaches test code 4 only after the stale branch redirect bypasses the trap handler."
+    "The initial thread restore executes fld ft0,0(sp) with sp equal to 0x1000138c, which is only four-byte aligned.",
+    "The FLD raises mcause=4 (load address misaligned).",
+    "The exception entry then attempts FSD context saves on the same misaligned stack and raises mcause=6 (store address misaligned), recursively entering the trap path.",
+    "Repeated recursive context saves eventually move outside the DATA memory region and appear at the SoC level as a bus fault."
   ],
   "root_cause": {
     "found": true,
-    "description": "full_flush clears execution state but does not clear registered branch recovery state, allowing a younger branch redirect to overwrite a precise trigger trap redirect on the following cycle",
-    "evidence": "memory_trigger_match=1 at time 4161; full_flush redirects to 0x14 at 4163; branch_miss remains 1 at 4165; subsequent redirect target becomes 0x148",
-    "affected_module": "rtl/cpu/superscalar/core_top.sv"
+    "description": "The RT-Thread initial stack frame was aligned to four bytes, but the RV32D context restore/save code uses FLD/FSD and therefore requires eight-byte alignment; the RISC-V ABI baseline uses sixteen-byte stack alignment.",
+    "evidence": "First failing FLD address 0x1000138c, followed by mcause=4 and recursive FSD mcause=6 traps.",
+    "affected_module": "software/rt-thread/port/cpuport.c"
   },
   "fix_recommendation": {
-    "type": "rtl_fix",
-    "description": "Give full_flush priority over registered branch recovery state; separately enforce CSR privilege/read-only legality and suppress minstret auto-increment on direct counter writes.",
+    "type": "software_port_fix",
+    "description": "Align the initial RT-Thread stack pointer down to 16 bytes before constructing the RV32IMFD context frame.",
     "target_files": [
-      "rtl/cpu/superscalar/core_top.sv",
-      "rtl/cpu/superscalar/commit/csr_file.sv"
-    ]
+      "software/rt-thread/port/cpuport.c"
+    ],
+    "implemented_change": "stk = (rt_uint8_t *)RT_ALIGN_DOWN((rt_ubase_t)stk, 16);"
   },
+  "verification": [
+    "make sim-rtthread PASS",
+    "make sim-msh PASS: help, ps and uptime",
+    "make sim-coremark COREMARK_ITERATIONS=3 PASS with ps/help after CoreMark",
+    "make sim-isa ISA_GATE=final PASS: 86/86"
+  ],
   "rerun_path": "frontend-compile-sim-run"
 }

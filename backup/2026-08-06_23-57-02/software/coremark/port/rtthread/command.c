@@ -1,0 +1,101 @@
+#include <rtthread.h>
+#include <finsh.h>
+#include <string.h>
+
+#include "core_portme.h"
+#include "drv_uart.h"
+#include "test_status.h"
+
+int coremark_main(void);
+
+#define COREMARK_DEFAULT_ITERATIONS 10000u
+#define COREMARK_MAX_ITERATIONS 1000000u
+
+static void print_u64(uint64_t value)
+{
+    char digits[24];
+    unsigned used = 0;
+
+    do {
+        digits[used++] = (char)('0' + (value % 10u));
+        value /= 10u;
+    } while (value != 0u);
+    while (used != 0u) {
+        uart_putc(digits[--used]);
+    }
+}
+
+static int parse_iterations(int argc, char **argv, uint32_t *iterations)
+{
+    unsigned long parsed;
+    char *end;
+
+    *iterations = COREMARK_DEFAULT_ITERATIONS;
+    if (argc == 1) {
+        return 0;
+    }
+    if (argc != 2) {
+        return -1;
+    }
+    parsed = strtoul(argv[1], &end, 10);
+    if (*argv[1] == '\0' || *end != '\0' ||
+        parsed == 0u || parsed > COREMARK_MAX_ITERATIONS) {
+        return -1;
+    }
+    *iterations = (uint32_t)parsed;
+    return 0;
+}
+
+static int cmd_coremark(int argc, char **argv)
+{
+    uint32_t iterations;
+    uint64_t ticks;
+    int result;
+
+    if (parse_iterations(argc, argv, &iterations) != 0) {
+        rt_kprintf("usage: coremark [iterations]\n");
+        rt_kprintf("iterations: 1..%u, default %u\n",
+                   COREMARK_MAX_ITERATIONS,
+                   COREMARK_DEFAULT_ITERATIONS);
+        return -RT_EINVAL;
+    }
+
+    rt_kprintf("SocRV CoreMark: iterations=%u, clock=%u Hz\n",
+               iterations,
+               COREMARK_TICKS_PER_SEC);
+    coremark_set_iterations(iterations);
+    (void)coremark_main();
+    result = coremark_result_code();
+    ticks = coremark_last_ticks();
+
+    uart_puts("SocRV exact total ticks: ");
+    print_u64(ticks);
+    uart_puts("\nSocRV total time (ms): ");
+    print_u64((ticks * 1000u) / COREMARK_TICKS_PER_SEC);
+    uart_puts("\nSocRV ticks/iteration: ");
+    print_u64(ticks / iterations);
+    uart_putc('\n');
+
+    if (ticks < (uint64_t)COREMARK_TICKS_PER_SEC * 10u) {
+        rt_kprintf(
+            "SocRV note: short functional/trend run; not a formal score.\n"
+        );
+    }
+    if (result == 0) {
+        rt_kprintf("SocRV CoreMark CRC check PASS\n");
+    } else {
+        rt_kprintf("SocRV CoreMark CRC check FAIL: %d\n", result);
+    }
+    uart_flush();
+    if (result == 0) {
+        test_status_report_pass(0u);
+    } else {
+        test_status_report_fail((uint32_t)result);
+    }
+    return result;
+}
+MSH_CMD_EXPORT_ALIAS(
+    cmd_coremark,
+    coremark,
+    run CoreMark: coremark [iterations]
+);

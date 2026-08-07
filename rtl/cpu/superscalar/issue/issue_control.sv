@@ -20,6 +20,7 @@ module issue_control #(
     input  logic bitmanip_req_ready_i,
     input  logic bitmanip_busy_i,
     input  logic bitmanip_clmul_start_i,
+    input  logic fp_req_ready_i,
     input  logic commit_i,
     input  logic branch_resolve_i,
     input  logic redirect_i,
@@ -45,6 +46,7 @@ module issue_control #(
             FU_BITMANIP: fu_ready = bitmanip_req_ready_i && !mdu_busy_i &&
                                          !(exec_i.valid && exec_i.uop.fu == FU_MULDIV) &&
                                          !bitmanip_clmul_start_i;
+            FU_FP, FU_FP_MEM: fu_ready = fp_req_ready_i;
             default: fu_ready = 1'b1;
         endcase
 

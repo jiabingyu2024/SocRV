@@ -9,6 +9,12 @@ module superscalar_cpu_core (
   output cpu_types_pkg::commit_trace_t commit_o,
   output logic fault_o
 );
+  localparam int unsigned DATA_OUTSTANDING_DEPTH = 8;
+  localparam int unsigned DATA_PENDING_PTR_W =
+      $clog2(DATA_OUTSTANDING_DEPTH);
+  localparam int unsigned DATA_PENDING_COUNT_W =
+      $clog2(DATA_OUTSTANDING_DEPTH + 1);
+
   logic core_rst;
   logic [31:0] imem_addr;
   logic imem_req_valid;
@@ -65,7 +71,13 @@ module superscalar_cpu_core (
   logic [63:0] dbg_commit_csr_minstret;
   logic [63:0] order_q;
   logic data_bus_fault_q;
-  logic data_pending_write_q;
+  logic data_pending_write_q [0:DATA_OUTSTANDING_DEPTH-1];
+  logic [DATA_PENDING_PTR_W-1:0] data_pending_head_q;
+  logic [DATA_PENDING_PTR_W-1:0] data_pending_tail_q;
+  logic [DATA_PENDING_COUNT_W-1:0] data_pending_count_q;
+  logic data_request_credit;
+  logic data_request_fire;
+  logic data_response_fire;
   logic irq_taken;
   logic [31:0] irq_mip;
   logic irq_event_valid_q;
@@ -80,7 +92,9 @@ module superscalar_cpu_core (
   assign instr_hxi.req_wstrb = '0;
   assign instr_hxi.rsp_ready = 1'b1;
 
-  assign data_hxi.req_valid = dmem_req_valid;
+  assign data_request_credit =
+      data_pending_count_q < DATA_PENDING_COUNT_W'(DATA_OUTSTANDING_DEPTH);
+  assign data_hxi.req_valid = dmem_req_valid && data_request_credit;
   // The imported core expresses sub-word stores as an address offset plus an
   // unshifted byte mask.  HXI/mem_native use an aligned word address and lane-
   // aligned data/strobes, so perform the original platform's lane adaptation
@@ -90,7 +104,9 @@ module superscalar_cpu_core (
   assign data_hxi.req_wdata = dmem_req_wdata << {dmem_req_addr[1:0], 3'b000};
   assign data_hxi.req_wstrb = (dmem_req_wstrb << dmem_req_addr[1:0]) & 4'hf;
   assign data_hxi.rsp_ready = 1'b1;
-  assign dmem_req_ready = data_hxi.req_ready;
+  assign dmem_req_ready = data_hxi.req_ready && data_request_credit;
+  assign data_request_fire = data_hxi.req_valid && data_hxi.req_ready;
+  assign data_response_fire = data_hxi.rsp_valid && data_hxi.rsp_ready;
 
   core_top u_core (
     .clk(clk_i),
@@ -111,7 +127,8 @@ module superscalar_cpu_core (
     // HXI acknowledges reads and writes.  The imported core's response channel
     // is read-data-only, so never let a preceding store acknowledgement satisfy
     // a younger load waiting inside the DCache.
-    .dmem_resp_valid_i(data_hxi.rsp_valid && !data_pending_write_q),
+    .dmem_resp_valid_i(data_hxi.rsp_valid && data_pending_count_q != 0 &&
+                       !data_pending_write_q[data_pending_head_q]),
     .dmem_resp_rdata_i(data_hxi.rsp_rdata),
     .irq_software_i(irq_software_i),
     .irq_timer_i(irq_timer_i),
@@ -210,7 +227,9 @@ module superscalar_cpu_core (
     if (!rst_ni) begin
       order_q <= '0;
       data_bus_fault_q <= 1'b0;
-      data_pending_write_q <= 1'b0;
+      data_pending_head_q <= '0;
+      data_pending_tail_q <= '0;
+      data_pending_count_q <= '0;
       irq_event_valid_q <= 1'b0;
       irq_event_mip_q <= '0;
     end else begin
@@ -221,11 +240,25 @@ module superscalar_cpu_core (
         order_q <= order_q + 64'd1;
       if (data_hxi.rsp_valid && data_hxi.rsp_err)
         data_bus_fault_q <= 1'b1;
-      if (data_hxi.req_valid && data_hxi.req_ready)
-        data_pending_write_q <= data_hxi.req_write;
-      if (data_hxi.rsp_valid && data_hxi.rsp_ready)
-        data_pending_write_q <= 1'b0;
+      if (data_request_fire) begin
+        data_pending_tail_q <= data_pending_tail_q + 1'b1;
+      end
+      if (data_response_fire)
+        data_pending_head_q <= data_pending_head_q + 1'b1;
+      unique case ({data_request_fire, data_response_fire})
+        2'b10: data_pending_count_q <= data_pending_count_q + 1'b1;
+        2'b01: data_pending_count_q <= data_pending_count_q - 1'b1;
+        default: begin end
+      endcase
     end
+  end
+
+
+  // The valid range is owned by data_pending_count_q, so FIFO payload bits do
+  // not need reset and remain outside the asynchronous-reset control process.
+  always_ff @(posedge clk_i) begin
+    if (data_request_fire)
+      data_pending_write_q[data_pending_tail_q] <= data_hxi.req_write;
   end
 
   assign fault_o = data_bus_fault_q;
@@ -235,4 +268,14 @@ module superscalar_cpu_core (
                   ^perf_load ^ ^perf_store ^ ^perf_dcache_access ^
                   ^perf_dcache_miss ^ ^perf_stall_front ^ ^perf_stall_mem ^
                   ^perf_stall_muldiv ^ ^perf_stall_load_use;
+
+`ifndef SYNTHESIS
+  always_ff @(posedge clk_i) begin
+    if (rst_ni) begin
+      assert (data_pending_count_q <=
+              DATA_PENDING_COUNT_W'(DATA_OUTSTANDING_DEPTH));
+      if (data_hxi.rsp_valid) assert (data_pending_count_q != 0);
+    end
+  end
+`endif
 endmodule

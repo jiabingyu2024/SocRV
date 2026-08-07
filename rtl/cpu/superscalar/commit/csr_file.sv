@@ -18,6 +18,8 @@ module csr_file (
     input  logic [31:0] trap_tval_i,
     input  logic        mret_valid_i,
     input  logic        retire_i,
+    input  logic        fp_commit_i,
+    input  logic [4:0]  fp_flags_i,
     input  logic        irq_software_i,
     input  logic        irq_timer_i,
     input  logic        irq_external_i,
@@ -34,6 +36,8 @@ module csr_file (
     output logic [31:0] mip_o,
     output logic [63:0] mcycle_o,
     output logic [63:0] minstret_o,
+    output logic [4:0]  fflags_o,
+    output logic [2:0]  frm_o,
     output logic        tselect_o,
     output logic [31:0] tdata1_0_o,
     output logic [31:0] tdata1_1_o,
@@ -53,21 +57,29 @@ module csr_file (
     logic [31:0] tdata2_q [0:1];
     logic [31:0] tcontrol_q;
     logic [1:0] privilege_q;
+    logic [4:0] fflags_q;
+    logic [2:0] frm_q;
+    logic [31:0] mstatus_read;
 
     function automatic logic [31:0] mstatus_warl(input logic [31:0] value);
         logic [31:0] result;
         begin
-            result = value & 32'h0002_1888;
+            result = value & 32'h0002_7888;
             if (!(value[12:11] inside {2'b00, 2'b11}))
                 result[12:11] = 2'b00;
             return result;
         end
     endfunction
 
+    always_comb begin
+        mstatus_read = mstatus_q;
+        mstatus_read[31] = mstatus_q[14:13] == 2'b11;
+    end
+
     assign mtvec_o = mtvec_q;
     assign mepc_o  = {mepc_q[31:2], 2'b00};
     assign privilege_o = privilege_q;
-    assign mstatus_o = mstatus_q;
+    assign mstatus_o = mstatus_read;
     assign mscratch_o = mscratch_q;
     assign mcause_o = mcause_q;
     assign mtval_o = mtval_q;
@@ -77,6 +89,8 @@ module csr_file (
     assign mip_o = mip;
     assign mcycle_o = mcycle_q;
     assign minstret_o = minstret_q;
+    assign fflags_o = fflags_q;
+    assign frm_o = frm_q;
     assign tselect_o = tselect_q;
     assign tdata1_0_o = tdata1_q[0];
     assign tdata1_1_o = tdata1_q[1];
@@ -108,8 +122,11 @@ module csr_file (
     always_comb begin
         read_data_o = 32'd0;
         unique case (read_addr_i)
-            12'h300: read_data_o = mstatus_q;
-            12'h301: read_data_o = 32'h4010_1100;
+            12'h001: read_data_o = {27'd0, fflags_q};
+            12'h002: read_data_o = {29'd0, frm_q};
+            12'h003: read_data_o = {24'd0, frm_q, fflags_q};
+            12'h300: read_data_o = mstatus_read;
+            12'h301: read_data_o = 32'h4010_1128;
             12'h304: read_data_o = mie_q;
             12'h305: read_data_o = mtvec_q;
             12'h306: read_data_o = mcounteren_q;
@@ -157,12 +174,18 @@ module csr_file (
             tdata2_q[0] <= 32'd0;
             tdata2_q[1] <= 32'd0;
             tcontrol_q <= 32'd0;
+            fflags_q <= 5'd0;
+            frm_q <= 3'd0;
         end else begin
             if (!mcountinhibit_q[0]) mcycle_q <= mcycle_q + 64'd1;
             if (retire_i && !mcountinhibit_q[2] &&
                 !(write_valid_i &&
                   (write_addr_i == 12'hB02 || write_addr_i == 12'hB82)))
                 minstret_q <= minstret_q + 64'd1;
+            if (fp_commit_i) begin
+                fflags_q <= fflags_q | fp_flags_i;
+                mstatus_q[14:13] <= 2'b11;
+            end
 
             if (trap_valid_i) begin
                 mepc_q <= {trap_pc_i[31:2], 2'b00};
@@ -181,6 +204,12 @@ module csr_file (
                 end
                 if (write_valid_i) begin
                     unique case (write_addr_i)
+                        12'h001: fflags_q <= write_data_i[4:0];
+                        12'h002: frm_q <= write_data_i[2:0];
+                        12'h003: begin
+                            fflags_q <= write_data_i[4:0];
+                            frm_q <= write_data_i[7:5];
+                        end
                         12'h300: mstatus_q <= mstatus_warl(write_data_i);
                         12'h304: mie_q <= write_data_i & 32'h0000_0888;
                         12'h305: mtvec_q <= {write_data_i[31:2], 1'b0, write_data_i[0]};

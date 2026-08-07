@@ -1,13 +1,13 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/zicntr/firmware.elf",
-    "sha256": "6036db3f25bf39422d3cda06dd04333f2c7547ffe7a26625e50c4277629ebc79"
+    "sha256": "8d05fc5e9f7bef9229c67690f17b784cbd2f19b79528f7063502390c7b5654b2"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32i_zicsr_zicntr",
+    "march": "rv32imfd_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",

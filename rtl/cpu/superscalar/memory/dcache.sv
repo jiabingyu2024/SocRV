@@ -43,7 +43,7 @@ module dcache #(
     localparam int unsigned TAG_W = CACHE_ADDR_W - TAG_LSB;
 
     typedef enum logic [2:0] {
-        DC_INIT, DC_IDLE, DC_UNC_REQ, DC_UNC_WAIT, DC_REFILL_REQ, DC_REFILL_WAIT
+        DC_INIT, DC_IDLE, DC_UNC_REQ, DC_UNC_WAIT, DC_REFILL
     } state_e;
     state_e state_q;
 
@@ -56,7 +56,15 @@ module dcache #(
     logic [TAG_W:0] tag_write_data;
     logic [INDEX_W-1:0] init_index_q;
     logic [31:0] req_addr_q;
-    logic [1:0] fill_word_q, refill_count_q;
+    logic [1:0] refill_start_word_q;
+    logic [2:0] refill_send_count_q;
+    logic [2:0] refill_recv_count_q;
+    logic [1:0] refill_send_word_c;
+    logic [1:0] refill_recv_word_c;
+    logic refill_req_fire_c;
+    logic refill_resp_fire_c;
+    logic [2:0] refill_send_after_c;
+    logic [2:0] refill_recv_after_c;
     logic [31:0] resp_data_q;
     logic resp_valid_q;
     logic lookup_valid_q;
@@ -104,13 +112,25 @@ module dcache #(
     assign store_aligned_data_c = cpu_req_wdata_i << {cpu_req_addr_i[1:0], 3'b000};
     assign store_aligned_mask_c = (cpu_req_wstrb_i << cpu_req_addr_i[1:0]) & 4'hf;
     assign idle_o = state_q == DC_IDLE;
+    assign refill_send_word_c = refill_start_word_q +
+                                refill_send_count_q[1:0];
+    assign refill_recv_word_c = refill_start_word_q +
+                                refill_recv_count_q[1:0];
+    assign refill_req_fire_c = state_q == DC_REFILL &&
+                               mem_req_valid_o && mem_req_ready_i;
+    assign refill_resp_fire_c = state_q == DC_REFILL && mem_resp_valid_i;
+    assign refill_send_after_c = refill_send_count_q +
+                                 3'(refill_req_fire_c);
+    assign refill_recv_after_c = refill_recv_count_q +
+                                 3'(refill_resp_fire_c);
 
     // DC_INIT and the last refill beat are mutually exclusive writers.  Their
     // address/data mux is outside the RAM inference template so the array maps
     // to one block RAM instead of hundreds of cascaded RAM64M primitives.
     assign tag_write_en = state_q == DC_INIT ||
-                          (state_q == DC_REFILL_WAIT && mem_resp_valid_i &&
-                           !killed_q && !kill_i && refill_count_q == 2'd3);
+                          (state_q == DC_REFILL && mem_resp_valid_i &&
+                           !killed_q && !kill_i &&
+                           refill_recv_count_q == 3'd3);
     assign tag_write_index = state_q == DC_INIT ? init_index_q :
                              req_addr_q[TAG_LSB-1:4];
     assign tag_write_data = state_q == DC_INIT ? '0 :
@@ -152,11 +172,11 @@ module dcache #(
         bank_write_mask = lookup_store_mask_q;
         if (lookup_valid_q && lookup_write_q && lookup_hit_c) begin
             bank_write_en = 1'b1;
-        end else if (state_q == DC_REFILL_WAIT && mem_resp_valid_i &&
+        end else if (state_q == DC_REFILL && mem_resp_valid_i &&
                      !killed_q && !kill_i) begin
             bank_write_en = 1'b1;
             bank_write_index = req_addr_q[TAG_LSB-1:4];
-            bank_write_word = fill_word_q;
+            bank_write_word = refill_recv_word_c;
             bank_write_data = mem_resp_rdata_i;
             bank_write_mask = 4'hf;
         end
@@ -215,10 +235,12 @@ module dcache #(
                 mem_req_addr_o = {req_addr_q[31:2], 2'b00};
                 mem_req_uncached_o = 1'b1;
             end
-            DC_REFILL_REQ: begin
-                mem_req_valid_o = 1'b1;
+            DC_REFILL: begin
+                mem_req_valid_o = !killed_q && !kill_i &&
+                                  refill_send_count_q < 3'd4;
                 mem_req_write_o = 1'b0;
-                mem_req_addr_o = {req_addr_q[31:4], 4'b0000} + {28'd0, fill_word_q, 2'b00};
+                mem_req_addr_o = {req_addr_q[31:4], 4'b0000} +
+                                 {28'd0, refill_send_word_c, 2'b00};
                 mem_req_uncached_o = 1'b0;
             end
             default: begin end
@@ -230,8 +252,9 @@ module dcache #(
             state_q <= DC_INIT;
             init_index_q <= '0;
             req_addr_q <= '0;
-            fill_word_q <= '0;
-            refill_count_q <= '0;
+            refill_start_word_q <= '0;
+            refill_send_count_q <= '0;
+            refill_recv_count_q <= '0;
             resp_data_q <= '0;
             resp_valid_q <= 1'b0;
             lookup_valid_q <= 1'b0;
@@ -262,9 +285,10 @@ module dcache #(
                     killed_q <= 1'b0;
                     if (lookup_load_miss_c) begin
                         req_addr_q <= lookup_addr_q;
-                        fill_word_q <= lookup_word_q;
-                        refill_count_q <= 2'd0;
-                        state_q <= DC_REFILL_REQ;
+                        refill_start_word_q <= lookup_word_q;
+                        refill_send_count_q <= 3'd0;
+                        refill_recv_count_q <= 3'd0;
+                        state_q <= DC_REFILL;
                     end else if (!lookup_stall_c && cpu_req_valid_i && cpu_req_ready_o) begin
                         if (cacheable_c) begin
                             lookup_valid_q <= 1'b1;
@@ -309,40 +333,28 @@ module dcache #(
                         end
                     end
                 end
-                DC_REFILL_REQ: begin
-                    if (kill_i) begin
-                        // If memory accepted the request on the same edge as the
-                        // kill, retain ownership until its late response drains.
-                        // Otherwise the request was cancelled before acceptance.
-                        if (mem_req_ready_i) begin
-                            state_q <= DC_REFILL_WAIT;
-                            killed_q <= 1'b1;
-                        end else begin
-                            state_q <= DC_IDLE;
-                            killed_q <= 1'b0;
+                DC_REFILL: begin
+                    if (refill_req_fire_c)
+                        refill_send_count_q <= refill_send_after_c;
+                    if (refill_resp_fire_c) begin
+                        refill_recv_count_q <= refill_recv_after_c;
+                        if (!killed_q && !kill_i &&
+                            refill_recv_count_q == 3'd0) begin
+                            resp_data_q <= mem_resp_rdata_i;
+                            resp_valid_q <= 1'b1;
                         end
-                    end else if (mem_req_ready_i) begin
-                        state_q <= DC_REFILL_WAIT;
                     end
-                end
-                DC_REFILL_WAIT: begin
-                    if (mem_resp_valid_i) begin
-                        if (killed_q || kill_i) begin
-                            state_q <= DC_IDLE;
-                            killed_q <= 1'b0;
-                        end else begin
-                            if (refill_count_q == 2'd0) begin
-                                resp_data_q <= mem_resp_rdata_i;
-                                resp_valid_q <= 1'b1;
-                            end
-                            if (refill_count_q == 2'd3) begin
-                                state_q <= DC_IDLE;
-                            end else begin
-                                fill_word_q <= fill_word_q + 1'b1;
-                                refill_count_q <= refill_count_q + 1'b1;
-                                state_q <= DC_REFILL_REQ;
-                            end
-                        end
+
+                    // A redirect stops issuing immediately but already
+                    // accepted beats remain ordered on HXI and must drain.
+                    // Normal completion occurs after all four responses.
+                    if ((killed_q || kill_i) &&
+                        refill_recv_after_c == refill_send_after_c) begin
+                        state_q <= DC_IDLE;
+                        killed_q <= 1'b0;
+                    end else if (!killed_q && !kill_i &&
+                                 refill_recv_after_c == 3'd4) begin
+                        state_q <= DC_IDLE;
                     end
                 end
                 default: state_q <= DC_IDLE;

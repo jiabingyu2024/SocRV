@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/xori/firmware.elf",
-    "sha256": "2b92d8958d62e318e7fb41c2abf8449dc1cc62dd1f80036113059bd4b8c9fb6d"
+    "sha256": "a646510441aa8fa5240cf8b5fb99752bfe4aebcbfa246a65d7209f5299b78396"
   },
   "endianness": "little",
   "entry": "0x00000000",

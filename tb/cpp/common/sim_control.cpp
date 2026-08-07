@@ -1,6 +1,7 @@
 #include "sim_control.h"
 
 #include <iostream>
+#include <vector>
 
 #include "perf_stats.h"
 #include "difftest_checker.h"
@@ -20,6 +21,15 @@ SimResult SimControl::run() {
     UartStimulus uart_stimulus(
         config_.uart_command,
         config_.uart_cycles_per_bit);
+    std::vector<std::string> uart_commands;
+    if (!config_.uart_command.empty()) {
+        uart_commands.push_back(config_.uart_command);
+        uart_commands.insert(
+            uart_commands.end(),
+            config_.uart_followup_commands.begin(),
+            config_.uart_followup_commands.end());
+    }
+    std::size_t uart_commands_sent = 0;
     DiffTestChecker difftest(config_);
     std::uint32_t last_commit_pc = 0;
     bool difftest_fault_injected = false;
@@ -36,13 +46,19 @@ SimResult SimControl::run() {
         if (uart.sample(dut_.uart_tx(), decoded_byte)) {
             std::cout << decoded_byte << std::flush;
             checker.observe(decoded_byte, cycle);
-            if (!config_.uart_command.empty() &&
-                checker.prompt_seen() &&
-                !uart_stimulus.started()) {
+            if (uart_commands_sent < uart_commands.size() &&
+                checker.prompt_count() > uart_commands_sent &&
+                (!uart_stimulus.started() ||
+                 uart_stimulus.finished(cycle))) {
+                if (uart_commands_sent != 0) {
+                    uart_stimulus.load(
+                        uart_commands[uart_commands_sent]);
+                }
                 const std::uint64_t command_cycle =
                     cycle + config_.uart_cycles_per_bit;
                 uart_stimulus.start(command_cycle);
                 checker.mark_command_sent(command_cycle);
+                ++uart_commands_sent;
             }
         }
         if (uart.framing_error()) {

@@ -32,7 +32,9 @@ module dmem_regslice (
     logic resp_valid_q;
     logic [31:0] resp_rdata_q;
 
-    assign s_req_ready_o = !req_valid_q;
+    // One-entry elastic request stage.  A downstream pop and upstream push may
+    // occur on the same edge, removing the former every-other-cycle bubble.
+    assign s_req_ready_o = !req_valid_q || m_req_ready_i;
     assign m_req_valid_o = req_valid_q;
     assign m_req_write_o = req_write_q;
     assign m_req_addr_o = req_addr_q;
@@ -51,20 +53,14 @@ module dmem_regslice (
             resp_valid_q <= m_resp_valid_i;
             if (m_resp_valid_i) resp_rdata_q <= m_resp_rdata_i;
 
-            if (!req_valid_q) begin
-                req_valid_q <= s_req_valid_i;
-            end else if (m_req_ready_i) begin
-                req_valid_q <= 1'b0;
-            end
+            if (s_req_ready_o) req_valid_q <= s_req_valid_i;
         end
     end
 
-    // Preload the payload whenever the one-entry slice is empty.  Payload is
-    // ignored while req_valid_q is low, so it need not be conditionally clocked
-    // by the long s_req_valid_i path.  This makes every payload-register CE a
-    // local !req_valid_q signal; the Load Queue/DCache request-valid cone only
-    // reaches the single req_valid_q bit.  When downstream back-pressures an
-    // occupied entry, req_valid_q is high and the complete payload still holds.
+    // Capture payload only on an accepted upstream transfer.  When downstream
+    // backpressures an occupied entry, s_req_ready_o is low and the complete
+    // payload remains stable; on a simultaneous pop/push it is replaced
+    // without inserting an empty cycle.
     always_ff @(posedge clk) begin
         if (rst) begin
             req_write_q <= 1'b0;
@@ -72,7 +68,7 @@ module dmem_regslice (
             req_wdata_q <= '0;
             req_wstrb_q <= '0;
             req_uncached_q <= 1'b0;
-        end else if (!req_valid_q) begin
+        end else if (s_req_ready_o && s_req_valid_i) begin
             req_write_q <= s_req_write_i;
             req_addr_q <= s_req_addr_i;
             req_wdata_q <= s_req_wdata_i;

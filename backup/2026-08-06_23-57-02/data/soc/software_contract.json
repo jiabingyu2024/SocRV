@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "cpu": {
+    "xlen": 32,
+    "privilege": "machine",
+    "march": "rv32im_zicsr_zicntr_zifencei",
+    "mabi": "ilp32",
+    "implementation": {
+      "name": "superscalar_cpu_core",
+      "status": "integrated_formal_core",
+      "riscv_test_gate": "final-base"
+    },
+    "target": {
+      "integer_march": "rv32im_zicsr_zicntr_zifencei",
+      "required_riscv_test_suites": [
+        "rv32ui",
+        "rv32mi",
+        "rv32um"
+      ],
+      "floating_point": {
+        "selection": "pending",
+        "candidates": {
+          "single": {
+            "extension": "F",
+            "march": "rv32imf_zicsr_zicntr_zifencei",
+            "riscv_test_suite": "rv32uf",
+            "compatible_abis": [
+              "ilp32",
+              "ilp32f"
+            ]
+          },
+          "double": {
+            "extension": "FD",
+            "march": "rv32imfd_zicsr_zicntr_zifencei",
+            "riscv_test_suite": "rv32ud",
+            "compatible_abis": [
+              "ilp32",
+              "ilp32f",
+              "ilp32d"
+            ]
+          }
+        }
+      }
+    },
+    "misaligned": "unsupported",
+    "atomic": false,
+    "compressed": false
+  },
+  "clocks": {
+    "soc_hz": 50000000,
+    "timer_hz": 50000000,
+    "uart_baud": 115200
+  },
+  "interrupts": {
+    "machine_causes": {
+      "software": 3,
+      "timer": 7,
+      "external": 11
+    },
+    "external_sources": {
+      "uart": 0
+    }
+  },
+  "peripherals": {
+    "TIMER": {
+      "region": "TIMER",
+      "registers": {
+        "MTIME_LO": {
+          "offset": "0x00000000",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "increments every enabled timer clock"
+        },
+        "MTIME_HI": {
+          "offset": "0x00000004",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "increments every enabled timer clock"
+        },
+        "MTIMECMP_LO": {
+          "offset": "0x00000008",
+          "access": "RW",
+          "reset": "0xffffffff",
+          "side_effect": "timer IRQ is level-high when enabled mtime >= mtimecmp"
+        },
+        "MTIMECMP_HI": {
+          "offset": "0x0000000c",
+          "access": "RW",
+          "reset": "0xffffffff",
+          "side_effect": "write high=max before low to avoid a transient IRQ"
+        },
+        "CONTROL": {
+          "offset": "0x00000010",
+          "access": "RW",
+          "reset": "0x00000001",
+          "side_effect": "bit0 enables mtime, bit1 enables timer IRQ output"
+        }
+      }
+    },
+    "IRQ_CTRL": {
+      "region": "IRQ_CTRL",
+      "registers": {
+        "PENDING": {
+          "offset": "0x00000000",
+          "access": "W1C",
+          "reset": "0x00000000",
+          "side_effect": "write one clears the corresponding latched external source"
+        },
+        "ENABLE": {
+          "offset": "0x00000004",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "enabled pending sources assert machine external IRQ"
+        },
+        "SOFTWARE": {
+          "offset": "0x00000008",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "bit0 directly drives machine software IRQ"
+        }
+      }
+    },
+    "UART": {
+      "region": "UART",
+      "registers": {
+        "TXDATA": {
+          "offset": "0x00000000",
+          "access": "WO",
+          "reset": "0x00000000",
+          "side_effect": "accepted byte is pushed into the TX FIFO"
+        },
+        "RXDATA": {
+          "offset": "0x00000004",
+          "access": "RO",
+          "reset": "0x00000000",
+          "side_effect": "read pops one byte from the RX FIFO"
+        },
+        "STATUS": {
+          "offset": "0x00000008",
+          "access": "RO",
+          "reset": "0x00000300",
+          "side_effect": "bit8 TX ready, bit9 TX empty, bit16 RX valid, bit17 framing error"
+        },
+        "DIVISOR": {
+          "offset": "0x0000000c",
+          "access": "RW",
+          "reset": "0x000001b2",
+          "side_effect": "baud divisor is floor(soc_hz/uart_baud)"
+        },
+        "CONTROL": {
+          "offset": "0x00000010",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "bit0 enables RX-not-empty external IRQ"
+        }
+      }
+    },
+    "GPIO": {
+      "region": "GPIO",
+      "registers": {
+        "OUTPUT": {
+          "offset": "0x00000000",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "drives logical GPIO output values"
+        },
+        "OUTPUT_ENABLE": {
+          "offset": "0x00000004",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "one enables the corresponding output driver"
+        },
+        "INPUT": {
+          "offset": "0x00000008",
+          "access": "RO",
+          "reset": "0x00000000",
+          "side_effect": "returns sampled logical GPIO inputs"
+        }
+      }
+    },
+    "TEST_STATUS": {
+      "region": "TEST_STATUS",
+      "registers": {
+        "STATUS": {
+          "offset": "0x00000000",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "PASS or FAIL magic terminates simulation and drives board status"
+        },
+        "CODE": {
+          "offset": "0x00000004",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "software-defined diagnostic or architectural test number"
+        }
+      }
+    }
+  },
+  "test_status": {
+    "pass_magic": "0x50415353",
+    "fail_magic": "0x4641494c",
+    "perf_start_magic": "0x43504d53",
+    "perf_stop_magic": "0x43504d45",
+    "status_register": "TEST_STATUS.STATUS",
+    "code_register": "TEST_STATUS.CODE"
+  }
+}

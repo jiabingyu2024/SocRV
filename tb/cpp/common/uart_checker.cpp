@@ -47,8 +47,13 @@ bool UartChecker::prompt_seen() const {
     return prompt_seen_;
 }
 
+std::uint64_t UartChecker::prompt_count() const {
+    return prompt_count_;
+}
+
 bool UartChecker::command_complete() const {
-    return command_sent_ && prompt_count_ >= 2;
+    return command_sent_ &&
+           prompt_count_ >= 2 + config_.uart_followup_commands.size();
 }
 
 bool UartChecker::contains_number_after(
@@ -98,7 +103,7 @@ UartCheckSnapshot UartChecker::evaluate(
         }
         if (!command_complete()) {
             snapshot.missing.push_back(
-                "second UART prompt after command completion");
+                "final UART prompt after all command completions");
         }
     }
 

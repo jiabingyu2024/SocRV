@@ -3,12 +3,12 @@
   "cpu": {
     "xlen": 32,
     "privilege": "machine",
-    "march": "rv32im_zicsr_zicntr_zifencei",
-    "mabi": "ilp32",
+    "march": "rv32imfd_zicsr_zicntr_zifencei",
+    "mabi": "ilp32d",
     "implementation": {
       "name": "superscalar_cpu_core",
       "status": "integrated_formal_core",
-      "riscv_test_gate": "final-base"
+      "riscv_test_gate": "fp-double"
     },
     "target": {
       "integer_march": "rv32im_zicsr_zicntr_zifencei",
@@ -18,7 +18,7 @@
         "rv32um"
       ],
       "floating_point": {
-        "selection": "pending",
+        "selection": "double",
         "candidates": {
           "single": {
             "extension": "F",

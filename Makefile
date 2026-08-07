@@ -122,6 +122,10 @@ sim-coremark: deps-check
 		--test rtthread-coremark-command-$(COREMARK_ITERATIONS) \
 		--benchmark-iterations $(COREMARK_ITERATIONS) \
 		--uart-command "coremark $(COREMARK_ITERATIONS)" \
+		--uart-followup-command "ps" \
+		--uart-followup-command "help" \
+		--uart-expect "List threads in the system" \
+		--uart-expect "RT-Thread shell help" \
 		$(if $(filter 1,$(DIFFTEST)),--difftest --difftest-mode soc-mmio --difftest-isa $(DIFFTEST_ISA),) \
 		$(if $(filter 1,$(TRACE)),--trace,)
 

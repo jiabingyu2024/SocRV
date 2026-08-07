@@ -5,6 +5,8 @@ _start:
     csrci mstatus, 8
     csrw mie, zero
     csrw mscratch, zero
+    li t0, 0x6000
+    csrs mstatus, t0
     .option push
     .option norelax
     la gp, __global_pointer$

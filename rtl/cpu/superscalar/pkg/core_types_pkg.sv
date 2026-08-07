@@ -7,10 +7,19 @@
 package core_types_pkg;
     import core_config_pkg::*;
 
-    typedef enum logic [2:0] {
+    typedef enum logic [3:0] {
         FU_ALU, FU_BRANCH, FU_LOAD, FU_STORE, FU_MULDIV, FU_SYSTEM,
-        FU_NONE, FU_BITMANIP
+        FU_NONE, FU_BITMANIP, FU_FP, FU_FP_MEM
     } fu_e;
+
+    typedef enum logic [4:0] {
+        FP_ADD, FP_SUB, FP_MUL, FP_DIV, FP_SQRT,
+        FP_FMADD, FP_FMSUB, FP_FNMSUB, FP_FNMADD,
+        FP_SGNJ, FP_SGNJN, FP_SGNJX, FP_MIN, FP_MAX,
+        FP_EQ, FP_LT, FP_LE, FP_CLASS,
+        FP_F2I, FP_I2F, FP_F2F, FP_MV_X_W, FP_MV_W_X,
+        FP_LOAD, FP_STORE
+    } fp_op_e;
 
     typedef enum logic [3:0] {
         ALU_ADD, ALU_SUB, ALU_AND, ALU_OR, ALU_XOR, ALU_SLL, ALU_SRL,
@@ -65,15 +74,29 @@ package core_types_pkg;
         logic [4:0]  rs1;
         logic [4:0]  rs2;
         logic [4:0]  rd;
+        logic [4:0]  frs1;
+        logic [4:0]  frs2;
+        logic [4:0]  frs3;
+        logic [4:0]  frd;
         logic        uses_rs1;
         logic        uses_rs2;
         logic        writes_rd;
+        logic        uses_frs1;
+        logic        uses_frs2;
+        logic        uses_frs3;
+        logic        writes_frd;
         logic [31:0] imm;
         fu_e         fu;
         alu_op_e     alu_op;
         bitmanip_op_e bitmanip_op;
         branch_op_e  branch_op;
         muldiv_op_e  muldiv_op;
+        fp_op_e      fp_op;
+        logic        fp_fmt;
+        logic        fp_dst_fmt;
+        logic [2:0]  fp_rm;
+        logic        fp_rm_used;
+        logic        fp_unsigned;
         mem_size_e   mem_size;
         logic        load_unsigned;
         logic        is_jal;
@@ -101,7 +124,14 @@ package core_types_pkg;
         logic [4:0]  rd;
         logic        writes_rd;
         logic [31:0] result;
+        logic [4:0]  frd;
+        logic        writes_frd;
+        logic [63:0] fp_result;
+        logic [4:0]  fp_flags;
+        logic        fp_dirty;
+        fp_op_e      fp_op;
         fu_e         fu;
+        logic        serialize;
         sys_op_e     sys_op;
         csr_op_e     csr_op;
         logic [11:0] csr_addr;
@@ -128,11 +158,27 @@ package core_types_pkg;
     } completion_t;
 
     typedef struct packed {
+        logic        valid;
+        logic [TRANS_ID_W-1:0] trans_id;
+        logic [31:0] int_result;
+        logic [63:0] fp_result;
+        logic [4:0]  fp_flags;
+        logic        writes_rd;
+        logic        writes_frd;
+        logic        exception_valid;
+        logic [4:0]  exception_cause;
+        logic [31:0] exception_tval;
+    } fp_completion_t;
+
+    typedef struct packed {
         logic valid;
         logic [TRANS_ID_W-1:0] trans_id;
         uop_t uop;
         logic [31:0] op1;
         logic [31:0] op2;
+        logic [63:0] fp_op1;
+        logic [63:0] fp_op2;
+        logic [63:0] fp_op3;
     } exec_req_t;
 
     typedef struct packed {

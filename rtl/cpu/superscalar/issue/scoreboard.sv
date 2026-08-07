@@ -22,6 +22,7 @@ module scoreboard #(
     input  logic slow_complete_i,
     input  logic [core_config_pkg::TRANS_ID_W-1:0] slow_trans_id_i,
     input  logic [31:0] slow_result_i,
+    input  core_types_pkg::fp_completion_t fp_completion_i,
 
     input  logic commit_i,
     output logic [core_config_pkg::TRANS_ID_W-1:0] commit_trans_id_o,
@@ -115,6 +116,18 @@ module scoreboard #(
                 entries_q[slow_trans_id_i].done <= 1'b1;
                 entries_q[slow_trans_id_i].result <= slow_result_i;
             end
+            if (fp_completion_i.valid && entries_q[fp_completion_i.trans_id].occupied) begin
+                entries_q[fp_completion_i.trans_id].done <= 1'b1;
+                entries_q[fp_completion_i.trans_id].result <= fp_completion_i.int_result;
+                entries_q[fp_completion_i.trans_id].fp_result <= fp_completion_i.fp_result;
+                entries_q[fp_completion_i.trans_id].fp_flags <= fp_completion_i.fp_flags;
+                entries_q[fp_completion_i.trans_id].exception_valid <=
+                    fp_completion_i.exception_valid;
+                entries_q[fp_completion_i.trans_id].exception_cause <=
+                    fp_completion_i.exception_cause;
+                entries_q[fp_completion_i.trans_id].exception_tval <=
+                    fp_completion_i.exception_tval;
+            end
 
             if (commit_i) begin
                 if (commit_entry_o.writes_rd && commit_entry_o.rd != 0 &&
@@ -123,7 +136,7 @@ module scoreboard #(
                     producer_valid_q[commit_entry_o.rd] <= 1'b0;
                 entries_q[commit_ptr_q].occupied <= 1'b0;
                 commit_ptr_q <= commit_ptr_q + 1'b1;
-                if (commit_entry_o.sys_op != SYS_NONE || commit_entry_o.exception_valid)
+                if (commit_entry_o.serialize || commit_entry_o.exception_valid)
                     serial_pending_o <= 1'b0;
             end
 
@@ -135,7 +148,15 @@ module scoreboard #(
                 entries_q[allocate_ptr_q].instr <= allocate_uop_i.instr;
                 entries_q[allocate_ptr_q].rd <= allocate_uop_i.rd;
                 entries_q[allocate_ptr_q].writes_rd <= allocate_uop_i.writes_rd;
+                entries_q[allocate_ptr_q].frd <= allocate_uop_i.frd;
+                entries_q[allocate_ptr_q].writes_frd <= allocate_uop_i.writes_frd;
+                entries_q[allocate_ptr_q].fp_result <= '0;
+                entries_q[allocate_ptr_q].fp_flags <= '0;
+                entries_q[allocate_ptr_q].fp_dirty <=
+                    allocate_uop_i.fu == FU_FP || allocate_uop_i.fu == FU_FP_MEM;
+                entries_q[allocate_ptr_q].fp_op <= allocate_uop_i.fp_op;
                 entries_q[allocate_ptr_q].fu <= allocate_uop_i.fu;
+                entries_q[allocate_ptr_q].serialize <= allocate_uop_i.serialize;
                 entries_q[allocate_ptr_q].sys_op <= allocate_uop_i.sys_op;
                 entries_q[allocate_ptr_q].csr_op <= allocate_uop_i.csr_op;
                 entries_q[allocate_ptr_q].csr_addr <= allocate_uop_i.csr_addr;
@@ -177,6 +198,8 @@ module scoreboard #(
                 assert (entries_q[fixed_completion_i.trans_id].occupied);
             if (load_complete_i) assert (entries_q[load_trans_id_i].occupied);
             if (slow_complete_i) assert (entries_q[slow_trans_id_i].occupied);
+            if (fp_completion_i.valid)
+                assert (entries_q[fp_completion_i.trans_id].occupied);
         end
     end
 `endif

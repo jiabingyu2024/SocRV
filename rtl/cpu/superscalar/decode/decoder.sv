@@ -34,6 +34,10 @@ module decoder (
         uop_o.rs1             = fetch_i.instr[19:15];
         uop_o.rs2             = fetch_i.instr[24:20];
         uop_o.rd              = fetch_i.instr[11:7];
+        uop_o.frs1            = fetch_i.instr[19:15];
+        uop_o.frs2            = fetch_i.instr[24:20];
+        uop_o.frs3            = fetch_i.instr[31:27];
+        uop_o.frd             = fetch_i.instr[11:7];
         uop_o.pred_next_pc    = fetch_i.pred_next_pc;
         uop_o.pred_kind       = fetch_i.pred_kind;
         uop_o.pred_hit        = fetch_i.pred_hit;
@@ -44,6 +48,8 @@ module decoder (
         uop_o.bitmanip_op     = BM_SH1ADD;
         uop_o.branch_op       = BR_NONE;
         uop_o.muldiv_op       = muldiv_op_e'(funct3);
+        uop_o.fp_op           = FP_ADD;
+        uop_o.fp_rm           = funct3;
         uop_o.mem_size        = MEM_WORD;
         uop_o.sys_op          = SYS_NONE;
         uop_o.csr_op          = CSR_NONE;
@@ -221,6 +227,160 @@ module decoder (
                         end
                     endcase
                 end
+            end
+            7'b0000111: begin // LOAD-FP: FLW / FLD
+                uop_o.fu = FU_FP_MEM;
+                uop_o.fp_op = FP_LOAD;
+                uop_o.imm = imm_i;
+                uop_o.uses_rs1 = 1'b1;
+                uop_o.writes_frd = 1'b1;
+                uop_o.serialize = 1'b1;
+                uop_o.exception_valid = 1'b0;
+                unique case (funct3)
+                    3'b010: uop_o.fp_fmt = 1'b0;
+                    3'b011: uop_o.fp_fmt = 1'b1;
+                    default: uop_o.exception_valid = 1'b1;
+                endcase
+            end
+            7'b0100111: begin // STORE-FP: FSW / FSD
+                uop_o.fu = FU_FP_MEM;
+                uop_o.fp_op = FP_STORE;
+                uop_o.imm = imm_s;
+                uop_o.uses_rs1 = 1'b1;
+                uop_o.uses_frs2 = 1'b1;
+                uop_o.serialize = 1'b1;
+                uop_o.exception_valid = 1'b0;
+                unique case (funct3)
+                    3'b010: uop_o.fp_fmt = 1'b0;
+                    3'b011: uop_o.fp_fmt = 1'b1;
+                    default: uop_o.exception_valid = 1'b1;
+                endcase
+            end
+            7'b1000011, 7'b1000111, 7'b1001011, 7'b1001111: begin // fused multiply-add
+                uop_o.fu = FU_FP;
+                uop_o.uses_frs1 = 1'b1;
+                uop_o.uses_frs2 = 1'b1;
+                uop_o.uses_frs3 = 1'b1;
+                uop_o.writes_frd = 1'b1;
+                uop_o.serialize = 1'b1;
+                uop_o.fp_fmt = fetch_i.instr[25];
+                uop_o.fp_dst_fmt = fetch_i.instr[25];
+                uop_o.fp_rm_used = 1'b1;
+                uop_o.exception_valid = fetch_i.instr[26] ||
+                    !((funct3 <= 3'b100) || (funct3 == 3'b111));
+                unique case (opcode)
+                    7'b1000011: uop_o.fp_op = FP_FMADD;
+                    7'b1000111: uop_o.fp_op = FP_FMSUB;
+                    7'b1001011: uop_o.fp_op = FP_FNMSUB;
+                    default:    uop_o.fp_op = FP_FNMADD;
+                endcase
+            end
+            7'b1010011: begin // OP-FP
+                uop_o.fu = FU_FP;
+                uop_o.serialize = 1'b1;
+                uop_o.fp_fmt = funct7[0];
+                uop_o.fp_dst_fmt = funct7[0];
+                unique case (funct7)
+                    7'b0000000, 7'b0000001: begin // FADD.S/D
+                        uop_o.fp_op = FP_ADD; uop_o.uses_frs1 = 1'b1;
+                        uop_o.uses_frs2 = 1'b1; uop_o.writes_frd = 1'b1;
+                        uop_o.fp_rm_used = 1'b1; uop_o.exception_valid =
+                            !((funct3 <= 3'b100) || (funct3 == 3'b111));
+                    end
+                    7'b0000100, 7'b0000101: begin // FSUB.S/D
+                        uop_o.fp_op = FP_SUB; uop_o.uses_frs1 = 1'b1;
+                        uop_o.uses_frs2 = 1'b1; uop_o.writes_frd = 1'b1;
+                        uop_o.fp_rm_used = 1'b1; uop_o.exception_valid =
+                            !((funct3 <= 3'b100) || (funct3 == 3'b111));
+                    end
+                    7'b0001000, 7'b0001001: begin // FMUL.S/D
+                        uop_o.fp_op = FP_MUL; uop_o.uses_frs1 = 1'b1;
+                        uop_o.uses_frs2 = 1'b1; uop_o.writes_frd = 1'b1;
+                        uop_o.fp_rm_used = 1'b1; uop_o.exception_valid =
+                            !((funct3 <= 3'b100) || (funct3 == 3'b111));
+                    end
+                    7'b0001100, 7'b0001101: begin // FDIV.S/D
+                        uop_o.fp_op = FP_DIV; uop_o.uses_frs1 = 1'b1;
+                        uop_o.uses_frs2 = 1'b1; uop_o.writes_frd = 1'b1;
+                        uop_o.fp_rm_used = 1'b1; uop_o.exception_valid =
+                            !((funct3 <= 3'b100) || (funct3 == 3'b111));
+                    end
+                    7'b0101100, 7'b0101101: begin // FSQRT.S/D
+                        uop_o.fp_op = FP_SQRT; uop_o.uses_frs1 = 1'b1;
+                        uop_o.writes_frd = 1'b1; uop_o.fp_rm_used = 1'b1;
+                        uop_o.exception_valid = (uop_o.frs2 != 0) ||
+                            !((funct3 <= 3'b100) || (funct3 == 3'b111));
+                    end
+                    7'b0010000, 7'b0010001: begin // FSGNJ[N/X].S/D
+                        uop_o.uses_frs1 = 1'b1; uop_o.uses_frs2 = 1'b1;
+                        uop_o.writes_frd = 1'b1; uop_o.exception_valid = 1'b0;
+                        unique case (funct3)
+                            3'b000: uop_o.fp_op = FP_SGNJ;
+                            3'b001: uop_o.fp_op = FP_SGNJN;
+                            3'b010: uop_o.fp_op = FP_SGNJX;
+                            default: uop_o.exception_valid = 1'b1;
+                        endcase
+                    end
+                    7'b0010100, 7'b0010101: begin // FMIN/FMAX.S/D
+                        uop_o.uses_frs1 = 1'b1; uop_o.uses_frs2 = 1'b1;
+                        uop_o.writes_frd = 1'b1; uop_o.exception_valid = 1'b0;
+                        if (funct3 == 3'b000) uop_o.fp_op = FP_MIN;
+                        else if (funct3 == 3'b001) uop_o.fp_op = FP_MAX;
+                        else uop_o.exception_valid = 1'b1;
+                    end
+                    7'b1010000, 7'b1010001: begin // FEQ/FLT/FLE.S/D
+                        uop_o.uses_frs1 = 1'b1; uop_o.uses_frs2 = 1'b1;
+                        uop_o.writes_rd = 1'b1; uop_o.exception_valid = 1'b0;
+                        unique case (funct3)
+                            3'b010: uop_o.fp_op = FP_EQ;
+                            3'b001: uop_o.fp_op = FP_LT;
+                            3'b000: uop_o.fp_op = FP_LE;
+                            default: uop_o.exception_valid = 1'b1;
+                        endcase
+                    end
+                    7'b1100000, 7'b1100001: begin // FCVT.W[U].S/D
+                        uop_o.fp_op = FP_F2I; uop_o.uses_frs1 = 1'b1;
+                        uop_o.writes_rd = 1'b1; uop_o.fp_rm_used = 1'b1;
+                        uop_o.fp_unsigned = uop_o.frs2[0];
+                        uop_o.exception_valid = (uop_o.frs2 > 1) ||
+                            !((funct3 <= 3'b100) || (funct3 == 3'b111));
+                    end
+                    7'b1101000, 7'b1101001: begin // FCVT.S/D.W[U]
+                        uop_o.fp_op = FP_I2F; uop_o.uses_rs1 = 1'b1;
+                        uop_o.writes_frd = 1'b1; uop_o.fp_rm_used = 1'b1;
+                        uop_o.fp_unsigned = uop_o.frs2[0];
+                        uop_o.exception_valid = (uop_o.frs2 > 1) ||
+                            !((funct3 <= 3'b100) || (funct3 == 3'b111));
+                    end
+                    7'b0100000: begin // FCVT.S.D
+                        uop_o.fp_op = FP_F2F; uop_o.uses_frs1 = 1'b1;
+                        uop_o.writes_frd = 1'b1; uop_o.fp_fmt = 1'b1;
+                        uop_o.fp_dst_fmt = 1'b0; uop_o.fp_rm_used = 1'b1;
+                        uop_o.exception_valid = (uop_o.frs2 != 1) ||
+                            !((funct3 <= 3'b100) || (funct3 == 3'b111));
+                    end
+                    7'b0100001: begin // FCVT.D.S
+                        uop_o.fp_op = FP_F2F; uop_o.uses_frs1 = 1'b1;
+                        uop_o.writes_frd = 1'b1; uop_o.fp_fmt = 1'b0;
+                        uop_o.fp_dst_fmt = 1'b1; uop_o.fp_rm_used = 1'b1;
+                        uop_o.exception_valid = (uop_o.frs2 != 0) ||
+                            !((funct3 <= 3'b100) || (funct3 == 3'b111));
+                    end
+                    7'b1110000, 7'b1110001: begin // FMV.X.W / FCLASS.S/D
+                        uop_o.uses_frs1 = 1'b1; uop_o.writes_rd = 1'b1;
+                        uop_o.exception_valid = (uop_o.frs2 != 0);
+                        if (funct3 == 3'b001) uop_o.fp_op = FP_CLASS;
+                        else if (funct3 == 3'b000 && !funct7[0]) uop_o.fp_op = FP_MV_X_W;
+                        else uop_o.exception_valid = 1'b1;
+                    end
+                    7'b1111000: begin // FMV.W.X
+                        uop_o.fp_op = FP_MV_W_X; uop_o.uses_rs1 = 1'b1;
+                        uop_o.writes_frd = 1'b1; uop_o.fp_fmt = 1'b0;
+                        uop_o.fp_dst_fmt = 1'b0;
+                        uop_o.exception_valid = (uop_o.frs2 != 0) || (funct3 != 0);
+                    end
+                    default: uop_o.exception_valid = 1'b1;
+                endcase
             end
             7'b0001111: begin // FENCE/FENCE.I
                 uop_o.fu = FU_SYSTEM; uop_o.serialize = 1'b1; uop_o.exception_valid = 1'b0;

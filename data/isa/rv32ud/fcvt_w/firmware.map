@@ -1,8 +1,8 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccDfylon.o
- .bss           0x00000000        0x0 /tmp/ccDfylon.o
+ .text          0x00000000        0x0 /tmp/cclc6giB.o
+ .bss           0x00000000        0x0 /tmp/cclc6giB.o
 
 Memory Configuration
 
@@ -13,7 +13,7 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccDfylon.o
+LOAD /tmp/cclc6giB.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
@@ -21,7 +21,7 @@ LOAD /tmp/ccDfylon.o
 
 .text           0x00000000      0x528
  *(.text.init)
- .text.init     0x00000000      0x528 /tmp/ccDfylon.o
+ .text.init     0x00000000      0x528 /tmp/cclc6giB.o
                 0x00000000                _start
  *(.text .text.*)
  *(.rodata .rodata.*)
@@ -30,11 +30,11 @@ LOAD /tmp/ccDfylon.o
 
 .rela.dyn       0x00000528        0x0
  .rela.text.init
-                0x00000528        0x0 /tmp/ccDfylon.o
+                0x00000528        0x0 /tmp/cclc6giB.o
 
 .data           0x10000000      0x230
  *(.data .data.*)
- .data          0x10000000      0x230 /tmp/ccDfylon.o
+ .data          0x10000000      0x230 /tmp/cclc6giB.o
                 0x10000200                begin_signature
                 0x10000230                end_signature
  *(.sdata .sdata.*)
@@ -54,4 +54,4 @@ OUTPUT(build/isa-data/generated/rv32ud/fcvt_w/firmware.elf elf32-littleriscv)
 .riscv.attributes
                 0x00000000       0x3f
  .riscv.attributes
-                0x00000000       0x3f /tmp/ccDfylon.o
+                0x00000000       0x3f /tmp/cclc6giB.o

@@ -11,7 +11,9 @@ public:
         std::uint64_t cycles_per_bit);
 
     void start(std::uint64_t cycle);
+    void load(std::string command);
     bool started() const;
+    bool finished(std::uint64_t cycle) const;
     bool level(std::uint64_t cycle) const;
 
 private:

@@ -353,6 +353,7 @@ def run_image(
     reproduce: str = "",
     wall_timeout: int = 600,
     uart_command: str = "",
+    uart_followup_commands: tuple[str, ...] = (),
     uart_prompt: str = "msh >",
     uart_prompt_timeout: int = 5_000_000,
     checker: str = "test-status",
@@ -422,6 +423,10 @@ def run_image(
                 f" --uart-prompt {json.dumps(uart_prompt)}"
                 f" --uart-prompt-timeout {uart_prompt_timeout}"
             )
+            for followup in uart_followup_commands:
+                reproduce += (
+                    " --uart-followup-command " + json.dumps(followup)
+                )
         reproduce += f" --checker {checker}"
         for expected in uart_expect:
             reproduce += f" --uart-expect {json.dumps(expected)}"
@@ -569,6 +574,8 @@ def run_image(
                 str(cycles_per_bit),
             ]
         )
+        for followup in uart_followup_commands:
+            argv.extend(["--uart-followup-command", followup + "\r"])
     if wave_path:
         argv.extend(["--trace", relative_to_repo(wave_path)])
     command = in_repo(repo_path(), argv)
@@ -623,6 +630,7 @@ def run_profile(
     wall_timeout: int = 600,
     require_pass: bool = True,
     uart_command: str = "",
+    uart_followup_commands: tuple[str, ...] = (),
     uart_prompt: str = "msh >",
     uart_prompt_timeout: int = 5_000_000,
     checker: str = "",
@@ -660,6 +668,7 @@ def run_profile(
         wall_timeout=wall_timeout,
         require_pass=require_pass,
         uart_command=uart_command,
+        uart_followup_commands=uart_followup_commands,
         uart_prompt=uart_prompt,
         uart_prompt_timeout=uart_prompt_timeout,
         checker=checker,
@@ -682,6 +691,7 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--benchmark-iterations", type=int)
     parser.add_argument("--uart-command")
+    parser.add_argument("--uart-followup-command", action="append")
     parser.add_argument("--uart-prompt", default="msh >")
     parser.add_argument("--uart-prompt-timeout", type=int, default=5_000_000)
     parser.add_argument("--checker")
@@ -743,6 +753,9 @@ def main() -> int:
             benchmark_iterations=benchmark_iterations,
             wall_timeout=args.wall_timeout,
             uart_command=uart_command,
+            uart_followup_commands=tuple(
+                args.uart_followup_command or ()
+            ),
             uart_prompt=args.uart_prompt,
             uart_prompt_timeout=args.uart_prompt_timeout,
             checker=args.checker or "",

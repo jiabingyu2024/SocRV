@@ -1,0 +1,17 @@
+COREMARK_ROOT := coremark/upstream
+COREMARK_PORT := coremark/port/common
+COREMARK_SOURCES := \
+	$(COREMARK_ROOT)/core_list_join.c \
+	$(COREMARK_ROOT)/core_main.c \
+	$(COREMARK_ROOT)/core_matrix.c \
+	$(COREMARK_ROOT)/core_state.c \
+	$(COREMARK_ROOT)/core_util.c \
+	$(COREMARK_PORT)/core_portme.c
+COREMARK_INCLUDES := -I$(COREMARK_ROOT) -I$(COREMARK_PORT)
+COREMARK_CFLAGS := \
+	-DPERFORMANCE_RUN=1 \
+	-DTOTAL_DATA_SIZE=2000 \
+	-DITERATIONS=$(COREMARK_ITERATIONS) \
+	-DCOREMARK_TICKS_PER_SEC=$(COREMARK_TICKS_PER_SEC) \
+	-DFLAGS_STR=\"$(COREMARK_FLAGS_TEXT)\" \
+	-Wno-error=maybe-uninitialized

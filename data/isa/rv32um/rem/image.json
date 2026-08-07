@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32um/rem/firmware.elf",
-    "sha256": "ff91f5ef5973d395d1209d8c972de1e6592effb833dc7129bfe728873585ba83"
+    "sha256": "e080fb4964c603d41f63a17959a13a4d0500f6bccff03b7fda3e4d17f062cd03"
   },
   "endianness": "little",
   "entry": "0x00000000",

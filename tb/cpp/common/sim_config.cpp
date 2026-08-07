@@ -82,6 +82,9 @@ SimConfig SimConfig::parse(int argc, char** argv) {
                 require_value(argc, argv, index), nullptr, 0);
         } else if (argument == "--uart-command") {
             config.uart_command = require_value(argc, argv, index);
+        } else if (argument == "--uart-followup-command") {
+            config.uart_followup_commands.emplace_back(
+                require_value(argc, argv, index));
         } else if (argument == "--uart-prompt") {
             config.uart_prompt = require_value(argc, argv, index);
         } else if (argument == "--uart-prompt-timeout") {
@@ -164,6 +167,11 @@ SimConfig SimConfig::parse(int argc, char** argv) {
         config.uart_prompt_timeout == 0u) {
         throw std::invalid_argument(
             "--uart-prompt-timeout must be positive");
+    }
+    if (config.uart_command.empty() &&
+        !config.uart_followup_commands.empty()) {
+        throw std::invalid_argument(
+            "--uart-followup-command requires --uart-command");
     }
     if (config.difftest_enabled) {
         if (config.difftest_backend != "spike") {

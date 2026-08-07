@@ -40,6 +40,16 @@ def main() -> int:
     _, image_dir = build_profile(args.profile)
     build_root.mkdir(parents=True, exist_ok=True)
     project_dir = build_root / "project"
+    # A failed or interrupted rebuild must not leave a previous PASS result or
+    # bitstream looking current. Vivado recreates each of these sign-off files.
+    stale_artifacts = [
+        build_root / "result.json",
+        project_dir / "socrv.runs" / "impl_1" / "fpga_top.bit",
+        project_dir / "reports" / "post_impl_timing_summary.rpt",
+        project_dir / "reports" / "post_impl_drc.rpt",
+    ]
+    for artifact in stale_artifacts:
+        artifact.unlink(missing_ok=True)
     command = [
         str(find_vivado()),
         "-mode",

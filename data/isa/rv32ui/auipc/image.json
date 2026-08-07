@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/auipc/firmware.elf",
-    "sha256": "801841af36605bf687ce51dff910d7a61d276d48027b87b0be5870def6ee0e43"
+    "sha256": "200f29af8d3443a4f50975acafb4536ae5c3b57e704ff231b4a5b043b89e13de"
   },
   "endianness": "little",
   "entry": "0x00000000",

@@ -13,14 +13,16 @@
       ]
     },
     "final": {
-      "blocked_reason": "Select single or double precision in the CPU contract",
+      "blocked_reason": null,
       "description": "Complete final CPU ISA acceptance gate",
       "excluded_tests": [],
-      "ready": false,
+      "ready": true,
       "suites": [
         "rv32ui",
         "rv32mi",
-        "rv32um"
+        "rv32um",
+        "rv32uf",
+        "rv32ud"
       ]
     },
     "final-base": {
@@ -40,6 +42,7 @@
       "excluded_tests": [],
       "ready": true,
       "suites": [
+        "rv32uf",
         "rv32ud"
       ]
     },
@@ -56,8 +59,8 @@
   "kind": "generated_isa_dataset",
   "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
   "schema_version": 2,
-  "selection_sha256": "5d73b124207d771ca0f8dd8de3bccfe0eaea7336a73602c0c1c99e0438709eda",
-  "software_contract_sha256": "5c651001a7db49b97fbf01893faca1967d24a36c93327c873f739dae8bdcfa86",
+  "selection_sha256": "7524440fa1ef742c5ea5cce29865754e58513efd7992a62a1bb5dc28a2c49a85",
+  "software_contract_sha256": "2e0a516ec60191d3c295c24e77180ce0015563e2f8f391c5e52bd6481b4b48d0",
   "suites": [
     {
       "excluded": [
@@ -74,7 +77,7 @@
     {
       "excluded": [],
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "rv32mi",
       "test_count": 16
     },
@@ -108,7 +111,7 @@
   "tests": [
     {
       "elf": "rv32ui/simple/firmware.elf",
-      "elf_sha256": "89b32982e69130740ddb756411b3d50270932ef906e9bf0d5116080cadfa05fe",
+      "elf_sha256": "d5c49f7d515fc44463815e77413f607ba56bb2382d8602733da594d8c65a7b4a",
       "image_manifest": "rv32ui/simple/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -119,7 +122,7 @@
     },
     {
       "elf": "rv32ui/add/firmware.elf",
-      "elf_sha256": "cec1cc1af96da64e0da923fa5ec413ce6426e6fbc4a76eb6993b1968661d443a",
+      "elf_sha256": "633fd1b4ae528f57eae75ca68cd9058825d93ae5d71e961d1d4445cb58826fd7",
       "image_manifest": "rv32ui/add/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -130,7 +133,7 @@
     },
     {
       "elf": "rv32ui/addi/firmware.elf",
-      "elf_sha256": "f59d7053e56c851fa6e0319972fe726608aac6b7ef02a07bac953f09443c61ad",
+      "elf_sha256": "559b59b735d275290d2086a5b6db0aa2c7d38b46d6c8c98cc42df3d6f070b4e1",
       "image_manifest": "rv32ui/addi/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -141,7 +144,7 @@
     },
     {
       "elf": "rv32ui/and/firmware.elf",
-      "elf_sha256": "39c37017612160f32a2c607431bc19b6e7c3f41a7454b1c29613a1a7f53d5b95",
+      "elf_sha256": "a0898e4486352e085cd6d2e2ff114b36723977e03cfad09f2891bbf32dc52b94",
       "image_manifest": "rv32ui/and/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -152,7 +155,7 @@
     },
     {
       "elf": "rv32ui/andi/firmware.elf",
-      "elf_sha256": "44e657b7537b103e0aff8b012972ce9e6a125fde5404badf4431ad200ebaa49b",
+      "elf_sha256": "cfbacc3aa53c89e2304f61233ab7801b0bfdd0a20ae6a78838789d9a3a8ed962",
       "image_manifest": "rv32ui/andi/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -163,7 +166,7 @@
     },
     {
       "elf": "rv32ui/auipc/firmware.elf",
-      "elf_sha256": "801841af36605bf687ce51dff910d7a61d276d48027b87b0be5870def6ee0e43",
+      "elf_sha256": "200f29af8d3443a4f50975acafb4536ae5c3b57e704ff231b4a5b043b89e13de",
       "image_manifest": "rv32ui/auipc/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -174,7 +177,7 @@
     },
     {
       "elf": "rv32ui/beq/firmware.elf",
-      "elf_sha256": "e805d6349eecea534eee54c2e5770bf15bf2b0f144dcae0b35d58cd5f0b85f8e",
+      "elf_sha256": "cfa2adec9469f0fe67be500c01613ed3e0064050e18757ec44404481551be602",
       "image_manifest": "rv32ui/beq/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -185,7 +188,7 @@
     },
     {
       "elf": "rv32ui/bge/firmware.elf",
-      "elf_sha256": "74a39c0aff443128303696f79ee513057d24c236c8dfef45e10909f5e1731a50",
+      "elf_sha256": "3b6cb21485f6216e085c154fb7c1e2d316581135eddfd3f195ce83f2a18830b5",
       "image_manifest": "rv32ui/bge/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -196,7 +199,7 @@
     },
     {
       "elf": "rv32ui/bgeu/firmware.elf",
-      "elf_sha256": "dbadcaedd575e7532ede58d7cfd170ac0a98a26ce6a88b99011aeeaaa4223ca1",
+      "elf_sha256": "b3bcc3188cc8119d8a2111252fd9a9be55211ed6f661105290231ef10384a7dd",
       "image_manifest": "rv32ui/bgeu/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -207,7 +210,7 @@
     },
     {
       "elf": "rv32ui/blt/firmware.elf",
-      "elf_sha256": "f1e41fc762d9bc0685e6b2c3370ecd96be301972a7c93d6c74216f4ab2d38d29",
+      "elf_sha256": "f37a0823b866056a5a190aa8ca99b6584ec12e540b1762572b703e09f538ec32",
       "image_manifest": "rv32ui/blt/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -218,7 +221,7 @@
     },
     {
       "elf": "rv32ui/bltu/firmware.elf",
-      "elf_sha256": "71621ef436b3386ff575a14551a2bbadc69f616970c01e110587097261c363bc",
+      "elf_sha256": "8e70ac0e337673600119d033e2a27754ec565c78c89e488184daf038c3c417c5",
       "image_manifest": "rv32ui/bltu/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -229,7 +232,7 @@
     },
     {
       "elf": "rv32ui/bne/firmware.elf",
-      "elf_sha256": "3132520bce7b414bd51e69356e8bd6626b50e5a2621b5690421619b0abec45f4",
+      "elf_sha256": "bc6dcbb3e1a759f849906fa4ef0a9ac97d76ac7ae8a93a644bf5f21eb14839a5",
       "image_manifest": "rv32ui/bne/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -240,7 +243,7 @@
     },
     {
       "elf": "rv32ui/fence_i/firmware.elf",
-      "elf_sha256": "b4b85867a879f31ebbaed9cb15d3b30778a6becb517396fbf8c51a8d1423357b",
+      "elf_sha256": "313055ecee2274397fe71673ede7792db1eec4d4bd072de22797f51dbf2d54d4",
       "image_manifest": "rv32ui/fence_i/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -251,7 +254,7 @@
     },
     {
       "elf": "rv32ui/jal/firmware.elf",
-      "elf_sha256": "9b0a944c01e50b6ae9d0ea4cc8de974e2a55be1940347b9cebc4f9db488f31ea",
+      "elf_sha256": "df5fef1c87d3b8af506a349623922c25e02e6a6523548f414301f5458f8e5d1e",
       "image_manifest": "rv32ui/jal/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -262,7 +265,7 @@
     },
     {
       "elf": "rv32ui/jalr/firmware.elf",
-      "elf_sha256": "cbc8463b2bc55d0f3e0a9de86e24f9fe9766e26a04c2d93f6fba71452575678b",
+      "elf_sha256": "85efae3d5b5e8358d0e991c19256ad6ebff81ea65bbbedab4990755763beae87",
       "image_manifest": "rv32ui/jalr/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -273,7 +276,7 @@
     },
     {
       "elf": "rv32ui/lb/firmware.elf",
-      "elf_sha256": "a1a470ff922129353f3c1e4e30dd942300980d9e1fea8da7c5ff12692ddcdfaf",
+      "elf_sha256": "83fbf07006ffc8b571df1bc4ded5b8e053f8ff8b59ed04cab1958b2a38e45ef4",
       "image_manifest": "rv32ui/lb/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -284,7 +287,7 @@
     },
     {
       "elf": "rv32ui/lbu/firmware.elf",
-      "elf_sha256": "9a8f1818196ebf46f4242e40b1a505269dc33ea18d70d8ab0f01077e38254d27",
+      "elf_sha256": "affc26521a3a1b8eadac0e5749dbe3559f93470a0040cd63c00226a8e1265d0b",
       "image_manifest": "rv32ui/lbu/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -295,7 +298,7 @@
     },
     {
       "elf": "rv32ui/ld_st/firmware.elf",
-      "elf_sha256": "250896b527e885411a505339cd27e8329f8025ec55a50b77fe31c070a78368d3",
+      "elf_sha256": "54ac69c701145f4f920ac893633b1beb68dd2bd5498571a23e77b668d7e4c5c9",
       "image_manifest": "rv32ui/ld_st/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -306,7 +309,7 @@
     },
     {
       "elf": "rv32ui/lh/firmware.elf",
-      "elf_sha256": "46dec9eb7422a15b634c1faa071ee1bf86189cd2f543bf8ade9a25ce8e2d0323",
+      "elf_sha256": "dd4cdd9c00fba4d933ee265f1ab1f0a6f08a0893deca63a6e14c21cbc01ca4e8",
       "image_manifest": "rv32ui/lh/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -317,7 +320,7 @@
     },
     {
       "elf": "rv32ui/lhu/firmware.elf",
-      "elf_sha256": "b60384609d96177b5a6e2d08950b0eae48096197747850055eeb47b3f57b6028",
+      "elf_sha256": "a88bab5502c5d3eeae8aed04f4550187dff8f9fecd24dfad912b5792c5e5cd18",
       "image_manifest": "rv32ui/lhu/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -328,7 +331,7 @@
     },
     {
       "elf": "rv32ui/lui/firmware.elf",
-      "elf_sha256": "42bd1217af023e8ed251eef6927d6819e5314db2bc455838f971514457a7ed0f",
+      "elf_sha256": "e57d990e77cb24bfaebe97d175a286170d3a52dd4e573b7ee513d60afa773d64",
       "image_manifest": "rv32ui/lui/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -339,7 +342,7 @@
     },
     {
       "elf": "rv32ui/lw/firmware.elf",
-      "elf_sha256": "1a351a75443b3b26c172aebbe359a81591c9ad6b2df8fa06ff5cb7f1cee3b2cf",
+      "elf_sha256": "a5bb716560efe2339a8aaf0e6bd8c7acc1fc3daa1646c5364622db78dff9ec05",
       "image_manifest": "rv32ui/lw/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -350,7 +353,7 @@
     },
     {
       "elf": "rv32ui/or/firmware.elf",
-      "elf_sha256": "75334235e77fdcaf4f132ec8ded62e93125d78810fd666bf50ea15d485fd60e0",
+      "elf_sha256": "229104d16d7d45e7cbc68c398b8fbf2f573e4d91f409c6291b7ad95e8144edae",
       "image_manifest": "rv32ui/or/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -361,7 +364,7 @@
     },
     {
       "elf": "rv32ui/ori/firmware.elf",
-      "elf_sha256": "b5cf1ed25b9d7bad6a008eedd6e52fdfe842324710486812d8c3c43a5d88726a",
+      "elf_sha256": "7bee4ebea1a4b1bc50873da3b5395ccf7079872029fdd33197c52adf9e93daec",
       "image_manifest": "rv32ui/ori/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -372,7 +375,7 @@
     },
     {
       "elf": "rv32ui/sb/firmware.elf",
-      "elf_sha256": "9dae06e843061eda27c0b192e4087057ef1bc51c6635821d6c891ff05bfaa4d6",
+      "elf_sha256": "1216ab3c79393caf85168ec08595d60284555aac7ad89fd3f0ef63e0a4e9490d",
       "image_manifest": "rv32ui/sb/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -383,7 +386,7 @@
     },
     {
       "elf": "rv32ui/sh/firmware.elf",
-      "elf_sha256": "b0c5bea5069b4f54cf075ae3d5f1c7577471bccb3f917b1ad8119fcf5ac87196",
+      "elf_sha256": "029b9df5a54c4045a41f9e115acfb869d922aae6e3d336459a45f1a01f863c00",
       "image_manifest": "rv32ui/sh/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -394,7 +397,7 @@
     },
     {
       "elf": "rv32ui/sll/firmware.elf",
-      "elf_sha256": "1d4bf65ed4a252d634bc2cf7641170f72eb5498da287e912754b5a1e3759b8b4",
+      "elf_sha256": "bdbf1483ad89a743cd72873e8e52e0742c92684c96db5366fa50173d3eae6393",
       "image_manifest": "rv32ui/sll/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -405,7 +408,7 @@
     },
     {
       "elf": "rv32ui/slli/firmware.elf",
-      "elf_sha256": "ad59a17c0471c2c9dcf97a250570546aba1167ee89677f405111475325773c86",
+      "elf_sha256": "8376d229ab428909993d9f186338615291ece0c8303582ca052be8b360169af8",
       "image_manifest": "rv32ui/slli/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -416,7 +419,7 @@
     },
     {
       "elf": "rv32ui/slt/firmware.elf",
-      "elf_sha256": "15dc88ad364398d87403c0e5427874bcc4dd83b17c9f5948ec7aa89e70e45821",
+      "elf_sha256": "c885847fe4efc503d89010a1242c5a85f3d73b4b69aefbdc5fa7e2d9c3b61ee6",
       "image_manifest": "rv32ui/slt/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -427,7 +430,7 @@
     },
     {
       "elf": "rv32ui/slti/firmware.elf",
-      "elf_sha256": "2d40c27336887f6e67db402fb80eb3e1131516aec64afdac361f3703e90b8dd7",
+      "elf_sha256": "87b23016957cd4f06e1f7cc9edc80249894226ccfd8e3428fc52e6ca65d682d1",
       "image_manifest": "rv32ui/slti/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -438,7 +441,7 @@
     },
     {
       "elf": "rv32ui/sltiu/firmware.elf",
-      "elf_sha256": "f43801c6ed4b25a0107f82a086fd0d8378d0048b20112314650d5115acbf2743",
+      "elf_sha256": "d532ff6a5c85a7567d7fd31dfa8340076f6d041945cb73920d7cfe4ae6dc5872",
       "image_manifest": "rv32ui/sltiu/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -449,7 +452,7 @@
     },
     {
       "elf": "rv32ui/sltu/firmware.elf",
-      "elf_sha256": "89f6468f280683273bdb8b247ade181d964929d71ae6cbeeebe610fa4e16070c",
+      "elf_sha256": "41dc9030620d8c24548f6f87a6a44cdf9de8a05b505db4df28bbcb721ad37344",
       "image_manifest": "rv32ui/sltu/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -460,7 +463,7 @@
     },
     {
       "elf": "rv32ui/sra/firmware.elf",
-      "elf_sha256": "5af5bd96742a7446eec2de52af487cb78d6ccbbdb0fbcd9b3e630a17f71fe45b",
+      "elf_sha256": "35b6346b2071415a6fb7f38f667a0e9f60797c28cf96da64a47221f1d6019875",
       "image_manifest": "rv32ui/sra/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -471,7 +474,7 @@
     },
     {
       "elf": "rv32ui/srai/firmware.elf",
-      "elf_sha256": "6875bb5e3757ffdffc47800a74865f11bc4e117dafe092a5f5d1a4565e26028a",
+      "elf_sha256": "621aee3c2e2f3669db7152510f698a745dd8b54d274cff4eeec709af4eb0446d",
       "image_manifest": "rv32ui/srai/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -482,7 +485,7 @@
     },
     {
       "elf": "rv32ui/srl/firmware.elf",
-      "elf_sha256": "274d4636cc752cc380aaab46ed9dd6ed0d7584a001c48996dd3b786ccbe1d6bb",
+      "elf_sha256": "67089a3f2afa2bd32af48f2e90893235b3ec5ec31f15a8903e39cbd99a6cdbf8",
       "image_manifest": "rv32ui/srl/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -493,7 +496,7 @@
     },
     {
       "elf": "rv32ui/srli/firmware.elf",
-      "elf_sha256": "8c28749b1513ee4fe680fba939691bb714da3e685dde4899c85787adf24aebc2",
+      "elf_sha256": "a797e81b4a6d15ff9b0438a34ee28eb11400ea3d502c75023779e917755bd2e7",
       "image_manifest": "rv32ui/srli/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -504,7 +507,7 @@
     },
     {
       "elf": "rv32ui/st_ld/firmware.elf",
-      "elf_sha256": "0c49039f7dc33ae79c54454d319d0627f82b99c61d91110966879b4c1b09a59e",
+      "elf_sha256": "ec6b6bce1e21d739f8f040959926871e69496b7b95bd7c4061d3da183e4effe6",
       "image_manifest": "rv32ui/st_ld/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -515,7 +518,7 @@
     },
     {
       "elf": "rv32ui/sub/firmware.elf",
-      "elf_sha256": "7e74306cc18b42ae34a9ae693589305410257b70b0d05a7f9f909de5a2d96328",
+      "elf_sha256": "718b10519a1e5fc08fd4f992c014ec71006fc509c09b46f9ebe4adf1d7511205",
       "image_manifest": "rv32ui/sub/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -526,7 +529,7 @@
     },
     {
       "elf": "rv32ui/sw/firmware.elf",
-      "elf_sha256": "a92713ffacd39e1be08599d3c473b066e9602f983547c4cba5b174f134aa473d",
+      "elf_sha256": "047f942ecd29d550ba05ecd0caa62e04083d39aaeea1ffb99514427f1f987674",
       "image_manifest": "rv32ui/sw/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -537,7 +540,7 @@
     },
     {
       "elf": "rv32ui/xor/firmware.elf",
-      "elf_sha256": "717f38ae0cab8724b66832e45b2b2eb263e178fe4768a22ee5993b0d8adbca93",
+      "elf_sha256": "493fb83e54bac870663cd0dba2947f360c796fcf01c12a34666870ac3163a581",
       "image_manifest": "rv32ui/xor/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -548,7 +551,7 @@
     },
     {
       "elf": "rv32ui/xori/firmware.elf",
-      "elf_sha256": "2b92d8958d62e318e7fb41c2abf8449dc1cc62dd1f80036113059bd4b8c9fb6d",
+      "elf_sha256": "a646510441aa8fa5240cf8b5fb99752bfe4aebcbfa246a65d7209f5299b78396",
       "image_manifest": "rv32ui/xori/image.json",
       "mabi": "ilp32",
       "march": "rv32i_zicsr_zifencei",
@@ -559,10 +562,10 @@
     },
     {
       "elf": "rv32mi/breakpoint/firmware.elf",
-      "elf_sha256": "5a0d9bffe4f0985c35cfbce0395a375749950e9adfac5c8555cd0acdd4e96259",
+      "elf_sha256": "40b308b0527cae3e8cd6cd2286aa0711cee956490e16c3c40c7768fae648aafe",
       "image_manifest": "rv32mi/breakpoint/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "breakpoint",
       "source": "software/riscv-tests/upstream/isa/rv32mi/breakpoint.S",
       "source_sha256": "24642a55f9bec01e205a9c61573d0d7229d7411fafe90f80682f3ec35d479c0a",
@@ -570,10 +573,10 @@
     },
     {
       "elf": "rv32mi/csr/firmware.elf",
-      "elf_sha256": "6987ae27d866425aa737ecb3de1304bed976bb4b588721b11af8e68336d7128c",
+      "elf_sha256": "f03e727384bf765549e9000238b1432273ec7892dd59d8fdad5348aa0cf89411",
       "image_manifest": "rv32mi/csr/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "csr",
       "source": "software/riscv-tests/upstream/isa/rv32mi/csr.S",
       "source_sha256": "dbba82db236250591eedf7bec5993001250feb70a83d7717dff42541d92c2386",
@@ -581,10 +584,10 @@
     },
     {
       "elf": "rv32mi/illegal/firmware.elf",
-      "elf_sha256": "0441940fd98ae79f4b230c0d97db615f445cc7e23f98085bad4cdd3588a1088d",
+      "elf_sha256": "40e42fca16b6c089aa641847dbca1f1dfa58333e191a7be43ecac733b06e55f6",
       "image_manifest": "rv32mi/illegal/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "illegal",
       "source": "software/riscv-tests/upstream/isa/rv32mi/illegal.S",
       "source_sha256": "a33a752d13e999ce5d5c3eb66edf9b8ff4ee75954efac2063e117ecf3d6e7738",
@@ -592,10 +595,10 @@
     },
     {
       "elf": "rv32mi/instret_overflow/firmware.elf",
-      "elf_sha256": "c0fbb0b88e709c957f5b29d37c3ac1dff47d185cc643ea422c8af820c7338c9b",
+      "elf_sha256": "d7ee5f6f11cd0dc10dcd1e755ef35df87ff9f97afd413b05bacda5b5f22cebe7",
       "image_manifest": "rv32mi/instret_overflow/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "instret_overflow",
       "source": "software/riscv-tests/upstream/isa/rv32mi/instret_overflow.S",
       "source_sha256": "d77a6d7f2fa408006a60cdab8cb9b9cb7882be4675464ffb73d6c00bd5975419",
@@ -603,10 +606,10 @@
     },
     {
       "elf": "rv32mi/lh-misaligned/firmware.elf",
-      "elf_sha256": "297285a10a34782b0689d542f2d255e0795b21d681109144e8949c7f3eb32929",
+      "elf_sha256": "9fa2ac2de2a1aa7bcd699f735342e08ed8528f2d4a7245a04b451ad65a60a589",
       "image_manifest": "rv32mi/lh-misaligned/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "lh-misaligned",
       "source": "software/riscv-tests/upstream/isa/rv32mi/lh-misaligned.S",
       "source_sha256": "26be723405ce6e184ed3737748efb9a187f3cbad01852181ce611dd46470e513",
@@ -614,10 +617,10 @@
     },
     {
       "elf": "rv32mi/lw-misaligned/firmware.elf",
-      "elf_sha256": "952ec8540bc7e8bb63bb84bc0a0ed8d127c67fc5f1340325116c6a08d9a533ef",
+      "elf_sha256": "2816a49269e8c0a0e0ed73261253abba6a78365111a0b744fd1674e581be5d35",
       "image_manifest": "rv32mi/lw-misaligned/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "lw-misaligned",
       "source": "software/riscv-tests/upstream/isa/rv32mi/lw-misaligned.S",
       "source_sha256": "ac69375775f262b6adae648886755af666a1eeeeb3784947f381274932099f64",
@@ -625,10 +628,10 @@
     },
     {
       "elf": "rv32mi/ma_addr/firmware.elf",
-      "elf_sha256": "04f028b2cf7584c41970c2b2233e32033ee4995001da4a3f486f9b7bfd6a4858",
+      "elf_sha256": "7b26394cd71e37e5bdef3be3b9eb8ad4940bac20109ffc22b7fa4483a2018438",
       "image_manifest": "rv32mi/ma_addr/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "ma_addr",
       "source": "software/riscv-tests/upstream/isa/rv32mi/ma_addr.S",
       "source_sha256": "a0a26c27bd3d118b2618bc052852a3e6c30a4f5fa1589d77891c5781a6cafd8f",
@@ -636,10 +639,10 @@
     },
     {
       "elf": "rv32mi/ma_fetch/firmware.elf",
-      "elf_sha256": "de05daaa552394afe5210aad0a8a6b8238594141d93a48ec3092507ee9650896",
+      "elf_sha256": "8f8bda20e9cacf123da70f78bbd50f23181e2df46e52f4a5a83a1e5b75ce17dd",
       "image_manifest": "rv32mi/ma_fetch/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "ma_fetch",
       "source": "software/riscv-tests/upstream/isa/rv32mi/ma_fetch.S",
       "source_sha256": "2ce0a168926523f2175a1c81451b65fa573eb2ab6ccccc4fc9c473e081698949",
@@ -647,10 +650,10 @@
     },
     {
       "elf": "rv32mi/mcsr/firmware.elf",
-      "elf_sha256": "fd8f7b9bf594000f92f9f1a8c0d451584dcaa9474cf23ab17b237b385adc93c7",
+      "elf_sha256": "eaf6d26bb57e59afc05689fe93c8e834f221eca5b958f5db74b4c91652ea0f9c",
       "image_manifest": "rv32mi/mcsr/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "mcsr",
       "source": "software/riscv-tests/upstream/isa/rv32mi/mcsr.S",
       "source_sha256": "428c77d710760acc0f2f187a3b716d994fb48820f53e32a0fa164a71f0fc8fb9",
@@ -658,10 +661,10 @@
     },
     {
       "elf": "rv32mi/pmpaddr/firmware.elf",
-      "elf_sha256": "d593125c7bd637cf7ac6aad139b1e681ac13019c680d6eb550a50fa3b26bb24b",
+      "elf_sha256": "0145b77615bb75b68a751b6c34aff0ffa9610e28b3ea49f6596cb49c250ef9c7",
       "image_manifest": "rv32mi/pmpaddr/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "pmpaddr",
       "source": "software/riscv-tests/upstream/isa/rv32mi/pmpaddr.S",
       "source_sha256": "c21f465c3dddd546b31c49e28b74033619269580fa269d4953f50ac19dc7257c",
@@ -669,10 +672,10 @@
     },
     {
       "elf": "rv32mi/sbreak/firmware.elf",
-      "elf_sha256": "7dd0ccdebce43be702a1a80a79602e5fee0f4d6a00e28fa91b621a1ff44810d1",
+      "elf_sha256": "7482d47566fbf3afc985517dcd958f7cc0c01ebbb95e1fb71d07b49c54338065",
       "image_manifest": "rv32mi/sbreak/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "sbreak",
       "source": "software/riscv-tests/upstream/isa/rv32mi/sbreak.S",
       "source_sha256": "023f43554a4db05fd1c22972bb24cce704c7e83990530ccfb69a33190de06ce9",
@@ -680,10 +683,10 @@
     },
     {
       "elf": "rv32mi/scall/firmware.elf",
-      "elf_sha256": "08ee85ad822ab4b89afd0e2958b02d7389b0bb8cba74631c222a329510089827",
+      "elf_sha256": "0c36374c0707cc03a5c37e19c10d0782dc384661482607d19bcfd5c6e1c43350",
       "image_manifest": "rv32mi/scall/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "scall",
       "source": "software/riscv-tests/upstream/isa/rv32mi/scall.S",
       "source_sha256": "1b92c6e9fd2f6e610055f7ecd573fe9d1d9768dc9ccb53d5c73a443ff8bc7b7c",
@@ -691,10 +694,10 @@
     },
     {
       "elf": "rv32mi/sh-misaligned/firmware.elf",
-      "elf_sha256": "27ff9ff171ab39edadca25bffbce16fc9ba13ef26dac81a39b44051d8037c818",
+      "elf_sha256": "e4e17e26d6ab55ee383f03de075ab27b6c0e27415c4092284eaf2677c86d69d2",
       "image_manifest": "rv32mi/sh-misaligned/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "sh-misaligned",
       "source": "software/riscv-tests/upstream/isa/rv32mi/sh-misaligned.S",
       "source_sha256": "f8ae987bf0e057cb20a6ae0e26d7ffe106b453914112664728d4524697983c29",
@@ -702,10 +705,10 @@
     },
     {
       "elf": "rv32mi/shamt/firmware.elf",
-      "elf_sha256": "0ff9ffc3ea826e98f8155be6b9928390c957b3fdcabfc6fb3f83a739dabdcea3",
+      "elf_sha256": "f9aee3dea3017b2df4505a87de6033af363c3d8548dc52682820ec19be7d04bc",
       "image_manifest": "rv32mi/shamt/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "shamt",
       "source": "software/riscv-tests/upstream/isa/rv32mi/shamt.S",
       "source_sha256": "da6d94f35afe8ea0ddf1637b91ad5c66189a80e4ea93f371c34033d674e51320",
@@ -713,10 +716,10 @@
     },
     {
       "elf": "rv32mi/sw-misaligned/firmware.elf",
-      "elf_sha256": "b23d1f162380cc5752abb0d7025659d5c4e6586e9ee4019e9791988992a96d0d",
+      "elf_sha256": "1867b2ed024bd31aed63da3914035a24c463dd89061f032fc9e0f54833295e3a",
       "image_manifest": "rv32mi/sw-misaligned/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "sw-misaligned",
       "source": "software/riscv-tests/upstream/isa/rv32mi/sw-misaligned.S",
       "source_sha256": "343044826d2d04a8a4bbc592045e59b7d7d95862f4fc276b496cbb39dc36663a",
@@ -724,10 +727,10 @@
     },
     {
       "elf": "rv32mi/zicntr/firmware.elf",
-      "elf_sha256": "6036db3f25bf39422d3cda06dd04333f2c7547ffe7a26625e50c4277629ebc79",
+      "elf_sha256": "8d05fc5e9f7bef9229c67690f17b784cbd2f19b79528f7063502390c7b5654b2",
       "image_manifest": "rv32mi/zicntr/image.json",
       "mabi": "ilp32",
-      "march": "rv32i_zicsr_zicntr",
+      "march": "rv32imfd_zicsr_zicntr_zifencei",
       "name": "zicntr",
       "source": "software/riscv-tests/upstream/isa/rv32mi/zicntr.S",
       "source_sha256": "91aa9aa040530ec09e7e17147679419f7a95a1751171890a21f35b350da2d3ac",
@@ -735,7 +738,7 @@
     },
     {
       "elf": "rv32um/div/firmware.elf",
-      "elf_sha256": "5443fa1a9af23d49f4a7501bf37783bad5fa7b10c0483032dcd8caed74f0c4b4",
+      "elf_sha256": "02efac8004b6944c3500608798ba48412d24dd4afd52be176c06c5c73b763501",
       "image_manifest": "rv32um/div/image.json",
       "mabi": "ilp32",
       "march": "rv32im_zicsr",
@@ -746,7 +749,7 @@
     },
     {
       "elf": "rv32um/divu/firmware.elf",
-      "elf_sha256": "5e0295a329951ffdc7dcca0cf80e18cbf82b8e3299ca05b3cc09b2eaef304e51",
+      "elf_sha256": "2dbf187c8b486bed672ca4fc94de65ef8a4f09691136a63f0316626b32a90a81",
       "image_manifest": "rv32um/divu/image.json",
       "mabi": "ilp32",
       "march": "rv32im_zicsr",
@@ -757,7 +760,7 @@
     },
     {
       "elf": "rv32um/mul/firmware.elf",
-      "elf_sha256": "ec4fa7dd96e14b637b760d1d5404cda8a8899db8e15987e4abb46657d5f6f925",
+      "elf_sha256": "556761a6fcabad570033893f91b9cd5fcaf4f21cae28f819e3505da238a75d1f",
       "image_manifest": "rv32um/mul/image.json",
       "mabi": "ilp32",
       "march": "rv32im_zicsr",
@@ -768,7 +771,7 @@
     },
     {
       "elf": "rv32um/mulh/firmware.elf",
-      "elf_sha256": "122639918b32608ff91d1b264f7e4a4e60fe848261a229bd5f632a2aa5b704c0",
+      "elf_sha256": "af9b0a367d06028a4db2332c0205b2c9c1fe26e4d83560c7a5ef3d9e82c9a7ba",
       "image_manifest": "rv32um/mulh/image.json",
       "mabi": "ilp32",
       "march": "rv32im_zicsr",
@@ -779,7 +782,7 @@
     },
     {
       "elf": "rv32um/mulhsu/firmware.elf",
-      "elf_sha256": "b11b4ac8e18bf11107cd935fa5af6a4c11431e897abad5a16a54a642c737a33a",
+      "elf_sha256": "440eb36aa3a094c3ef64c21ff1a14a9c0ce874ed9e8a1d0c14887f02aa59ff01",
       "image_manifest": "rv32um/mulhsu/image.json",
       "mabi": "ilp32",
       "march": "rv32im_zicsr",
@@ -790,7 +793,7 @@
     },
     {
       "elf": "rv32um/mulhu/firmware.elf",
-      "elf_sha256": "efc231ce870f1552329f3b12fbeabd4626d625e143ca782c99449c6e7b925fb3",
+      "elf_sha256": "56dc7e7b33261a5b2c5119ab9434a0bb6b4fbc0836f2d39e11d1cb75385cf82b",
       "image_manifest": "rv32um/mulhu/image.json",
       "mabi": "ilp32",
       "march": "rv32im_zicsr",
@@ -801,7 +804,7 @@
     },
     {
       "elf": "rv32um/rem/firmware.elf",
-      "elf_sha256": "ff91f5ef5973d395d1209d8c972de1e6592effb833dc7129bfe728873585ba83",
+      "elf_sha256": "e080fb4964c603d41f63a17959a13a4d0500f6bccff03b7fda3e4d17f062cd03",
       "image_manifest": "rv32um/rem/image.json",
       "mabi": "ilp32",
       "march": "rv32im_zicsr",
@@ -812,7 +815,7 @@
     },
     {
       "elf": "rv32um/remu/firmware.elf",
-      "elf_sha256": "7ef4301595f4f83d62ce9b2546cd5526493ffef60bc0dc6de271971d59688ca9",
+      "elf_sha256": "56553a52b3fed0bdfb5314a011e4e1f776840501b134927036133c7373b45c13",
       "image_manifest": "rv32um/remu/image.json",
       "mabi": "ilp32",
       "march": "rv32im_zicsr",
@@ -823,7 +826,7 @@
     },
     {
       "elf": "rv32uf/fadd/firmware.elf",
-      "elf_sha256": "a769c0bc2154637bc185c6a13d1218417ac69b10af31aa31d45236c06cef0510",
+      "elf_sha256": "d84c654f82257ab28a1ccb1a0e204e4ef7863024ffce4066a9c3a3390bb71c35",
       "image_manifest": "rv32uf/fadd/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -834,7 +837,7 @@
     },
     {
       "elf": "rv32uf/fclass/firmware.elf",
-      "elf_sha256": "2042a222043b9f0748a74e990c2915aba4b9c72e430286159dadf2f69855e667",
+      "elf_sha256": "20d0c7926301bab43e487512a6ea5f17b5ba94d442e4648923868f34e2021d91",
       "image_manifest": "rv32uf/fclass/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -845,7 +848,7 @@
     },
     {
       "elf": "rv32uf/fcmp/firmware.elf",
-      "elf_sha256": "a557b76cb950eaf251a7680d5d15114f055b8577e451a937947269ddaea63abd",
+      "elf_sha256": "192e3c4ddabfe1b6a7f96df6fe33b881d0f0a710f68f777c4e650cd25fd5d735",
       "image_manifest": "rv32uf/fcmp/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -856,7 +859,7 @@
     },
     {
       "elf": "rv32uf/fcvt/firmware.elf",
-      "elf_sha256": "b6a1e134439805531566bb16dbe0a2a93e56d68c20fbbd57fae0e95bf6a2b55e",
+      "elf_sha256": "cc162c82494ebbcacb6e70d33e4a02c286bed26ef85ced7c6b5ed7b3af20a4b1",
       "image_manifest": "rv32uf/fcvt/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -867,7 +870,7 @@
     },
     {
       "elf": "rv32uf/fcvt_w/firmware.elf",
-      "elf_sha256": "e880619ea2e9b4bfe12ddf8612716c451b3e2dd6bec2307f138da68f4a351aff",
+      "elf_sha256": "5ecfa19b44fb7010f730a01a59fbe1dc7bc539021cf5d4fa110997df89722033",
       "image_manifest": "rv32uf/fcvt_w/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -878,7 +881,7 @@
     },
     {
       "elf": "rv32uf/fdiv/firmware.elf",
-      "elf_sha256": "94ccdd6cdbe408466cdd87b6b2095545579057de20cf5c721f8058f9bb3ed7a1",
+      "elf_sha256": "c65c702ac87e17819c9016699c173717ad72ef2f2f028fff1d7212fcd4aa35fd",
       "image_manifest": "rv32uf/fdiv/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -889,7 +892,7 @@
     },
     {
       "elf": "rv32uf/fmadd/firmware.elf",
-      "elf_sha256": "1ae33331a0e3cd187cda3615b28ac5d4c0a176663d8c40c5e5c4eea71f9894b1",
+      "elf_sha256": "22b234ae8a93f3f6d5311a7c71dcb195eeb5a3911fe12d19ef52d2e574ef488e",
       "image_manifest": "rv32uf/fmadd/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -900,7 +903,7 @@
     },
     {
       "elf": "rv32uf/fmin/firmware.elf",
-      "elf_sha256": "ec6c4ca204568688e4fe37989f8e8d223413cb09fff127c8e796aaa818abd817",
+      "elf_sha256": "773d1d39d04ec2bf78f52cb2868662d116ed6fbb5e857798509b745ac37ea13c",
       "image_manifest": "rv32uf/fmin/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -911,7 +914,7 @@
     },
     {
       "elf": "rv32uf/ldst/firmware.elf",
-      "elf_sha256": "7bf0f84c12f4bda60d753be4198dd7d7eebdbb7f8ee2fc6727ae367bffcce29d",
+      "elf_sha256": "880c22623c7dd15356f4e42bd650c08ef3d64dffe6d9655e226259da45452132",
       "image_manifest": "rv32uf/ldst/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -922,7 +925,7 @@
     },
     {
       "elf": "rv32uf/move/firmware.elf",
-      "elf_sha256": "84135f4cd10a5b7f31e3f33011b61e8c7953de65310a17ebfe6291a87d8f685d",
+      "elf_sha256": "1af05847123725b7e305f1740730d4c40ded386a762c57c4ae7b5cc303e7eec0",
       "image_manifest": "rv32uf/move/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -933,7 +936,7 @@
     },
     {
       "elf": "rv32uf/recoding/firmware.elf",
-      "elf_sha256": "d77942e61b8898f7189a8cf53de6b27bc962b55dda2a2e734460f8bf7222ce85",
+      "elf_sha256": "ffabd50a0ea1a0c06852e84958f98928bdec4c418a75110f2f44399a9f816731",
       "image_manifest": "rv32uf/recoding/image.json",
       "mabi": "ilp32",
       "march": "rv32imf_zicsr",
@@ -944,7 +947,7 @@
     },
     {
       "elf": "rv32ud/fadd/firmware.elf",
-      "elf_sha256": "0ba3c25cc8d1b58382143c94ef998b306188441f8796051f464e69159b4569b9",
+      "elf_sha256": "44146201a2f34ee1de68f2b81a6650ca409c177d972131750bd01d1f6947b58a",
       "image_manifest": "rv32ud/fadd/image.json",
       "mabi": "ilp32",
       "march": "rv32imfd_zicsr",
@@ -955,7 +958,7 @@
     },
     {
       "elf": "rv32ud/fclass/firmware.elf",
-      "elf_sha256": "242f5a20b326e2107a48d9795a669e2e7500a5bce008881f6f0cfba74bddbf5c",
+      "elf_sha256": "f58f204e6dc9f21da9ac896e24e1bad377ec4e585c0ce072ab1244494f8562be",
       "image_manifest": "rv32ud/fclass/image.json",
       "mabi": "ilp32",
       "march": "rv32imfd_zicsr",
@@ -966,7 +969,7 @@
     },
     {
       "elf": "rv32ud/fcmp/firmware.elf",
-      "elf_sha256": "fe0b7071876dbbd82efe19bd3998b3f17cf851789929e96cbd7f8ef4534c8b45",
+      "elf_sha256": "04b79d5a649a66f9f61de9fe1c5e6cbfc16788e61fb5d59ec72a79031c71a589",
       "image_manifest": "rv32ud/fcmp/image.json",
       "mabi": "ilp32",
       "march": "rv32imfd_zicsr",
@@ -977,7 +980,7 @@
     },
     {
       "elf": "rv32ud/fcvt/firmware.elf",
-      "elf_sha256": "978f6e5e8b850013f3f102a108c9b1ec2fb9d24d08e991cb805c843dfa8a0d37",
+      "elf_sha256": "8336f27365ad010dfa1c9789781075c5ffd7b5215dc2c2c9216b939318106d2b",
       "image_manifest": "rv32ud/fcvt/image.json",
       "mabi": "ilp32",
       "march": "rv32imfd_zicsr",
@@ -988,7 +991,7 @@
     },
     {
       "elf": "rv32ud/fcvt_w/firmware.elf",
-      "elf_sha256": "a60a23d03dfdfb7da9de4cacc35b0fb95b0548ca287de31bb71890fe89d11c57",
+      "elf_sha256": "0bf0efaf8fe9c773a0a64743b026a447335817e9e41adab3b5e1d2077ac65208",
       "image_manifest": "rv32ud/fcvt_w/image.json",
       "mabi": "ilp32",
       "march": "rv32imfd_zicsr",
@@ -999,7 +1002,7 @@
     },
     {
       "elf": "rv32ud/fdiv/firmware.elf",
-      "elf_sha256": "952066b916a8e91b912341eb3b380e199d0bf808cccb064fc5e0cbea7f4706e4",
+      "elf_sha256": "af24bd11efa1d35a2cf1e023ae08c6d2dd4132ced225eea0300f6d013b132a52",
       "image_manifest": "rv32ud/fdiv/image.json",
       "mabi": "ilp32",
       "march": "rv32imfd_zicsr",
@@ -1010,7 +1013,7 @@
     },
     {
       "elf": "rv32ud/fmadd/firmware.elf",
-      "elf_sha256": "c81a67a4c104e77f999e8d2106fb2f3ce19a3d788df8a93cfc81c6319838c804",
+      "elf_sha256": "4efb7722b904273e07e3c31b0357d22c7699bc4035ff417ad58585845511a3c1",
       "image_manifest": "rv32ud/fmadd/image.json",
       "mabi": "ilp32",
       "march": "rv32imfd_zicsr",
@@ -1021,7 +1024,7 @@
     },
     {
       "elf": "rv32ud/fmin/firmware.elf",
-      "elf_sha256": "a582b1117d3e16c430f5135cf51a1535fa1f6f489507ed8fc828af33c0b67d0c",
+      "elf_sha256": "848e355dc681fc775b8e0afa0c6be7be73908cf007a6e2a9094b9359df9dae6a",
       "image_manifest": "rv32ud/fmin/image.json",
       "mabi": "ilp32",
       "march": "rv32imfd_zicsr",
@@ -1032,7 +1035,7 @@
     },
     {
       "elf": "rv32ud/ldst/firmware.elf",
-      "elf_sha256": "63a4020b7948e56437f2dc17f303cf978c8fc36c21d340ce239d08f712572725",
+      "elf_sha256": "ebe15aea15963808132365eb67c941473c175567408026946d624b3d29890e8d",
       "image_manifest": "rv32ud/ldst/image.json",
       "mabi": "ilp32",
       "march": "rv32imfd_zicsr",
@@ -1043,7 +1046,7 @@
     },
     {
       "elf": "rv32ud/recoding/firmware.elf",
-      "elf_sha256": "f0949689d46e5916d6e7a8a1a7c349232d0e3bce1250ac4f03d89ed68060b69e",
+      "elf_sha256": "1f02c8edb81c3127e732ab51a72c6b3d4d216b6a9ef35cf2e4d94252f397ddd3",
       "image_manifest": "rv32ud/recoding/image.json",
       "mabi": "ilp32",
       "march": "rv32imfd_zicsr",

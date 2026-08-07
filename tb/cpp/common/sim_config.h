@@ -24,6 +24,7 @@ struct SimConfig {
     std::string reproduce;
     std::string test_name = "baremetal-smoke";
     std::string uart_command;
+    std::vector<std::string> uart_followup_commands;
     std::string uart_prompt = "msh >";
     std::string checker = "test-status";
     std::vector<std::string> uart_expect;

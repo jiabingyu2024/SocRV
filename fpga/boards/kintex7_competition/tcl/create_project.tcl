@@ -24,6 +24,10 @@ proc read_socrv_filelist {repo_dir filelist_path} {
         }
         if {[regexp {^-f[ \t]+(.+)$} $line -> nested]} {
             read_socrv_filelist $repo_dir [file normalize [file join $repo_dir $nested]]
+        } elseif {[regexp {^\+incdir\+(.+)$} $line -> incdir]} {
+            set include_path [file normalize [file join $repo_dir $incdir]]
+            set current_dirs [get_property include_dirs [current_fileset]]
+            set_property include_dirs [concat $current_dirs [list $include_path]] [current_fileset]
         } else {
             set source_path [file normalize [file join $repo_dir $line]]
             if {![file exists $source_path]} {

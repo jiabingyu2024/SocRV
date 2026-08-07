@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/sub/firmware.elf",
-    "sha256": "7e74306cc18b42ae34a9ae693589305410257b70b0d05a7f9f909de5a2d96328"
+    "sha256": "718b10519a1e5fc08fd4f992c014ec71006fc509c09b46f9ebe4adf1d7511205"
   },
   "endianness": "little",
   "entry": "0x00000000",

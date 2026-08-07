@@ -109,3 +109,51 @@ CRLF。浮点仍在 F 或 FD 中后续确定。
 
 详细操作见
 [`cpu_iteration_sim_software_fpga_guide.md`](cpu_iteration_sim_software_fpga_guide.md)。
+
+## 2026-08-07 RV32IMFD、O3、CoreMark tick 与 FPGA 最终基线
+
+当前正式软硬件基线已经升级为：
+
+```text
+ISA/ABI       rv32imfd_zicsr_zicntr_zifencei / ilp32d
+optimization  -O3
+CPU clock     50 MHz
+FPU           FPnew，可综合 RV32F + RV32D，32 x 64-bit FPR
+```
+
+CoreMark 命令执行期间暂停 RT-Thread tick，退出性能测量窗口后重新调用
+`timer_init_tick(RT_TICK_PER_SECOND)` 恢复节拍。仿真已在同一轮 UART 会话中执行
+`coremark 3`、`ps`、`help`，观察到 4 次完整 `msh >`，证明 CoreMark 结束后 shell
+能够继续接收输入。短功能运行输出包括：
+
+```text
+Total ticks      : 1903972
+Total time (secs): 0.038079
+Iterations/Sec   : 78.782671
+Compiler flags   : O3-rv32imfd_zicsr_zicntr_zifencei-ilp32d-rtthread-command
+SocRV CoreMark CRC check PASS
+```
+
+RV32D RT-Thread 上下文已保存/恢复全部 FPR 与 FCSR，初始线程栈按 RISC-V ABI
+改为 16-byte 对齐。ISA 回归为 86/86 PASS，其中 FP32/FP64 聚焦门禁为 21/21 PASS。
+
+FPnew 的 ADDMUL/CONV 使用输入、内部和输出分布式流水，DIVSQRT/NONCOMP 使用一个
+FPnew 定义的流水边界；FPU wrapper 用寄存器 `active_q` 跟踪唯一未完成事务，避免
+FPnew 组合 busy 信号反馈到 fence.i/full-flush。最终 Vivado 2023.2 签核结果：
+
+```text
+Device          xc7k325tffg900-2
+WNS / TNS       +4.615 ns / 0.000 ns
+Fail endpoints  0
+DRC errors      0
+DRC warnings    81
+LUT / FF        16639 / 9367
+RAMB36 / RAMB18 41 / 1
+DSP             15
+Bitstream bytes 11443717
+SHA-256         34b6306322148758b8097a2ba2a89ddb6ccd5f918e93a094d8521caa6b2ff9e4
+```
+
+DRC warning 仅包含配置电压属性、DSP 流水建议和既有 BRAM 异步复位检查；没有
+LUTLP-1、Error 或 Critical Warning。bitstream 已准备好，但本次未连接物理开发板，
+实际烧写和板上 `coremark 10000` 仍需人工执行。

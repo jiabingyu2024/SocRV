@@ -15,8 +15,22 @@ void UartStimulus::start(std::uint64_t cycle) {
     }
 }
 
+void UartStimulus::load(std::string command) {
+    bytes_ = std::move(command);
+    start_cycle_ = 0;
+    started_ = false;
+}
+
 bool UartStimulus::started() const {
     return started_;
+}
+
+bool UartStimulus::finished(std::uint64_t cycle) const {
+    if (!started_ || cycle < start_cycle_) {
+        return false;
+    }
+    const std::uint64_t frame_cycles = 10u * cycles_per_bit_;
+    return cycle - start_cycle_ >= bytes_.size() * frame_cycles;
 }
 
 bool UartStimulus::level(std::uint64_t cycle) const {

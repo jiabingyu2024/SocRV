@@ -4,9 +4,9 @@ RTTHREAD_COMMON_SOURCES := \
 	rt-thread/port/start_rtthread.S \
 	rt-thread/port/trap_gcc.S \
 	rt-thread/port/rtthread_crt0.c \
-	$(RT_COMMON)/context_gcc.S \
-	$(RT_COMMON)/interrupt_gcc.S \
-	$(RT_COMMON)/cpuport.c \
+	rt-thread/port/context_gcc.S \
+	rt-thread/port/interrupt_gcc.S \
+	rt-thread/port/cpuport.c \
 	$(RT_COMMON)/trap_common.c \
 	$(RT_ROOT)/src/clock.c \
 	$(RT_ROOT)/src/components.c \

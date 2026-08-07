@@ -1,9 +1,9 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccXRQDKV.o
- .data          0x00000000        0x0 /tmp/ccXRQDKV.o
- .bss           0x00000000        0x0 /tmp/ccXRQDKV.o
+ .text          0x00000000        0x0 /tmp/ccpce1zK.o
+ .data          0x00000000        0x0 /tmp/ccpce1zK.o
+ .bss           0x00000000        0x0 /tmp/ccpce1zK.o
 
 Memory Configuration
 
@@ -14,7 +14,7 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccXRQDKV.o
+LOAD /tmp/ccpce1zK.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
@@ -22,7 +22,7 @@ LOAD /tmp/ccXRQDKV.o
 
 .text           0x00000000       0xac
  *(.text.init)
- .text.init     0x00000000       0xac /tmp/ccXRQDKV.o
+ .text.init     0x00000000       0xac /tmp/ccpce1zK.o
                 0x00000000                _start
  *(.text .text.*)
  *(.rodata .rodata.*)
@@ -31,7 +31,7 @@ LOAD /tmp/ccXRQDKV.o
 
 .rela.dyn       0x000000ac        0x0
  .rela.text.init
-                0x000000ac        0x0 /tmp/ccXRQDKV.o
+                0x000000ac        0x0 /tmp/ccpce1zK.o
 
 .data           0x10000000        0x0
  *(.data .data.*)
@@ -50,6 +50,6 @@ LOAD /tmp/ccXRQDKV.o
 OUTPUT(build/isa-data/generated/rv32mi/mcsr/firmware.elf elf32-littleriscv)
 
 .riscv.attributes
-                0x00000000       0x31
+                0x00000000       0x55
  .riscv.attributes
-                0x00000000       0x31 /tmp/ccXRQDKV.o
+                0x00000000       0x55 /tmp/ccpce1zK.o

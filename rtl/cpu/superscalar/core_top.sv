@@ -85,6 +85,7 @@ module core_top (
     logic fetch_valid, fetch_pop;
 
     logic [31:0] rf_rs1_data, rf_rs2_data, rf_write_data;
+    logic [63:0] fp_rs1_data, fp_rs2_data, fp_rs3_data;
     logic rf_write_valid;
     logic wb_valid_q;
     logic [4:0] wb_rd_q;
@@ -131,6 +132,9 @@ module core_top (
     logic dc_req_valid, dc_req_ready, dc_req_write, dc_req_uncached;
     logic [31:0] dc_req_addr, dc_req_wdata;
     logic [3:0] dc_req_wstrb;
+    logic int_dc_req_valid, int_dc_req_ready, int_dc_req_write, int_dc_req_uncached;
+    logic [31:0] int_dc_req_addr, int_dc_req_wdata;
+    logic [3:0] int_dc_req_wstrb;
     logic dc_resp_valid, dc_idle, dc_access_pulse, dc_miss_pulse;
     logic [31:0] dc_resp_rdata;
     logic dc_mem_req_valid, dc_mem_req_ready, dc_mem_req_write, dc_mem_req_uncached;
@@ -157,6 +161,16 @@ module core_top (
     logic [31:0] bm_resp_result, slow_resp_result;
     logic slow_resp_valid, bitmanip_clmul_start_c;
 
+    fp_completion_t fp_exec_completion, fp_mem_completion, fp_completion;
+    logic fp_exec_req_valid, fp_exec_req_ready, fp_exec_busy;
+    logic fp_mem_req_valid, fp_mem_req_ready, fp_mem_busy;
+    logic fp_issue_ready;
+    logic [2:0] fp_effective_rm;
+    logic fp_cache_req_valid, fp_cache_req_ready, fp_cache_req_write;
+    logic fp_cache_req_uncached;
+    logic [31:0] fp_cache_req_addr, fp_cache_req_wdata;
+    logic [3:0] fp_cache_req_wstrb;
+
     scoreboard_entry_t commit_entry;
     logic commit_ready, commit_fire, commit_normal;
     logic commit_store_mark;
@@ -174,6 +188,8 @@ module core_top (
     logic [31:0] csr_pmpcfg0, csr_pmpaddr0;
     logic [31:0] csr_mie, csr_mip;
     logic [63:0] csr_mcycle, csr_minstret;
+    logic [4:0] csr_fflags;
+    logic [2:0] csr_frm;
     logic csr_tselect;
     logic [31:0] csr_tdata1_0, csr_tdata1_1;
     logic [31:0] csr_tdata2_0, csr_tdata2_1, csr_tcontrol;
@@ -197,6 +213,7 @@ module core_top (
 
     function automatic logic csr_is_implemented(input logic [11:0] addr);
         unique case (addr)
+            12'h001, 12'h002, 12'h003,
             12'h300, 12'h301, 12'h304, 12'h305, 12'h306, 12'h320,
             12'h340, 12'h341, 12'h342, 12'h343, 12'h344,
             12'h3A0, 12'h3B0,
@@ -285,6 +302,14 @@ module core_top (
         .write_data_i(rf_write_data)
     );
 
+    fp_regfile u_fp_regfile (
+        .clk(clk), .rs1_addr_i(id_uop_q.frs1), .rs2_addr_i(id_uop_q.frs2),
+        .rs3_addr_i(id_uop_q.frs3), .rs1_data_o(fp_rs1_data),
+        .rs2_data_o(fp_rs2_data), .rs3_data_o(fp_rs3_data),
+        .write_valid_i(commit_normal && commit_entry.writes_frd),
+        .write_addr_i(commit_entry.frd), .write_data_i(commit_entry.fp_result)
+    );
+
     scoreboard u_scoreboard (
         .clk(clk), .rst(rst), .flush_i(full_flush),
         .allocate_i(issue_fire), .allocate_uop_i(issue_uop),
@@ -297,6 +322,7 @@ module core_top (
         .load_complete_accepted_o(load_completion_accepted),
         .slow_complete_i(slow_resp_valid),
         .slow_trans_id_i(slow_resp_tid), .slow_result_i(slow_resp_result),
+        .fp_completion_i(fp_completion),
         .commit_i(commit_fire), .commit_trans_id_o(commit_ptr_q),
         .commit_entry_o(commit_entry), .count_o(scoreboard_count_q),
         .serial_pending_o(serial_pending_q), .query_uop_i(id_uop_q),
@@ -383,7 +409,11 @@ module core_top (
             issue_uop.exception_valid = 1'b1;
             issue_uop.exception_cause = 5'd3;
             issue_uop.exception_tval = id_uop_q.pc;
-        end else if (csr_access_illegal) begin
+        end else if (csr_access_illegal ||
+                     ((id_uop_q.fu == FU_FP || id_uop_q.fu == FU_FP_MEM) &&
+                      (csr_mstatus[14:13] == 2'b00 ||
+                       (id_uop_q.fp_rm_used && id_uop_q.fp_rm == 3'b111 &&
+                        csr_frm > 3'b100)))) begin
             issue_uop.fu = FU_NONE;
             issue_uop.sys_op = SYS_NONE;
             issue_uop.writes_rd = 1'b0;
@@ -403,6 +433,7 @@ module core_top (
         .mdu_req_ready_i(mdu_req_ready), .mdu_busy_i(mdu_busy),
         .bitmanip_req_ready_i(bm_req_ready), .bitmanip_busy_i(bm_busy),
         .bitmanip_clmul_start_i(bitmanip_clmul_start_c), .commit_i(commit_fire),
+        .fp_req_ready_i(fp_issue_ready),
         .branch_resolve_i(branch_resolve_valid_c), .redirect_i(redirect_valid),
         .issue_o(issue_fire_raw)
     );
@@ -498,6 +529,40 @@ module core_top (
     assign slow_resp_tid = bm_resp_valid ? bm_resp_tid : mdu_resp_tid;
     assign slow_resp_result = bm_resp_valid ? bm_resp_result : mdu_resp_result;
 
+    assign fp_effective_rm = exec_q.uop.fp_rm == 3'b111 ? csr_frm : exec_q.uop.fp_rm;
+    assign fp_exec_req_valid = exec_q.valid && exec_q.uop.fu == FU_FP && !full_flush;
+    assign fp_mem_req_valid = exec_q.valid && exec_q.uop.fu == FU_FP_MEM && !full_flush;
+    assign fp_issue_ready = id_uop_q.fu == FU_FP_MEM ?
+                            (fp_mem_req_ready && mem_quiescent) : fp_exec_req_ready;
+
+    fp_execute_unit u_fp_execute (
+        .clk(clk), .rst(rst), .flush_i(full_flush),
+        .req_valid_i(fp_exec_req_valid), .req_ready_o(fp_exec_req_ready),
+        .req_i(exec_q), .effective_rm_i(fp_effective_rm),
+        .completion_o(fp_exec_completion), .busy_o(fp_exec_busy)
+    );
+
+    fp_memory_unit u_fp_memory (
+        .clk(clk), .rst(rst), .flush_i(full_flush),
+        .req_valid_i(fp_mem_req_valid), .req_ready_o(fp_mem_req_ready),
+        .req_i(exec_q),
+        .req_uncached_i(!addr_is_dram(exec_q.op1 + exec_q.uop.imm)),
+        .cache_req_valid_o(fp_cache_req_valid),
+        .cache_req_ready_i(fp_cache_req_ready),
+        .cache_req_write_o(fp_cache_req_write),
+        .cache_req_addr_o(fp_cache_req_addr),
+        .cache_req_wdata_o(fp_cache_req_wdata),
+        .cache_req_wstrb_o(fp_cache_req_wstrb),
+        .cache_req_uncached_o(fp_cache_req_uncached),
+        .cache_resp_valid_i(dc_resp_valid), .cache_resp_rdata_i(dc_resp_rdata),
+        .completion_o(fp_mem_completion), .busy_o(fp_mem_busy)
+    );
+
+    always_comb begin
+        fp_completion = fp_exec_completion.valid ?
+                        fp_exec_completion : fp_mem_completion;
+    end
+
     store_buffer u_store_buffer (
         .clk(clk), .rst(rst), .flush_i(full_flush),
         .enqueue_i(exec_store_enqueue), .enqueue_trans_id_i(exec_q.trans_id),
@@ -519,17 +584,28 @@ module core_top (
         .load_count_i(load_count_q),
         .load_forward_complete_i(load_forward_complete),
         .exec_load_valid_i(exec_load_enqueue), .exec_trans_id_i(exec_q.trans_id),
-        .exec_addr_i(exec_mem_addr_q), .request_valid_o(dc_req_valid),
-        .request_write_o(dc_req_write), .request_addr_o(dc_req_addr),
-        .request_wdata_o(dc_req_wdata), .request_wstrb_o(dc_req_wstrb),
-        .request_uncached_o(dc_req_uncached),
+        .exec_addr_i(exec_mem_addr_q), .request_valid_o(int_dc_req_valid),
+        .request_write_o(int_dc_req_write), .request_addr_o(int_dc_req_addr),
+        .request_wdata_o(int_dc_req_wdata), .request_wstrb_o(int_dc_req_wstrb),
+        .request_uncached_o(int_dc_req_uncached),
         .load_direct_candidate_o(load_direct_candidate),
         .older_store_pending_o(older_store_pending),
         .direct_older_store_pending_o(direct_older_store_pending)
     );
 
-    assign store_drain_fire = dc_req_valid && dc_req_write && dc_req_ready;
-    assign load_start_fire = dc_req_valid && !dc_req_write && dc_req_ready;
+    assign int_dc_req_ready = dc_req_ready && !fp_mem_busy;
+    assign fp_cache_req_ready = dc_req_ready && fp_mem_busy;
+    always_comb begin
+        dc_req_valid = fp_mem_busy ? fp_cache_req_valid : int_dc_req_valid;
+        dc_req_write = fp_mem_busy ? fp_cache_req_write : int_dc_req_write;
+        dc_req_addr = fp_mem_busy ? fp_cache_req_addr : int_dc_req_addr;
+        dc_req_wdata = fp_mem_busy ? fp_cache_req_wdata : int_dc_req_wdata;
+        dc_req_wstrb = fp_mem_busy ? fp_cache_req_wstrb : int_dc_req_wstrb;
+        dc_req_uncached = fp_mem_busy ? fp_cache_req_uncached : int_dc_req_uncached;
+    end
+
+    assign store_drain_fire = int_dc_req_valid && int_dc_req_write && int_dc_req_ready;
+    assign load_start_fire = int_dc_req_valid && !int_dc_req_write && int_dc_req_ready;
     assign load_direct_start_fire = load_start_fire && load_direct_candidate;
     assign load_queue_start_fire = load_start_fire && !load_direct_candidate;
     assign load_pop_fire = load_queue_start_fire || load_forward_complete;
@@ -596,7 +672,8 @@ module core_top (
     );
 
     assign mem_quiescent = (store_count_q == 0) && (load_count_q == 0) &&
-                           !load_active_q && dc_idle && !mdu_busy;
+                           !load_active_q && dc_idle && !mdu_busy && !bm_busy &&
+                           !fp_exec_busy && !fp_mem_busy;
     always_comb begin
         commit_ready = commit_entry.occupied && commit_entry.done;
         if (commit_entry.fu == FU_STORE && commit_entry.store_slot_valid)
@@ -645,12 +722,15 @@ module core_top (
         .trap_cause_i(csr_trap_cause),
          .trap_tval_i(take_interrupt ? 32'd0 : commit_entry.exception_tval),
          .mret_valid_i(csr_mret_valid),
-         .retire_i(commit_normal), .mtvec_o(csr_mtvec),
+         .retire_i(commit_normal),
+         .fp_commit_i(commit_normal && commit_entry.fp_dirty),
+         .fp_flags_i(commit_entry.fp_flags), .mtvec_o(csr_mtvec),
         .mepc_o(csr_mepc), .privilege_o(csr_privilege), .mstatus_o(csr_mstatus),
         .mscratch_o(csr_mscratch), .mcause_o(csr_mcause), .mtval_o(csr_mtval),
         .pmpcfg0_o(csr_pmpcfg0), .pmpaddr0_o(csr_pmpaddr0),
          .mie_o(csr_mie), .mip_o(csr_mip),
          .mcycle_o(csr_mcycle), .minstret_o(csr_minstret),
+         .fflags_o(csr_fflags), .frm_o(csr_frm),
          .tselect_o(csr_tselect), .tdata1_0_o(csr_tdata1_0),
          .tdata1_1_o(csr_tdata1_1), .tdata2_0_o(csr_tdata2_0),
          .tdata2_1_o(csr_tdata2_1), .tcontrol_o(csr_tcontrol),
@@ -767,6 +847,9 @@ module core_top (
                                    (issue_uop.fu == FU_STORE)) ?
                                   src1_mem_value : src1_value;
                     exec_q.op2 <= src2_value;
+                    exec_q.fp_op1 <= fp_rs1_data;
+                    exec_q.fp_op2 <= fp_rs2_data;
+                    exec_q.fp_op3 <= fp_rs3_data;
                     // Early AGU retiming: the memory stage receives a
                     // registered effective address instead of placing a
                     // 32-bit add in front of cache metadata/RAM controls.
@@ -800,7 +883,7 @@ module core_top (
             assert (dcache_miss_q <= dcache_access_q);
             assert (load_count_perf_q + store_count_perf_q <= commit_count_q);
             assert (!(mdu_resp_valid && bm_resp_valid));
-            if (dc_mem_req_valid && dc_mem_req_write) begin
+            if (dc_mem_req_valid && dc_mem_req_write && !fp_mem_busy) begin
                 assert (store_count_q != 0);
                 assert (store_q[store_head_q].valid && store_committed_q[store_head_q]);
             end

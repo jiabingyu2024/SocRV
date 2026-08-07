@@ -1,13 +1,13 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/sbreak/firmware.elf",
-    "sha256": "7dd0ccdebce43be702a1a80a79602e5fee0f4d6a00e28fa91b621a1ff44810d1"
+    "sha256": "7482d47566fbf3afc985517dcd958f7cc0c01ebbb95e1fb71d07b49c54338065"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32i_zicsr_zicntr",
+    "march": "rv32imfd_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",

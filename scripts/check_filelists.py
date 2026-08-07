@@ -20,6 +20,13 @@ def expand(path: Path, seen_lists: set[Path], sources: list[Path]) -> None:
             if not nested.exists():
                 raise ValueError(f"{path}:{line_number}: missing nested filelist {nested}")
             expand(nested, seen_lists, sources)
+        elif line.startswith("+incdir+"):
+            include_dir = repo_path(line[len("+incdir+"):].strip())
+            if not include_dir.is_dir():
+                raise ValueError(
+                    f"{path}:{line_number}: missing include directory "
+                    f"{include_dir}"
+                )
         elif line.startswith("-"):
             continue
         else:

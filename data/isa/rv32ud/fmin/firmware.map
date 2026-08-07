@@ -1,8 +1,8 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccz3k3vv.o
- .bss           0x00000000        0x0 /tmp/ccz3k3vv.o
+ .text          0x00000000        0x0 /tmp/cckSeYtU.o
+ .bss           0x00000000        0x0 /tmp/cckSeYtU.o
 
 Memory Configuration
 
@@ -13,7 +13,7 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccz3k3vv.o
+LOAD /tmp/cckSeYtU.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
@@ -21,7 +21,7 @@ LOAD /tmp/ccz3k3vv.o
 
 .text           0x00000000      0x544
  *(.text.init)
- .text.init     0x00000000      0x544 /tmp/ccz3k3vv.o
+ .text.init     0x00000000      0x544 /tmp/cckSeYtU.o
                 0x00000000                _start
  *(.text .text.*)
  *(.rodata .rodata.*)
@@ -30,11 +30,11 @@ LOAD /tmp/ccz3k3vv.o
 
 .rela.dyn       0x00000544        0x0
  .rela.text.init
-                0x00000544        0x0 /tmp/ccz3k3vv.o
+                0x00000544        0x0 /tmp/cckSeYtU.o
 
 .data           0x10000000      0x240
  *(.data .data.*)
- .data          0x10000000      0x240 /tmp/ccz3k3vv.o
+ .data          0x10000000      0x240 /tmp/cckSeYtU.o
                 0x10000240                end_signature
                 0x10000240                begin_signature
  *(.sdata .sdata.*)
@@ -54,4 +54,4 @@ OUTPUT(build/isa-data/generated/rv32ud/fmin/firmware.elf elf32-littleriscv)
 .riscv.attributes
                 0x00000000       0x3f
  .riscv.attributes
-                0x00000000       0x3f /tmp/ccz3k3vv.o
+                0x00000000       0x3f /tmp/cckSeYtU.o

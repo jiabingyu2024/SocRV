@@ -6,7 +6,9 @@ COREMARK_SOURCES := \
 	$(COREMARK_ROOT)/core_matrix.c \
 	$(COREMARK_ROOT)/core_state.c \
 	$(COREMARK_ROOT)/core_util.c \
-	$(COREMARK_PORT)/core_portme.c
+	$(COREMARK_PORT)/core_portme.c \
+	$(COREMARK_PORT)/ee_printf.c \
+	$(COREMARK_PORT)/cvt.c
 COREMARK_INCLUDES := -I$(COREMARK_ROOT) -I$(COREMARK_PORT)
 COREMARK_CFLAGS := \
 	-DPERFORMANCE_RUN=1 \

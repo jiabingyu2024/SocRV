@@ -466,3 +466,56 @@ coremark 10000
 
 这样的分层能把多数 CPU 回退留在快速仿真阶段，同时保证最终 FPGA 使用的仍是同一套
 SoC、memory、BSP、RT-Thread、CoreMark 和镜像生成链路。
+
+## 8. 当前 RV32IMFD / O3 上板基线（2026-08-07）
+
+默认软件参数不再是 RV32IM/ilp32，而是：
+
+```text
+-march=rv32imfd_zicsr_zicntr_zifencei
+-mabi=ilp32d
+-O3
+```
+
+CPU 硬件实现了 M、F、D 扩展；浮点部分使用与 Verilator 共用的可综合 FPnew RTL，
+Vivado Tcl 通过 `sim/filelists/fpga_kintex7.f` 递归读取同一份 RTL filelist，不依赖
+仿真专用浮点模型或未纳入工程的黑盒 IP。双精度 load/store 通过两个 32-bit D-HXI
+传输完成，CPU subsystem 对 SoC 的端口、地址映射、Crossbar 和外设均未改变。
+
+正式 ISA 门禁使用：
+
+```text
+make sim-isa ISA_GATE=fp-double  # RV32F/RV32D 21 项
+make sim-isa ISA_GATE=final      # RV32I/M/机器态/F/D 共 86 项
+```
+
+`make sim-coremark COREMARK_ITERATIONS=3` 除了检查 CRC 和带小数的时间输出，还会在
+CoreMark 返回后的新提示符依次发送 `ps`、`help`。只有后续命令执行完并再次出现提示符，
+该测试才会 PASS；这同时覆盖 tick 恢复和 shell 可继续输入。
+
+当前已签核上板文件：
+
+```text
+build/vivado/kintex7-rtthread-coremark/project/socrv.runs/impl_1/fpga_top.bit
+build/vivado/kintex7-rtthread-coremark/project/reports/post_impl_timing_summary.rpt
+build/vivado/kintex7-rtthread-coremark/project/reports/post_impl_drc.rpt
+build/vivado/kintex7-rtthread-coremark/result.json
+```
+
+签核值为 WNS `+4.615 ns`、TNS `0`、DRC error `0`；bitstream SHA-256 为
+`34b6306322148758b8097a2ba2a89ddb6ccd5f918e93a094d8521caa6b2ff9e4`。
+
+烧写前建议再次执行：
+
+```text
+make fpga-check PROFILE=rtthread-coremark
+```
+
+然后连接开发板运行：
+
+```text
+make fpga-program PROFILE=rtthread-coremark
+```
+
+串口保持 115200/8-N-1/no-flow-control。看到 `msh >` 后先运行 `help`、`ps`，再运行
+`coremark 10000`；结束后再次输入 `ps` 或 `uptime`，确认节拍和串口输入仍正常。

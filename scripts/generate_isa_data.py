@@ -243,10 +243,14 @@ def gate_manifest(
         "single": floating_point["candidates"]["single"]["riscv_test_suite"],
         "double": floating_point["candidates"]["double"]["riscv_test_suite"],
     }
+    selected_fp_suites = {
+        "single": [fp_suites["single"]],
+        "double": [fp_suites["single"], fp_suites["double"]],
+    }
     final_suites = list(mandatory)
     ready = fp_selection in fp_suites
     if ready:
-        final_suites.append(fp_suites[fp_selection])
+        final_suites.extend(selected_fp_suites[fp_selection])
     return {
         "current": {
             "ready": True,
@@ -271,7 +275,7 @@ def gate_manifest(
         },
         "fp-double": {
             "ready": True,
-            "suites": [fp_suites["double"]],
+            "suites": selected_fp_suites["double"],
             "excluded_tests": [],
             "description": "Candidate double-precision floating-point gate",
             "blocked_reason": None,

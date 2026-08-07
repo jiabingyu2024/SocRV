@@ -1,13 +1,13 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/scall/firmware.elf",
-    "sha256": "08ee85ad822ab4b89afd0e2958b02d7389b0bb8cba74631c222a329510089827"
+    "sha256": "0c36374c0707cc03a5c37e19c10d0782dc384661482607d19bcfd5c6e1c43350"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32i_zicsr_zicntr",
+    "march": "rv32imfd_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",

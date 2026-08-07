@@ -32,6 +32,7 @@ public:
     void mark_framing_error();
 
     bool prompt_seen() const;
+    std::uint64_t prompt_count() const;
     bool command_complete() const;
     UartCheckSnapshot evaluate(
         bool test_passed,
