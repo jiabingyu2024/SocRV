@@ -138,3 +138,20 @@ bool SocDutAdapter::test_pass() const {
 std::uint32_t SocDutAdapter::test_code() const {
     return dut_->test_code_o;
 }
+
+MicroCounters SocDutAdapter::perf_counters() const {
+    MicroCounters value;
+    value.cycles = dut_->perf_cycles_o;
+    value.commits = dut_->perf_commits_o;
+    value.branches = dut_->perf_branches_o;
+    value.branch_misses = dut_->perf_branch_misses_o;
+    value.loads = dut_->perf_loads_o;
+    value.stores = dut_->perf_stores_o;
+    value.dcache_accesses = dut_->perf_dcache_accesses_o;
+    value.dcache_misses = dut_->perf_dcache_misses_o;
+    value.stall_front = dut_->perf_stall_front_o;
+    value.stall_memory = dut_->perf_stall_memory_o;
+    value.stall_muldiv = dut_->perf_stall_muldiv_o;
+    value.stall_raw = dut_->perf_stall_raw_o;
+    return value;
+}

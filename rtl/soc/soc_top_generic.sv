@@ -15,6 +15,7 @@ module soc_top_generic #(
   output logic test_pass_o,
   output logic [31:0] test_code_o,
   output cpu_types_pkg::commit_trace_t commit_o,
+  output cpu_types_pkg::perf_counters_t perf_o,
   output logic cpu_fault_o
 );
   mem_native_if code_mem(clk_i);
@@ -35,6 +36,7 @@ module soc_top_generic #(
     .test_pass_o,
     .test_code_o,
     .commit_o,
+    .perf_o,
     .cpu_fault_o
   );
 

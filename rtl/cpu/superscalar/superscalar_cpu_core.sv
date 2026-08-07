@@ -7,6 +7,7 @@ module superscalar_cpu_core (
   input logic irq_timer_i,
   input logic irq_external_i,
   output cpu_types_pkg::commit_trace_t commit_o,
+  output cpu_types_pkg::perf_counters_t perf_o,
   output logic fault_o
 );
   localparam int unsigned DATA_OUTSTANDING_DEPTH = 8;
@@ -84,6 +85,19 @@ module superscalar_cpu_core (
   logic [31:0] irq_event_mip_q;
 
   assign core_rst = !rst_ni;
+
+  assign perf_o.cycles = perf_cycle;
+  assign perf_o.commits = perf_commit;
+  assign perf_o.branches = perf_branch;
+  assign perf_o.branch_misses = perf_branch_miss;
+  assign perf_o.loads = perf_load;
+  assign perf_o.stores = perf_store;
+  assign perf_o.dcache_accesses = perf_dcache_access;
+  assign perf_o.dcache_misses = perf_dcache_miss;
+  assign perf_o.stall_front = perf_stall_front;
+  assign perf_o.stall_memory = perf_stall_mem;
+  assign perf_o.stall_muldiv = perf_stall_muldiv;
+  assign perf_o.stall_raw = perf_stall_load_use;
 
   assign instr_hxi.req_valid = imem_req_valid;
   assign instr_hxi.req_addr  = imem_addr;
@@ -264,10 +278,7 @@ module superscalar_cpu_core (
   assign fault_o = data_bus_fault_q;
 
   logic unused;
-  assign unused = dmem_req_uncached ^ ^perf_branch ^ ^perf_branch_miss ^
-                  ^perf_load ^ ^perf_store ^ ^perf_dcache_access ^
-                  ^perf_dcache_miss ^ ^perf_stall_front ^ ^perf_stall_mem ^
-                  ^perf_stall_muldiv ^ ^perf_stall_load_use;
+  assign unused = dmem_req_uncached;
 
 `ifndef SYNTHESIS
   always_ff @(posedge clk_i) begin

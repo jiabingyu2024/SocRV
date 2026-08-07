@@ -87,7 +87,21 @@ void SimResult::write_json(const SimConfig& config) const {
                << "    \"commits_per_iteration\": "
                << performance.commits_per_iteration << ",\n"
                << "    \"iterations_per_second\": "
-               << performance.iterations_per_second << "\n";
+               << performance.iterations_per_second << ",\n"
+               << "    \"microarchitecture\": {\n"
+               << "      \"cycles\": " << performance.microarchitecture.cycles << ",\n"
+               << "      \"commits\": " << performance.microarchitecture.commits << ",\n"
+               << "      \"branches\": " << performance.microarchitecture.branches << ",\n"
+               << "      \"branch_misses\": " << performance.microarchitecture.branch_misses << ",\n"
+               << "      \"loads\": " << performance.microarchitecture.loads << ",\n"
+               << "      \"stores\": " << performance.microarchitecture.stores << ",\n"
+               << "      \"dcache_accesses\": " << performance.microarchitecture.dcache_accesses << ",\n"
+               << "      \"dcache_misses\": " << performance.microarchitecture.dcache_misses << ",\n"
+               << "      \"stall_front\": " << performance.microarchitecture.stall_front << ",\n"
+               << "      \"stall_memory\": " << performance.microarchitecture.stall_memory << ",\n"
+               << "      \"stall_muldiv\": " << performance.microarchitecture.stall_muldiv << ",\n"
+               << "      \"stall_raw\": " << performance.microarchitecture.stall_raw << "\n"
+               << "    }\n";
     } else {
         output << "    \"start_cycle\": null,\n"
                << "    \"end_cycle\": null,\n"
@@ -97,7 +111,8 @@ void SimResult::write_json(const SimConfig& config) const {
                << "    \"seconds\": null,\n"
                << "    \"cycles_per_iteration\": null,\n"
                << "    \"commits_per_iteration\": null,\n"
-               << "    \"iterations_per_second\": null\n";
+               << "    \"iterations_per_second\": null,\n"
+               << "    \"microarchitecture\": null\n";
     }
     output << "  },\n"
            << "  \"checker\": {\n"

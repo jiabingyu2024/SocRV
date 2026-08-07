@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "difftest_types.h"
+#include "perf_stats.h"
 
 class VerilatedContext;
 class VerilatedVcdC;
@@ -34,6 +35,7 @@ public:
     bool test_done() const;
     bool test_pass() const;
     std::uint32_t test_code() const;
+    MicroCounters perf_counters() const;
 
 private:
     std::unique_ptr<VerilatedContext> context_;

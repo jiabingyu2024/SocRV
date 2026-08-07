@@ -17,6 +17,7 @@ struct SimConfig {
     std::uint32_t perf_stop_code = 0;
     std::uint32_t seed = 1;
     std::string trace_path;
+    std::string commit_profile_path;
     std::string result_path;
     std::string log_path;
     std::string image_manifest;

@@ -55,6 +55,8 @@ SimConfig SimConfig::parse(int argc, char** argv) {
                 require_value(argc, argv, index), nullptr, 0);
         } else if (argument == "--trace") {
             config.trace_path = require_value(argc, argv, index);
+        } else if (argument == "--commit-profile") {
+            config.commit_profile_path = require_value(argc, argv, index);
         } else if (argument == "--result") {
             config.result_path = require_value(argc, argv, index);
         } else if (argument == "--log") {

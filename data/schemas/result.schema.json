@@ -98,7 +98,8 @@
         "seconds",
         "cycles_per_iteration",
         "commits_per_iteration",
-        "iterations_per_second"
+        "iterations_per_second",
+        "microarchitecture"
       ],
       "properties": {
         "requested": {"type": "boolean"},
@@ -121,6 +122,29 @@
         "iterations_per_second": {
           "type": ["number", "null"],
           "minimum": 0
+        },
+        "microarchitecture": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": [
+            "cycles", "commits", "branches", "branch_misses",
+            "loads", "stores", "dcache_accesses", "dcache_misses",
+            "stall_front", "stall_memory", "stall_muldiv", "stall_raw"
+          ],
+          "properties": {
+            "cycles": {"type": "integer", "minimum": 0},
+            "commits": {"type": "integer", "minimum": 0},
+            "branches": {"type": "integer", "minimum": 0},
+            "branch_misses": {"type": "integer", "minimum": 0},
+            "loads": {"type": "integer", "minimum": 0},
+            "stores": {"type": "integer", "minimum": 0},
+            "dcache_accesses": {"type": "integer", "minimum": 0},
+            "dcache_misses": {"type": "integer", "minimum": 0},
+            "stall_front": {"type": "integer", "minimum": 0},
+            "stall_memory": {"type": "integer", "minimum": 0},
+            "stall_muldiv": {"type": "integer", "minimum": 0},
+            "stall_raw": {"type": "integer", "minimum": 0}
+          }
         }
       }
     },

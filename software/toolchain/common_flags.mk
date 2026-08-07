@@ -1,4 +1,4 @@
-ARCH_FLAGS := -march=rv32imfd_zicsr_zicntr_zifencei -mabi=ilp32d
+ARCH_FLAGS := -march=rv32imfd_zicsr_zicntr_zifencei_zbkb -mabi=ilp32d
 COMMON_FLAGS := $(ARCH_FLAGS) -ffreestanding -fno-builtin -fdata-sections -ffunction-sections \
 	-msmall-data-limit=0 -Wall -Wextra -Werror
 OPTIMIZATION ?= -O3

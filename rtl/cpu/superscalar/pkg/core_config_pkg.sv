@@ -11,7 +11,7 @@ package core_config_pkg;
     localparam logic CFG_ZBA              = 1'b0;
     localparam logic CFG_ZBB              = 1'b0;
     localparam logic CFG_ZBC              = 1'b0;
-    localparam logic CFG_ZBKB             = 1'b0;
+    localparam logic CFG_ZBKB             = 1'b1;
     localparam logic CFG_ZBKX             = 1'b0;
     localparam logic CFG_ZBS              = 1'b0;
     localparam logic CFG_ZB_ANY           = CFG_ZBA | CFG_ZBB | CFG_ZBC |
@@ -31,8 +31,12 @@ package core_config_pkg;
     localparam int unsigned STORE_BUFFER_DEPTH = 8;
     localparam int unsigned LOAD_QUEUE_DEPTH   = 4;
     localparam int unsigned BTB_ENTRIES        = 128;
-    localparam int unsigned GSHARE_HISTORY_BITS = 8;
+    localparam int unsigned GSHARE_HISTORY_BITS = 9;
     localparam int unsigned GSHARE_PHT_ENTRIES  = 1 << GSHARE_HISTORY_BITS;
+    // A small, confidence-gated loop predictor runs in parallel with GShare.
+    // It only overrides stable backward conditional branches.
+    localparam int unsigned LOOP_PRED_ENTRIES   = 16;
+    localparam int unsigned LOOP_PRED_COUNT_BITS = 12;
     localparam int unsigned RAS_DEPTH          = 8;
     localparam int unsigned DCACHE_LINES       = 2048;
     localparam int unsigned DCACHE_LINE_BYTES  = 16;

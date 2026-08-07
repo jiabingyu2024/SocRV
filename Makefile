@@ -1,4 +1,4 @@
-PYTHON ?= python
+PYTHON ?= python3
 JOBS ?= 4
 PROFILE ?= rtthread-coremark
 SUITE ?= smoke

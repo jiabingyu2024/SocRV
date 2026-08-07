@@ -363,6 +363,7 @@ def run_image(
     difftest_mode: str = "ram-strict",
     difftest_isa: str = "",
     difftest_fault: str = "",
+    commit_profile: bool = False,
 ) -> Path:
     if rebuild_model:
         build_model(difftest=difftest)
@@ -377,6 +378,9 @@ def run_image(
     safe_name = safe_test_name(test_name) + ("-diff" if difftest else "")
     result_path = repo_path("build", "result", "soc", f"{safe_name}.json")
     log_path = repo_path("build", "log", "soc", f"{safe_name}.log")
+    commit_profile_path = repo_path(
+        "build", "profile", "soc", f"{safe_name}.csv"
+    )
     wave_path = (
         repo_path("build", "wave", "soc", f"{safe_name}.vcd")
         if trace
@@ -384,6 +388,9 @@ def run_image(
     )
     result_path.parent.mkdir(parents=True, exist_ok=True)
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    if commit_profile:
+        commit_profile_path.parent.mkdir(parents=True, exist_ok=True)
+        commit_profile_path.unlink(missing_ok=True)
     if wave_path:
         wave_path.parent.mkdir(parents=True, exist_ok=True)
     result_path.unlink(missing_ok=True)
@@ -578,6 +585,10 @@ def run_image(
             argv.extend(["--uart-followup-command", followup + "\r"])
     if wave_path:
         argv.extend(["--trace", relative_to_repo(wave_path)])
+    if commit_profile:
+        argv.extend(
+            ["--commit-profile", relative_to_repo(commit_profile_path)]
+        )
     command = in_repo(repo_path(), argv)
     result = bash(command, timeout=wall_timeout, check=False)
     combined_log = (
@@ -640,6 +651,7 @@ def run_profile(
     difftest_mode: str = "ram-strict",
     difftest_isa: str = "",
     difftest_fault: str = "",
+    commit_profile: bool = False,
 ) -> Path:
     if build_sw:
         _, image_dir = build_profile(profile)
@@ -678,6 +690,7 @@ def run_profile(
         difftest_mode=difftest_mode,
         difftest_isa=difftest_isa,
         difftest_fault=difftest_fault,
+        commit_profile=commit_profile,
     )
 
 
@@ -701,6 +714,7 @@ def main() -> int:
     parser.add_argument("--no-rtl-build", action="store_true")
     parser.add_argument("--no-software-build", action="store_true")
     parser.add_argument("--trace", action="store_true")
+    parser.add_argument("--commit-profile", action="store_true")
     parser.add_argument("--build-only", action="store_true")
     parser.add_argument("--force-rtl-build", action="store_true")
     parser.add_argument("--difftest", action="store_true")
@@ -773,6 +787,7 @@ def main() -> int:
             difftest_mode=args.difftest_mode,
             difftest_isa=args.difftest_isa or "",
             difftest_fault=args.difftest_fault or "",
+            commit_profile=args.commit_profile,
         )
     except (OSError, RuntimeError, ValueError) as error:
         parser.error(str(error))

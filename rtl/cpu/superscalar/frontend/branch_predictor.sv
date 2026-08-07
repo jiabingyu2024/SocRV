@@ -8,6 +8,8 @@ module branch_predictor #(
     parameter int unsigned ENTRIES     = core_config_pkg::BTB_ENTRIES,
     parameter int unsigned HISTORY_BITS = core_config_pkg::GSHARE_HISTORY_BITS,
     parameter int unsigned PHT_ENTRIES  = core_config_pkg::GSHARE_PHT_ENTRIES,
+    parameter int unsigned LOOP_ENTRIES = core_config_pkg::LOOP_PRED_ENTRIES,
+    parameter int unsigned LOOP_COUNT_BITS = core_config_pkg::LOOP_PRED_COUNT_BITS,
     parameter int unsigned RAS_DEPTH    = core_config_pkg::RAS_DEPTH
 ) (
     input  logic       clk,
@@ -35,6 +37,8 @@ module branch_predictor #(
     localparam int unsigned BTB_INDEX_W = $clog2(ENTRIES);
     localparam int unsigned PHT_INDEX_W = $clog2(PHT_ENTRIES);
     localparam int unsigned RAS_W       = $clog2(RAS_DEPTH);
+    localparam int unsigned LOOP_INDEX_W = $clog2(LOOP_ENTRIES);
+    localparam int unsigned LOOP_TAG_W = 32 - LOOP_INDEX_W - 2;
     localparam int unsigned TAG_W       = 32 - BTB_INDEX_W - 2;
     localparam int unsigned ENTRY_W     = TAG_W + 32 + 2;
 
@@ -46,11 +50,17 @@ module branch_predictor #(
     logic [ENTRIES-1:0] btb_valid_q;
     logic [PHT_ENTRIES-1:0] pht_valid_q;
     logic [HISTORY_BITS-1:0] global_history_q;
+    logic [LOOP_TAG_W-1:0] loop_tag_q [0:LOOP_ENTRIES-1];
+    logic [LOOP_COUNT_BITS-1:0] loop_trip_q [0:LOOP_ENTRIES-1];
+    logic [LOOP_COUNT_BITS-1:0] loop_current_q [0:LOOP_ENTRIES-1];
+    logic [1:0] loop_conf_q [0:LOOP_ENTRIES-1];
+    logic [LOOP_ENTRIES-1:0] loop_valid_q;
     logic [31:0] ras_q [0:RAS_DEPTH-1];
     logic [RAS_W:0] ras_count_q;
     logic [RAS_W-1:0] ras_top_c;
     logic [BTB_INDEX_W-1:0] btb_pred_idx, btb_upd_idx;
     logic [PHT_INDEX_W-1:0] pht_pred_idx;
+    logic [LOOP_INDEX_W-1:0] loop_pred_idx, loop_upd_idx;
     logic [31:0] read_pc_q;
     logic [ENTRY_W-1:0] read_entry_q, update_entry_c;
     logic read_entry_valid_q, read_valid_q;
@@ -59,15 +69,25 @@ module branch_predictor #(
     logic [1:0] read_pht_counter_q, pht_collision_counter_q;
     logic read_pht_valid_q;
     logic [PHT_INDEX_W-1:0] read_pht_index_q;
+    logic [LOOP_TAG_W-1:0] read_loop_tag_q;
+    logic [LOOP_COUNT_BITS-1:0] read_loop_trip_q, read_loop_current_q;
+    logic [1:0] read_loop_conf_q;
+    logic read_loop_valid_q, loop_hit_c, loop_taken_c;
     logic selected_valid_c;
     logic [TAG_W-1:0] selected_tag_c;
     logic [31:0] selected_target_c;
     pred_kind_e selected_kind_c;
     logic [1:0] selected_counter_c, update_counter_c;
 
-    assign btb_pred_idx = predict_pc_i[BTB_INDEX_W+1:2];
-    assign btb_upd_idx  = update_pc_i[BTB_INDEX_W+1:2];
+    assign btb_pred_idx = predict_pc_i[BTB_INDEX_W+1:2] ^
+                          predict_pc_i[(2*BTB_INDEX_W)+1:BTB_INDEX_W+2];
+    assign btb_upd_idx  = update_pc_i[BTB_INDEX_W+1:2] ^
+                          update_pc_i[(2*BTB_INDEX_W)+1:BTB_INDEX_W+2];
     assign pht_pred_idx = predict_pc_i[PHT_INDEX_W+1:2] ^ global_history_q;
+    assign loop_pred_idx = predict_pc_i[LOOP_INDEX_W+1:2] ^
+                           predict_pc_i[(2*LOOP_INDEX_W)+1:LOOP_INDEX_W+2];
+    assign loop_upd_idx = update_pc_i[LOOP_INDEX_W+1:2] ^
+                          update_pc_i[(2*LOOP_INDEX_W)+1:LOOP_INDEX_W+2];
     assign ras_top_c = RAS_W'(ras_count_q - 1'b1);
     assign update_entry_c = {update_pc_i[31:BTB_INDEX_W+2], update_target_i,
                              update_kind_i};
@@ -80,6 +100,12 @@ module branch_predictor #(
     assign predict_hit_o = read_valid_q && selected_valid_c &&
                            selected_tag_c == read_pc_q[31:BTB_INDEX_W+2];
     assign predict_index_o = read_pht_index_q;
+    assign loop_hit_c = read_loop_valid_q &&
+                        read_loop_tag_q == read_pc_q[31:LOOP_INDEX_W+2] &&
+                        selected_kind_c == PRED_COND &&
+                        selected_target_c < read_pc_q &&
+                        read_loop_conf_q[1] && read_loop_trip_q != '0;
+    assign loop_taken_c = read_loop_current_q != read_loop_trip_q;
 
     always_comb begin
         if (update_taken_i && update_pred_counter_i != 2'b11) begin
@@ -98,7 +124,10 @@ module branch_predictor #(
         if (predict_hit_o) begin
             predict_kind_o = selected_kind_c;
             unique case (selected_kind_c)
-                PRED_COND: if (selected_counter_c[1]) predict_next_pc_o = selected_target_c;
+                PRED_COND: begin
+                    if (loop_hit_c ? loop_taken_c : selected_counter_c[1])
+                        predict_next_pc_o = selected_target_c;
+                end
                 PRED_RETURN: begin
                     if (ras_count_q != 0) predict_next_pc_o = ras_q[ras_top_c];
                     else predict_next_pc_o = selected_target_c;
@@ -113,6 +142,7 @@ module branch_predictor #(
         if (rst) begin
             btb_valid_q <= '0;
             pht_valid_q <= '0;
+            loop_valid_q <= '0;
             global_history_q <= '0;
             ras_count_q <= '0;
             read_valid_q <= 1'b0;
@@ -120,6 +150,10 @@ module branch_predictor #(
             read_pht_valid_q <= 1'b0;
             read_pht_counter_q <= 2'b01;
             read_pht_index_q <= '0;
+            read_loop_valid_q <= 1'b0;
+            read_loop_trip_q <= '0;
+            read_loop_current_q <= '0;
+            read_loop_conf_q <= '0;
             btb_collision_q <= 1'b0;
             pht_collision_q <= 1'b0;
         end else begin
@@ -136,6 +170,11 @@ module branch_predictor #(
                 read_pht_counter_q <= pht_mem[pht_pred_idx];
                 read_pht_valid_q <= pht_valid_q[pht_pred_idx];
                 read_pht_index_q <= pht_pred_idx;
+                read_loop_tag_q <= loop_tag_q[loop_pred_idx];
+                read_loop_trip_q <= loop_trip_q[loop_pred_idx];
+                read_loop_current_q <= loop_current_q[loop_pred_idx];
+                read_loop_conf_q <= loop_conf_q[loop_pred_idx];
+                read_loop_valid_q <= loop_valid_q[loop_pred_idx];
                 btb_collision_entry_q <= update_entry_c;
                 pht_collision_counter_q <= update_counter_c;
             end
@@ -147,6 +186,43 @@ module branch_predictor #(
                     pht_mem[update_pred_index_i] <= update_counter_c;
                     global_history_q <= {global_history_q[HISTORY_BITS-2:0],
                                          update_taken_i};
+                    if (update_target_i < update_pc_i) begin
+                        if (!loop_valid_q[loop_upd_idx] ||
+                            loop_tag_q[loop_upd_idx] !=
+                                update_pc_i[31:LOOP_INDEX_W+2]) begin
+                            loop_valid_q[loop_upd_idx] <= 1'b1;
+                            loop_tag_q[loop_upd_idx] <=
+                                update_pc_i[31:LOOP_INDEX_W+2];
+                            loop_trip_q[loop_upd_idx] <= '0;
+                            loop_current_q[loop_upd_idx] <=
+                                update_taken_i ? LOOP_COUNT_BITS'(1) : '0;
+                            loop_conf_q[loop_upd_idx] <= '0;
+                        end else if (update_taken_i) begin
+                            if (loop_current_q[loop_upd_idx] !=
+                                {LOOP_COUNT_BITS{1'b1}})
+                                loop_current_q[loop_upd_idx] <=
+                                    loop_current_q[loop_upd_idx] + 1'b1;
+                            if (loop_trip_q[loop_upd_idx] != '0 &&
+                                loop_current_q[loop_upd_idx] >=
+                                    loop_trip_q[loop_upd_idx] &&
+                                loop_conf_q[loop_upd_idx] != 0)
+                                loop_conf_q[loop_upd_idx] <=
+                                    loop_conf_q[loop_upd_idx] - 1'b1;
+                        end else begin
+                            if (loop_current_q[loop_upd_idx] ==
+                                    loop_trip_q[loop_upd_idx] &&
+                                loop_trip_q[loop_upd_idx] != '0) begin
+                                if (loop_conf_q[loop_upd_idx] != 2'b11)
+                                    loop_conf_q[loop_upd_idx] <=
+                                        loop_conf_q[loop_upd_idx] + 1'b1;
+                            end else begin
+                                loop_trip_q[loop_upd_idx] <=
+                                    loop_current_q[loop_upd_idx];
+                                loop_conf_q[loop_upd_idx] <= '0;
+                            end
+                            loop_current_q[loop_upd_idx] <= '0;
+                        end
+                    end
                 end
             end
             if (commit_call_i) begin
@@ -167,6 +243,9 @@ module branch_predictor #(
         assert (ENTRIES >= 2 && (ENTRIES & (ENTRIES - 1)) == 0);
         assert (HISTORY_BITS >= 2);
         assert (PHT_ENTRIES == (1 << HISTORY_BITS));
+        assert (LOOP_ENTRIES >= 2 &&
+                (LOOP_ENTRIES & (LOOP_ENTRIES - 1)) == 0);
+        assert (LOOP_COUNT_BITS >= 2);
         assert (RAS_DEPTH >= 2 && (RAS_DEPTH & (RAS_DEPTH - 1)) == 0);
     end
 `endif

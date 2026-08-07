@@ -7,6 +7,7 @@ module cpu_subsystem (
   input logic irq_timer_i,
   input logic irq_external_i,
   output cpu_types_pkg::commit_trace_t commit_o,
+  output cpu_types_pkg::perf_counters_t perf_o,
   output logic fault_o
 );
   superscalar_cpu_core u_core (
@@ -18,6 +19,7 @@ module cpu_subsystem (
     .irq_timer_i,
     .irq_external_i,
     .commit_o,
+    .perf_o,
     .fault_o
   );
 endmodule

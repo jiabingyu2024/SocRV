@@ -43,13 +43,26 @@ module soc_sim_top (
   output logic irq_event_valid_o,
   output logic [63:0] irq_event_next_order_o,
   output logic [31:0] irq_event_mip_pre_o,
-  output logic [31:0] irq_event_mip_post_o
+  output logic [31:0] irq_event_mip_post_o,
+  output logic [63:0] perf_cycles_o,
+  output logic [63:0] perf_commits_o,
+  output logic [63:0] perf_branches_o,
+  output logic [63:0] perf_branch_misses_o,
+  output logic [63:0] perf_loads_o,
+  output logic [63:0] perf_stores_o,
+  output logic [63:0] perf_dcache_accesses_o,
+  output logic [63:0] perf_dcache_misses_o,
+  output logic [63:0] perf_stall_front_o,
+  output logic [63:0] perf_stall_memory_o,
+  output logic [63:0] perf_stall_muldiv_o,
+  output logic [63:0] perf_stall_raw_o
 );
   logic [15:0] gpio_i;
   logic [15:0] gpio_o;
   logic [15:0] gpio_oe;
   logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] ext_irq;
   cpu_types_pkg::commit_trace_t commit;
+  cpu_types_pkg::perf_counters_t perf;
 
   assign gpio_i = '0;
   assign ext_irq = '0;
@@ -90,6 +103,18 @@ module soc_sim_top (
   assign irq_event_next_order_o = commit.irq_next_order;
   assign irq_event_mip_pre_o = commit.irq_mip_pre;
   assign irq_event_mip_post_o = commit.irq_mip_post;
+  assign perf_cycles_o = perf.cycles;
+  assign perf_commits_o = perf.commits;
+  assign perf_branches_o = perf.branches;
+  assign perf_branch_misses_o = perf.branch_misses;
+  assign perf_loads_o = perf.loads;
+  assign perf_stores_o = perf.stores;
+  assign perf_dcache_accesses_o = perf.dcache_accesses;
+  assign perf_dcache_misses_o = perf.dcache_misses;
+  assign perf_stall_front_o = perf.stall_front;
+  assign perf_stall_memory_o = perf.stall_memory;
+  assign perf_stall_muldiv_o = perf.stall_muldiv;
+  assign perf_stall_raw_o = perf.stall_raw;
 
   soc_top_generic u_dut (
     .clk_i,
@@ -104,6 +129,7 @@ module soc_sim_top (
     .test_pass_o,
     .test_code_o,
     .commit_o(commit),
+    .perf_o(perf),
     .cpu_fault_o
   );
 

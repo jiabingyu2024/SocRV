@@ -1,6 +1,8 @@
 #include "sim_control.h"
 
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 #include <vector>
 
 #include "perf_stats.h"
@@ -33,6 +35,16 @@ SimResult SimControl::run() {
     DiffTestChecker difftest(config_);
     std::uint32_t last_commit_pc = 0;
     bool difftest_fault_injected = false;
+    std::ofstream commit_profile;
+    bool profile_active = false;
+    if (!config_.commit_profile_path.empty()) {
+        commit_profile.open(config_.commit_profile_path);
+        if (!commit_profile) {
+            throw std::runtime_error("cannot open commit profile: " +
+                                     config_.commit_profile_path);
+        }
+        commit_profile << "cycle,pc,instruction\n";
+    }
 
     dut_.set_reset(false);
     dut_.set_uart_rx(true);
@@ -42,6 +54,13 @@ SimResult SimControl::run() {
         }
         dut_.set_uart_rx(uart_stimulus.level(cycle));
         dut_.step_cycle();
+        if (config_.performance_enabled()) {
+            if (dut_.test_code() == config_.perf_start_code) {
+                profile_active = true;
+            } else if (dut_.test_code() == config_.perf_stop_code) {
+                profile_active = false;
+            }
+        }
         char decoded_byte = '\0';
         if (uart.sample(dut_.uart_tx(), decoded_byte)) {
             std::cout << decoded_byte << std::flush;
@@ -73,6 +92,12 @@ SimResult SimControl::run() {
             }
             if (event.valid && event.retired) {
                 ++retired_count;
+                if (profile_active && commit_profile) {
+                    commit_profile << cycle << ",0x" << std::hex
+                                   << std::setw(8) << std::setfill('0')
+                                   << event.pc_rdata << ",0x" << std::setw(8)
+                                   << event.instruction << std::dec << "\n";
+                }
             }
         }
         if (!difftest_fault_injected &&
@@ -109,7 +134,8 @@ SimResult SimControl::run() {
             }
         }
         difftest.observe_cycle(cycle, arch_events, irq_events);
-        stats.observe(cycle, retired_count, dut_.test_code());
+        stats.observe(
+            cycle, retired_count, dut_.test_code(), dut_.perf_counters());
 
         if (!difftest.passed()) {
             std::cerr << "\nDIFF_MISMATCH: "

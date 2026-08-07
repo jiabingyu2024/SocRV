@@ -1,5 +1,20 @@
 package cpu_types_pkg;
   typedef struct packed {
+    logic [63:0] cycles;
+    logic [63:0] commits;
+    logic [63:0] branches;
+    logic [63:0] branch_misses;
+    logic [63:0] loads;
+    logic [63:0] stores;
+    logic [63:0] dcache_accesses;
+    logic [63:0] dcache_misses;
+    logic [63:0] stall_front;
+    logic [63:0] stall_memory;
+    logic [63:0] stall_muldiv;
+    logic [63:0] stall_raw;
+  } perf_counters_t;
+
+  typedef struct packed {
     logic        valid;
     logic        retired;
     logic [63:0] order;

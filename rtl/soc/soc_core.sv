@@ -15,6 +15,7 @@ module soc_core #(
   output logic test_pass_o,
   output logic [31:0] test_code_o,
   output cpu_types_pkg::commit_trace_t commit_o,
+  output cpu_types_pkg::perf_counters_t perf_o,
   output logic cpu_fault_o
 );
   hxi_if cpu_i_hxi(clk_i);
@@ -68,6 +69,7 @@ module soc_core #(
     .irq_timer_i(irq_timer),
     .irq_external_i(irq_external),
     .commit_o,
+    .perf_o,
     .fault_o(cpu_fault_o)
   );
 
