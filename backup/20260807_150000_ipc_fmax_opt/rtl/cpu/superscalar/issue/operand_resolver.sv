@@ -61,10 +61,9 @@ module operand_resolver (
             src2_value_o = rs2_scoreboard_data_i;
         end
 
-        // A DCache completion feeds both the general consumer bypass and the
-        // address-generation path. The value is already registered at the
-        // cache boundary, so this removes a load-to-address bubble without
-        // introducing an asynchronous RAM-to-AGU path.
+        // A DCache completion may feed the general consumer bypass but never
+        // the address-generation path. This preserves the intentional timing
+        // break on load-to-address dependencies.
         src1_memory_ready_o = src1_ready_o;
         src1_memory_value_o = src1_value_o;
         if (rs1_found_i) begin
@@ -78,12 +77,6 @@ module operand_resolver (
                          load_completion_meta_i.trans_id == rs1_trans_id_i) begin
                 src1_ready_o = 1'b1;
                 src1_value_o = load_result_i;
-                // The DCache data bank has a registered BRAM output.  Reuse
-                // that registered value for load-to-address forwarding so a
-                // dependent load/store need not wait for the scoreboard
-                // write, while avoiding an asynchronous RAM-to-AGU path.
-                src1_memory_ready_o = 1'b1;
-                src1_memory_value_o = load_result_i;
             end else if (slow_completion_valid_i &&
                          slow_completion_trans_id_i == rs1_trans_id_i) begin
                 src1_ready_o = 1'b1;

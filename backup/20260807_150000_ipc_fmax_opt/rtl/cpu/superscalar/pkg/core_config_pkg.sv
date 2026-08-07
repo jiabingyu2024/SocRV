@@ -25,11 +25,8 @@ package core_config_pkg;
     localparam int unsigned IROM_BYTE_ADDR_W   = 14;
     localparam int unsigned FETCH_QUEUE_DEPTH  = 4;
     localparam int unsigned SCOREBOARD_DEPTH   = 8;
-    // Keep more independent memory operations in flight.  These depths stay
-    // bounded by the eight-entry retirement scoreboard; no extra combinational
-    // cache/HXI stage is introduced by the capacity increase.
-    localparam int unsigned STORE_BUFFER_DEPTH = 8;
-    localparam int unsigned LOAD_QUEUE_DEPTH   = 4;
+    localparam int unsigned STORE_BUFFER_DEPTH = 4;
+    localparam int unsigned LOAD_QUEUE_DEPTH   = 2;
     localparam int unsigned BTB_ENTRIES        = 128;
     localparam int unsigned GSHARE_HISTORY_BITS = 8;
     localparam int unsigned GSHARE_PHT_ENTRIES  = 1 << GSHARE_HISTORY_BITS;

@@ -434,11 +434,7 @@ module core_top (
         .bitmanip_req_ready_i(bm_req_ready), .bitmanip_busy_i(bm_busy),
         .bitmanip_clmul_start_i(bitmanip_clmul_start_c), .commit_i(commit_fire),
         .fp_req_ready_i(fp_issue_ready),
-        // Only a branch that will actually redirect blocks allocation.  The
-        // compare is already part of branch_miss_c; correct predictions keep
-        // their one-cycle successor issue opportunity.  Mispredictions still
-        // block before allocation, so no backend rollback path is required.
-        .branch_resolve_i(branch_miss_c), .redirect_i(redirect_valid),
+        .branch_resolve_i(branch_resolve_valid_c), .redirect_i(redirect_valid),
         .issue_o(issue_fire_raw)
     );
 

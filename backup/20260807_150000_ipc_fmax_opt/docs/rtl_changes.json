@@ -347,61 +347,6 @@
         "Makefile DIFFTEST_ISA still defaults to RV32IM while the current hardware MISA exposes F/D, so CSR/MISA DiffTest must use DIFFTEST_ISA=rv32imfd_zicsr_zicntr_zifencei until that pre-existing baseline setting is corrected.",
         "Physical-board UART/CoreMark 10000 validation remains manual; the generated bitstream passed implementation but no board was connected in this run."
       ]
-    },
-    {
-      "date": "2026-08-07",
-      "trigger": "User-requested IPC optimization with frequency-preservation constraint",
-      "scope": [
-        "rtl/cpu/superscalar/core_top.sv",
-        "rtl/cpu/superscalar/issue/operand_resolver.sv",
-        "rtl/cpu/superscalar/pkg/core_config_pkg.sv"
-      ],
-      "backup": "backup/20260807_150000_ipc_fmax_opt/",
-      "summary": "Completed the three prioritized performance changes: correct-prediction branches may continue issuing while branch-miss uops are blocked before scoreboard allocation; registered DCache load completion now bypasses into the load/store address-generation operand path; and load/store queue capacity was increased to reduce back-pressure. No new RAM-to-AGU asynchronous path or speculative backend flush path was introduced.",
-      "performance": {
-        "workload": "RT-Thread CoreMark command, 3 iterations",
-        "baseline_cycles": 1326922,
-        "baseline_ipc": 0.677972782,
-        "agu_bypass_and_queue_cycles": 1301722,
-        "agu_bypass_and_queue_ipc": 0.691097638,
-        "final_cycles": 1170463,
-        "final_ipc": 0.768599264,
-        "cycle_reduction_percent_vs_baseline": 11.79,
-        "ipc_improvement_percent_vs_baseline": 13.37
-      },
-      "frequency_guard": {
-        "clock_hz": 50000000,
-        "post_route_wns_ns_before": 4.028,
-        "post_route_wns_ns_after": 4.137,
-        "post_route_tns_ns_after": 0.0,
-        "failing_endpoints_after": 0,
-        "note": "The final branch-miss gating uses the current-cycle compare result because the existing recovery controller redirects frontend state but does not flush backend scoreboard state; a registered gate allowed wrong-path uops to pollute the scoreboard."
-      },
-      "queue_depth": {
-        "load_queue_before": 2,
-        "load_queue_after": 4,
-        "store_buffer_before": 4,
-        "store_buffer_after": 8
-      },
-      "fpga": {
-        "device": "xc7k325tffg900-2",
-        "luts": 17327,
-        "ffs": 9677,
-        "ramb36": 44,
-        "ramb18": 1,
-        "dsps": 15,
-        "drc_errors": 0,
-        "drc_warnings": 81,
-        "bitstream_sha256": "231b94f8d2f9e58db328e6830faa0d16d6987957da35aafa07e6911a872b8a96"
-      },
-      "verification": [
-        "make check PASS",
-        "RV32UI/RV32MI/RV32UM/RV32UF/RV32UD ISA gate PASS: 86/86",
-        "RT-Thread and MSH help/ps prompt recovery PASS",
-        "CoreMark 3 and 10 PASS with CRC PASS and decimal timing output",
-        "Vivado post-route timing PASS",
-        "make fpga-check PROFILE=rtthread-coremark PASS"
-      ]
     }
   ],
   "assumptions": [
