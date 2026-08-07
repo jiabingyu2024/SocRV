@@ -1,13 +1,13 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/pmpaddr/firmware.elf",
-    "sha256": "0145b77615bb75b68a751b6c34aff0ffa9610e28b3ea49f6596cb49c250ef9c7"
+    "sha256": "2f74160d7da4aee9a264e33d3696fe01647a6b976f84e1a888afb01e85df4886"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32imfd_zicsr_zicntr_zifencei",
+    "march": "rv32imf_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",

@@ -402,6 +402,106 @@
         "Vivado post-route timing PASS",
         "make fpga-check PROFILE=rtthread-coremark PASS"
       ]
+    },
+    {
+      "date": "2026-08-07",
+      "trigger": "User-selected RSD cache-boundary scheme 3 with the SocRV address map and a single-precision-only software/hardware baseline",
+      "scope": [
+        "rtl/cpu/rsd/",
+        "rtl/cpu/cpu_subsystem.sv",
+        "rtl/filelist.f",
+        "fpga/boards/kintex7_competition/tcl/create_project.tcl",
+        "software/toolchain/common_flags.mk",
+        "software/profiles/rtthread-coremark.mk",
+        "software/bsp/drivers/drv_uart.c",
+        "software/bsp/include/drv_uart.h",
+        "software/rt-thread/port/board.c",
+        "software/applications/baremetal/store-load-forward/main.c",
+        "software/profiles/store-load-forward.mk",
+        "scripts/build_software.py",
+        "scripts/run_verilator.py",
+        "tb/cpp/common/sim_control.cpp"
+      ],
+      "backup": [
+        "backup/20260807_205017/",
+        "backup/20260807_205819/",
+        "backup/20260807_211343/",
+        "backup/20260807_211642/",
+        "backup/20260807_212437/",
+        "backup/20260807_215430/"
+      ],
+      "summary": "Replaced the active superscalar CPU with the RSD out-of-order core. RSD ICache and DCache boundaries independently drive the unchanged SocRV instruction and data HXI masters. The SoC address decoder, reset vector, memories, MMIO addresses, peripherals, clocks and top-level board interface remain unchanged. The inactive superscalar RTL was removed after RSD simulation and implementation sign-off.",
+      "integration_contract": {
+        "instruction_path": "RSD ICache -> rsd_icache_hxi_adapter -> instr_hxi",
+        "data_path": "RSD DCache -> rsd_dcache_hxi_adapter -> data_hxi",
+        "reset_pc": "0x00000000",
+        "code": "0x00000000, 64 KiB",
+        "data": "0x10000000, 64 KiB",
+        "timer": "0x20000000",
+        "uncached_mmio": "all SocRV MMIO is ordered through D-HXI",
+        "soc_interface_change": false,
+        "memory_map_change": false
+      },
+      "software": {
+        "march": "rv32imf_zicsr_zicntr_zifencei",
+        "mabi": "ilp32f",
+        "optimization": "-O3",
+        "floating_point_baseline": "IEEE-754 single precision only"
+      },
+      "targeted_fixes": [
+        "RSD reset is held for its cache/predictor RAM clearing sequence.",
+        "RV32M and FP32 execution RTL, FCSR/fflags and RT-Thread FP context handling are active.",
+        "Uncacheable DCache MSHR matching includes the 32-bit word offset, preventing MTIME_HI/MTIME_LO response aliasing without adding a full-address tag compare.",
+        "UART RX returns a character in the function return value, avoiding the old stack byte store/load window and reducing instructions.",
+        "The legacy one-event SocRV trace exports the RSD two-lane retirement count through order advances for non-intrusive IPC measurement.",
+        "Vivado portability fix changed the RAM bounds assertion from an unpacked-array comparison to ra[i] scalar comparison."
+      ],
+      "performance": {
+        "workload": "RT-Thread CoreMark command, 3 iterations",
+        "cycles": 951042,
+        "commits": 899616,
+        "ipc": 0.945926678,
+        "cycles_per_iteration": 317014,
+        "iterations_per_second_at_50mhz": 157.721741,
+        "exact_total_ticks": 950939
+      },
+      "verification": [
+        "Verilator RTL lint PASS",
+        "RV32UM PASS: 8/8",
+        "RV32UF PASS: 11/11",
+        "Full selected RV32IMF ISA set: 68/76 PASS; eight upstream RSD privileged/exception cases remain listed below",
+        "RT-Thread boot PASS",
+        "MSH help/ps/uptime and prompt recovery PASS",
+        "CoreMark 3 CRC PASS with decimal time; ps/help work after completion",
+        "Focused O3 byte sb->lbu/lb forwarding test PASS for four offsets and five byte patterns",
+        "Vivado synthesis, implementation, timing, DRC and bitstream checks PASS"
+      ],
+      "fpga": {
+        "device": "xc7k325tffg900-2",
+        "clock_hz": 50000000,
+        "wns_ns": 4.370,
+        "tns_ns": 0.0,
+        "failing_endpoints": 0,
+        "drc_errors": 0,
+        "drc_warnings": 66,
+        "luts": 26322,
+        "ffs": 13228,
+        "ramb36": 36,
+        "ramb18": 25,
+        "dsps": 18,
+        "bitstream_bytes": 11443717,
+        "bitstream_sha256": "11e55ae5beacf2369b03d9d2210c033403160d978c308cc7e01413b6a621cd94",
+        "xilinx_arithmetic_ip": "none; RV32M and FP32 are synthesized from RSD RTL in the shared filelist"
+      },
+      "licensing": {
+        "license": "rtl/cpu/rsd/LICENSE",
+        "credits": "rtl/cpu/rsd/CREDITS.md"
+      },
+      "known_limitations": [
+        "The selected upstream RSD ISA cases fence_i, csr, illegal, instret_overflow, ma_fetch, pmpaddr, scall and shamt do not yet pass the SocRV official-test harness.",
+        "The generated bitstream passed implementation, but physical-board UART and CoreMark 10000 remain a manual hardware validation step.",
+        "DRC warnings are limited to configuration-voltage metadata, DSP pipeline recommendations, a gated-clock check and asynchronous-reset BRAM address checks; there are no DRC errors."
+      ]
     }
   ],
   "assumptions": [
@@ -409,6 +509,7 @@
     "Two masters contending for the same HXI slave are serialized by per-slave round-robin arbitration.",
     "Code and data memory are each 64 KiB.",
     "Memory response latency parameters must be at least one cycle.",
-    "The superscalar core is the active and final CPU implementation; the demo core has been removed after full regression."
+    "The RSD out-of-order core is the active CPU implementation; the superscalar and demo cores are not present in the active RTL tree.",
+    "The formal software and FPGA baseline is RV32IMF/ilp32f/O3 with single-precision floating point only."
   ]
 }

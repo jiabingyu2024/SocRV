@@ -36,8 +36,8 @@ void rt_hw_console_output(const char *text)
 
 signed char rt_hw_console_getchar(void)
 {
-    char character;
-    if (uart_getc_nonblocking(&character)) {
+    int character = uart_getc_nonblocking();
+    if (character >= 0) {
         return (signed char)character;
     }
     /*

@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ud/ldst/firmware.elf",
-    "sha256": "ebe15aea15963808132365eb67c941473c175567408026946d624b3d29890e8d"
+    "sha256": "014964f89b39730696c756759a3ef2a2eb33c2be8c88226702d22d9032e36a8e"
   },
   "endianness": "little",
   "entry": "0x00000000",

@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32um/divu/firmware.elf",
-    "sha256": "2dbf187c8b486bed672ca4fc94de65ef8a4f09691136a63f0316626b32a90a81"
+    "sha256": "477d7ed813a4e7f59dd09ecfeb6049f23840d214b1dd5ca23b64080bbbb1330a"
   },
   "endianness": "little",
   "entry": "0x00000000",

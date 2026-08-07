@@ -36,6 +36,7 @@ SPIKE_BUILD_MANIFEST = repo_path(
 
 DEFAULT_CYCLES = {
     "smoke": 200_000,
+    "store-load-forward": 300_000,
     "trap-timer": 500_000,
     "rtthread": 2_000_000,
     "coremark-smoke": 50_000_000,
@@ -44,6 +45,7 @@ DEFAULT_CYCLES = {
 
 DEFAULT_TESTS = {
     "smoke": "baremetal-smoke",
+    "store-load-forward": "baremetal-store-load-forward",
     "trap-timer": "baremetal-trap-timer",
     "rtthread": "rtthread-smoke",
     "coremark-smoke": "coremark-baremetal-functional",
@@ -57,6 +59,7 @@ BENCHMARK_ITERATIONS = {
 
 DEFAULT_CHECKERS = {
     "smoke": "test-status-and-uart",
+    "store-load-forward": "test-status-and-uart",
     "trap-timer": "test-status",
     "rtthread": "test-status-and-uart",
     "coremark-smoke": "coremark-crc-and-test-status",
@@ -66,6 +69,7 @@ DEFAULT_CHECKERS = {
 
 DEFAULT_UART_EXPECT = {
     "smoke": ("SocRV smoke PASS",),
+    "store-load-forward": ("SocRV byte store-load forwarding PASS",),
     "rtthread": (
         "Thread Nano Operating System",
         "SocRV RT-Thread boot",
@@ -258,6 +262,8 @@ def build_model(*, force: bool = False, difftest: bool = False) -> None:
         f"build/verilator/{target}/obj_dir",
         "-o",
         "soc_sim",
+        "-j",
+        "4",
         "-CFLAGS",
         cflags,
     ]
@@ -290,7 +296,10 @@ def build_model(*, force: bool = False, difftest: bool = False) -> None:
             "-lboost_regex -lboost_system -pthread -ldl"
         )
         argv.extend(["-LDFLAGS", ldflags])
-    result = bash(in_repo(repo_path(), argv), timeout=240, check=False)
+    # RSD is substantially larger than the former demo core.  Its first
+    # generated-model build can exceed four minutes even though compilation is
+    # progressing normally; retain a bounded but realistic build timeout.
+    result = bash(in_repo(repo_path(), argv), timeout=900, check=False)
     print(result.stdout, end="")
     if result.stderr:
         print(result.stderr, end="", file=sys.stderr)

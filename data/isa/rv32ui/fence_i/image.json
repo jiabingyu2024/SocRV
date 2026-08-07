@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/fence_i/firmware.elf",
-    "sha256": "313055ecee2274397fe71673ede7792db1eec4d4bd072de22797f51dbf2d54d4"
+    "sha256": "c2c31e4658538e0ee59e2c4541fe6353345c925ad5a0ab86c7d98c543e7c0258"
   },
   "endianness": "little",
   "entry": "0x00000000",

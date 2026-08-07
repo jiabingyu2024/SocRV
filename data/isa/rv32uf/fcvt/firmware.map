@@ -1,8 +1,8 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccX3cuti.o
- .bss           0x00000000        0x0 /tmp/ccX3cuti.o
+ .text          0x00000000        0x0 /tmp/ccjsmP33.o
+ .bss           0x00000000        0x0 /tmp/ccjsmP33.o
 
 Memory Configuration
 
@@ -13,7 +13,7 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccX3cuti.o
+LOAD /tmp/ccjsmP33.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
@@ -21,7 +21,7 @@ LOAD /tmp/ccX3cuti.o
 
 .text           0x00000000      0x10c
  *(.text.init)
- .text.init     0x00000000      0x10c /tmp/ccX3cuti.o
+ .text.init     0x00000000      0x10c /tmp/ccjsmP33.o
                 0x00000000                _start
  *(.text .text.*)
  *(.rodata .rodata.*)
@@ -30,11 +30,11 @@ LOAD /tmp/ccX3cuti.o
 
 .rela.dyn       0x0000010c        0x0
  .rela.text.init
-                0x0000010c        0x0 /tmp/ccX3cuti.o
+                0x0000010c        0x0 /tmp/ccjsmP33.o
 
 .data           0x10000000       0x10
  *(.data .data.*)
- .data          0x10000000       0x10 /tmp/ccX3cuti.o
+ .data          0x10000000       0x10 /tmp/ccjsmP33.o
                 0x10000010                end_signature
                 0x10000010                begin_signature
  *(.sdata .sdata.*)
@@ -54,4 +54,4 @@ OUTPUT(build/isa-data/generated/rv32uf/fcvt/firmware.elf elf32-littleriscv)
 .riscv.attributes
                 0x00000000       0x3a
  .riscv.attributes
-                0x00000000       0x3a /tmp/ccX3cuti.o
+                0x00000000       0x3a /tmp/ccjsmP33.o

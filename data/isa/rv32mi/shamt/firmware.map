@@ -1,9 +1,9 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccbokGez.o
- .data          0x00000000        0x0 /tmp/ccbokGez.o
- .bss           0x00000000        0x0 /tmp/ccbokGez.o
+ .text          0x00000000        0x0 /tmp/ccSWMT8t.o
+ .data          0x00000000        0x0 /tmp/ccSWMT8t.o
+ .bss           0x00000000        0x0 /tmp/ccSWMT8t.o
 
 Memory Configuration
 
@@ -14,7 +14,7 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccbokGez.o
+LOAD /tmp/ccSWMT8t.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
@@ -22,7 +22,7 @@ LOAD /tmp/ccbokGez.o
 
 .text           0x00000000       0xb0
  *(.text.init)
- .text.init     0x00000000       0xb0 /tmp/ccbokGez.o
+ .text.init     0x00000000       0xb0 /tmp/ccSWMT8t.o
                 0x00000000                _start
                 0x00000098                mtvec_handler
  *(.text .text.*)
@@ -32,7 +32,7 @@ LOAD /tmp/ccbokGez.o
 
 .rela.dyn       0x000000b0        0x0
  .rela.text.init
-                0x000000b0        0x0 /tmp/ccbokGez.o
+                0x000000b0        0x0 /tmp/ccSWMT8t.o
 
 .data           0x10000000        0x0
  *(.data .data.*)
@@ -51,6 +51,6 @@ LOAD /tmp/ccbokGez.o
 OUTPUT(build/isa-data/generated/rv32mi/shamt/firmware.elf elf32-littleriscv)
 
 .riscv.attributes
-                0x00000000       0x55
+                0x00000000       0x50
  .riscv.attributes
-                0x00000000       0x55 /tmp/ccbokGez.o
+                0x00000000       0x50 /tmp/ccSWMT8t.o

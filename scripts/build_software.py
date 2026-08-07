@@ -24,6 +24,9 @@ class SoftwareProfile:
 
 PROFILES = {
     "smoke": SoftwareProfile("baremetal", (), 300_000),
+    "store-load-forward": SoftwareProfile(
+        "baremetal-store-load-forward", (), 300_000
+    ),
     "trap-timer": SoftwareProfile("baremetal", (), 500_000),
     "rtthread": SoftwareProfile("rtthread", ("rt-thread",), 2_500_000),
     "coremark-smoke": SoftwareProfile(
@@ -153,7 +156,7 @@ def build_profile(
     elf = output / "firmware.elf"
     if not elf.is_file():
         raise RuntimeError(f"software build did not produce {elf}")
-    entry, _segments = parse_elf32_little(elf)
+    entry, segments = parse_elf32_little(elf)
 
     memory_map_path = repo_path("data", "soc", "memory_map.json")
     memory_map = json.loads(memory_map_path.read_text(encoding="utf-8"))
@@ -178,13 +181,27 @@ def build_profile(
         ["riscv64-unknown-elf-size", str(elf.relative_to(repo_path()).as_posix())]
     )
     size = parse_size(size_output)
+    code_base = int(memory_map["regions"]["CODE"]["base"], 0)
     code_size = int(memory_map["regions"]["CODE"]["size"], 0)
+    data_base = int(memory_map["regions"]["DATA"]["base"], 0)
     data_size = int(memory_map["regions"]["DATA"]["size"], 0)
-    if size["text"] > code_size:
-        raise RuntimeError(f"{profile_name}: text exceeds CODE capacity")
-    if size["data"] + size["bss"] > data_size - 8192:
+    region_used = {"CODE": 0, "DATA": 0}
+    for segment in segments:
+        segment_end = segment.address + segment.memory_size
+        if code_base <= segment.address and segment_end <= code_base + code_size:
+            region_used["CODE"] = max(region_used["CODE"], segment_end - code_base)
+        elif data_base <= segment.address and segment_end <= data_base + data_size:
+            region_used["DATA"] = max(region_used["DATA"], segment_end - data_base)
+        else:
+            raise RuntimeError(
+                f"{profile_name}: load segment 0x{segment.address:08x}+"
+                f"0x{segment.memory_size:x} is outside CODE/DATA"
+            )
+    if region_used["CODE"] > code_size:
+        raise RuntimeError(f"{profile_name}: CODE load image exceeds capacity")
+    if region_used["DATA"] > data_size - 8192:
         raise RuntimeError(
-            f"{profile_name}: initialized/uninitialized data reaches reserved stack"
+            f"{profile_name}: DATA load image reaches reserved stack"
         )
 
     write_json_atomic(
@@ -196,6 +213,8 @@ def build_profile(
             "data": size["data"],
             "bss": size["bss"],
             "total": size["total"],
+            "code_used": region_used["CODE"],
+            "data_used": region_used["DATA"],
             "code_capacity": code_size,
             "data_capacity": data_size,
             "reserved_stack": 8192,

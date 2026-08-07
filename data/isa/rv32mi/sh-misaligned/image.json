@@ -1,13 +1,13 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/sh-misaligned/firmware.elf",
-    "sha256": "e4e17e26d6ab55ee383f03de075ab27b6c0e27415c4092284eaf2677c86d69d2"
+    "sha256": "c435705308dea1f18d1797d5544b89c448a9058f1f4936781599c73a4660e19e"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32imfd_zicsr_zicntr_zifencei",
+    "march": "rv32imf_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",

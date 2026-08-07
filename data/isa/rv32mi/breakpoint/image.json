@@ -1,13 +1,13 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/breakpoint/firmware.elf",
-    "sha256": "40b308b0527cae3e8cd6cd2286aa0711cee956490e16c3c40c7768fae648aafe"
+    "sha256": "6d802c93b75fad479c9d2789f9eccee593b5280d439e224bf56b8c98de30f8cc"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32imfd_zicsr_zicntr_zifencei",
+    "march": "rv32imf_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",

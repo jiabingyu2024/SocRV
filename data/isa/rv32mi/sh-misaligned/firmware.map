@@ -1,8 +1,8 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccZi5YPk.o
- .bss           0x00000000        0x0 /tmp/ccZi5YPk.o
+ .text          0x00000000        0x0 /tmp/cc41FUTD.o
+ .bss           0x00000000        0x0 /tmp/cc41FUTD.o
 
 Memory Configuration
 
@@ -13,7 +13,7 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccZi5YPk.o
+LOAD /tmp/cc41FUTD.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
@@ -21,7 +21,7 @@ LOAD /tmp/ccZi5YPk.o
 
 .text           0x00000000       0xf8
  *(.text.init)
- .text.init     0x00000000       0xf8 /tmp/ccZi5YPk.o
+ .text.init     0x00000000       0xf8 /tmp/cc41FUTD.o
                 0x00000000                _start
                 0x000000e4                mtvec_handler
  *(.text .text.*)
@@ -31,11 +31,11 @@ LOAD /tmp/ccZi5YPk.o
 
 .rela.dyn       0x000000f8        0x0
  .rela.text.init
-                0x000000f8        0x0 /tmp/ccZi5YPk.o
+                0x000000f8        0x0 /tmp/cc41FUTD.o
 
 .data           0x10000000       0x10
  *(.data .data.*)
- .data          0x10000000       0x10 /tmp/ccZi5YPk.o
+ .data          0x10000000       0x10 /tmp/cc41FUTD.o
                 0x10000000                begin_signature
                 0x10000010                end_signature
  *(.sdata .sdata.*)
@@ -53,6 +53,6 @@ LOAD /tmp/ccZi5YPk.o
 OUTPUT(build/isa-data/generated/rv32mi/sh-misaligned/firmware.elf elf32-littleriscv)
 
 .riscv.attributes
-                0x00000000       0x55
+                0x00000000       0x50
  .riscv.attributes
-                0x00000000       0x55 /tmp/ccZi5YPk.o
+                0x00000000       0x50 /tmp/cc41FUTD.o

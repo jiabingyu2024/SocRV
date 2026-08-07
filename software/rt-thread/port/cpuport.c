@@ -42,9 +42,7 @@ rt_uint8_t *rt_hw_stack_init(void       *tentry,
     int                i;
 
     stk  = stack_addr + sizeof(rt_ubase_t);
-    /* Keep the restored thread stack ABI-aligned.  RV32D context frames use
-     * FLD/FSD, so the historical REGBYTES (4-byte) alignment is insufficient.
-     */
+    /* Keep every restored RV32IMF thread stack ABI-aligned. */
     stk  = (rt_uint8_t *)RT_ALIGN_DOWN((rt_ubase_t)stk, 16);
     stk -= sizeof(struct rt_hw_stack_frame);
 

@@ -7,7 +7,7 @@
       "rv32mi",
       "rv32um"
     ],
-    "floating_point_selection": "double"
+    "floating_point_selection": "single"
   },
   "suites": [
     {
@@ -67,7 +67,7 @@
     },
     {
       "name": "rv32mi",
-      "march": "rv32imfd_zicsr_zicntr_zifencei",
+      "march": "rv32imf_zicsr_zicntr_zifencei",
       "mabi": "ilp32",
       "generate": true,
       "tests": [

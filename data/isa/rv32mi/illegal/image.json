@@ -1,13 +1,13 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/illegal/firmware.elf",
-    "sha256": "40e42fca16b6c089aa641847dbca1f1dfa58333e191a7be43ecac733b06e55f6"
+    "sha256": "d82d6167dac443b5b50bd815d6a1a8fc157e1926a5cad42661cde1d6971430cc"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32imfd_zicsr_zicntr_zifencei",
+    "march": "rv32imf_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",

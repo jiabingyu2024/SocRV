@@ -3,11 +3,11 @@
 #define SOCRV_SOC_CONFIG_H
 
 #define SOCRV_XLEN 32u
-#define SOCRV_MARCH "rv32imfd_zicsr_zicntr_zifencei"
-#define SOCRV_MABI "ilp32d"
-#define SOCRV_CPU_IMPLEMENTATION "superscalar_cpu_core"
+#define SOCRV_MARCH "rv32imf_zicsr_zicntr_zifencei"
+#define SOCRV_MABI "ilp32f"
+#define SOCRV_CPU_IMPLEMENTATION "rsd_cpu_core_adapter"
 #define SOCRV_TARGET_INTEGER_MARCH "rv32im_zicsr_zicntr_zifencei"
-#define SOCRV_TARGET_FP_SELECTION "double"
+#define SOCRV_TARGET_FP_SELECTION "single"
 #define SOCRV_TARGET_SINGLE_MARCH "rv32imf_zicsr_zicntr_zifencei"
 #define SOCRV_TARGET_DOUBLE_MARCH "rv32imfd_zicsr_zicntr_zifencei"
 #define SOCRV_SOC_CLOCK_HZ 50000000u

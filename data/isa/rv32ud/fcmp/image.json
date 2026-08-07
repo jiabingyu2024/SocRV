@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ud/fcmp/firmware.elf",
-    "sha256": "04b79d5a649a66f9f61de9fe1c5e6cbfc16788e61fb5d59ec72a79031c71a589"
+    "sha256": "8bba6006a7c7ae49675fd73da9505cab599f480ccd0291b1fe161282acfeddb8"
   },
   "endianness": "little",
   "entry": "0x00000000",

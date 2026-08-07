@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/bltu/firmware.elf",
-    "sha256": "8e70ac0e337673600119d033e2a27754ec565c78c89e488184daf038c3c417c5"
+    "sha256": "16e159c1924cb1b983d859d5115eab0988db458de016e5dbcd2c5569fd85f5a8"
   },
   "endianness": "little",
   "entry": "0x00000000",

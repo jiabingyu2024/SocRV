@@ -16,7 +16,6 @@ SECTIONS
     KEEP(*(.text.start))
     KEEP(*(.text.trap))
     *(.text .text.*)
-    *(.rodata .rodata.*)
     . = ALIGN(4);
     __rt_init_start = .;
     KEEP(*(SORT(.rti_fn.*)))
@@ -28,6 +27,15 @@ SECTIONS
     . = ALIGN(4);
     __code_end = .;
   } > CODE
+
+  /* SocRV has independent instruction and data memories.  Keep executable
+     code in IROM and place read-only constants in DRAM so an O3 RT-Thread +
+     CoreMark image fits the fixed 64 KiB IROM without changing the map. */
+  .rodata : ALIGN(4)
+  {
+    *(.rodata .rodata.*)
+    . = ALIGN(4);
+  } > DATA
 
   .data : ALIGN(4)
   {

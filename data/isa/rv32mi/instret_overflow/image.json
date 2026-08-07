@@ -1,13 +1,13 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/instret_overflow/firmware.elf",
-    "sha256": "d7ee5f6f11cd0dc10dcd1e755ef35df87ff9f97afd413b05bacda5b5f22cebe7"
+    "sha256": "bf3608536317fb5ad21b2559b58c00c4b36b7b230aece5e7d8fb4e45594df04d"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32imfd_zicsr_zicntr_zifencei",
+    "march": "rv32imf_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",

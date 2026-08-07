@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32um/mulhu/firmware.elf",
-    "sha256": "56dc7e7b33261a5b2c5119ab9434a0bb6b4fbc0836f2d39e11d1cb75385cf82b"
+    "sha256": "c78992728508a34fb64dfb763f39c378c8f1d1eb09e23fff0b4cb6f171ba8c2a"
   },
   "endianness": "little",
   "entry": "0x00000000",

@@ -32,6 +32,7 @@ SimResult SimControl::run() {
     std::size_t uart_commands_sent = 0;
     DiffTestChecker difftest(config_);
     std::uint32_t last_commit_pc = 0;
+    std::uint64_t next_retired_order = 0;
     bool difftest_fault_injected = false;
 
     dut_.set_reset(false);
@@ -72,7 +73,15 @@ SimResult SimControl::run() {
                 last_commit_pc = event.pc_rdata;
             }
             if (event.valid && event.retired) {
-                ++retired_count;
+                if (event.order >= next_retired_order) {
+                    retired_count += static_cast<std::uint32_t>(
+                        event.order - next_retired_order + 1u);
+                } else {
+                    // Preserve compatibility with a core that does not expose
+                    // a monotonic architectural order counter.
+                    ++retired_count;
+                }
+                next_retired_order = event.order + 1u;
             }
         }
         if (!difftest_fault_injected &&

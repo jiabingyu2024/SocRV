@@ -28,6 +28,13 @@ proc read_socrv_filelist {repo_dir filelist_path} {
             set include_path [file normalize [file join $repo_dir $incdir]]
             set current_dirs [get_property include_dirs [current_fileset]]
             set_property include_dirs [concat $current_dirs [list $include_path]] [current_fileset]
+        } elseif {[regexp {^\+define\+([^=]+)(?:=(.*))?$} $line -> name value]} {
+            set define $name
+            if {$value ne ""} {
+                append define "=" $value
+            }
+            set current_defines [get_property verilog_define [current_fileset]]
+            set_property verilog_define [concat $current_defines [list $define]] [current_fileset]
         } else {
             set source_path [file normalize [file join $repo_dir $line]]
             if {![file exists $source_path]} {

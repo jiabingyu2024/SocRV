@@ -41,26 +41,26 @@ void uart_puts(const char *text)
     }
 }
 
-int uart_getc_nonblocking(char *character)
+int uart_getc_nonblocking(void)
 {
     uint32_t status = mmio_read32(
         SOCRV_UART_BASE + SOCRV_UART_STATUS_OFFSET
     );
     if ((status & SOCRV_UART_STATUS_RX_VALID) == 0u) {
-        return 0;
+        return -1;
     }
-    *character = (char)mmio_read32(
+    return (int)(mmio_read32(
         SOCRV_UART_BASE + SOCRV_UART_RXDATA_OFFSET
-    );
-    return 1;
+    ) & 0xffu);
 }
 
 char uart_getc(void)
 {
-    char character;
-    while (!uart_getc_nonblocking(&character)) {
-    }
-    return character;
+    int character;
+    do {
+        character = uart_getc_nonblocking();
+    } while (character < 0);
+    return (char)character;
 }
 
 void uart_enable_rx_irq(int enable)

@@ -42,6 +42,8 @@
 #define FINSH_USING_HISTORY
 #define FINSH_HISTORY_LINES 3
 #define MSH_USING_BUILT_IN_COMMANDS
+/* Keep help/ps/coremark but omit the large generic `list` command. */
+#define SOCRV_FINSH_MINIMAL
 
 #define RT_USING_USER_MAIN
 #define RT_MAIN_THREAD_STACK_SIZE 2048

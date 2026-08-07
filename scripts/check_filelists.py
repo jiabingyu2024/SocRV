@@ -27,6 +27,10 @@ def expand(path: Path, seen_lists: set[Path], sources: list[Path]) -> None:
                     f"{path}:{line_number}: missing include directory "
                     f"{include_dir}"
                 )
+        elif line.startswith("+define+"):
+            # Compile-time definitions are consumed by Verilator/Vivado, not
+            # source paths that should be checked for filesystem existence.
+            continue
         elif line.startswith("-"):
             continue
         else:

@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32um/remu/firmware.elf",
-    "sha256": "56553a52b3fed0bdfb5314a011e4e1f776840501b134927036133c7373b45c13"
+    "sha256": "a62155d05d8a25174309a7f09fb5747db8078db5f54604888f74a1fdc6554698"
   },
   "endianness": "little",
   "entry": "0x00000000",

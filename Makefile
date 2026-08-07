@@ -7,7 +7,7 @@ ISA_GATE ?= current
 COREMARK_ITERATIONS ?= 3
 DIFFTEST ?= 0
 DIFFTEST_MODE ?= ram-strict
-DIFFTEST_ISA ?= rv32im_zicsr_zicntr_zifencei
+DIFFTEST_ISA ?= rv32imf_zicsr_zicntr_zifencei
 
 .DEFAULT_GOAL := help
 

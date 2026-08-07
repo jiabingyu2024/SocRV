@@ -1,8 +1,8 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccLuoTm6.o
- .bss           0x00000000        0x0 /tmp/ccLuoTm6.o
+ .text          0x00000000        0x0 /tmp/ccmxxbNX.o
+ .bss           0x00000000        0x0 /tmp/ccmxxbNX.o
 
 Memory Configuration
 
@@ -13,7 +13,7 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccLuoTm6.o
+LOAD /tmp/ccmxxbNX.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
@@ -21,7 +21,7 @@ LOAD /tmp/ccLuoTm6.o
 
 .text           0x00000000      0x124
  *(.text.init)
- .text.init     0x00000000      0x124 /tmp/ccLuoTm6.o
+ .text.init     0x00000000      0x124 /tmp/ccmxxbNX.o
                 0x00000000                _start
                 0x00000104                mtvec_handler
  *(.text .text.*)
@@ -31,11 +31,11 @@ LOAD /tmp/ccLuoTm6.o
 
 .rela.dyn       0x00000124        0x0
  .rela.text.init
-                0x00000124        0x0 /tmp/ccLuoTm6.o
+                0x00000124        0x0 /tmp/ccmxxbNX.o
 
 .data           0x10000000       0x10
  *(.data .data.*)
- .data          0x10000000       0x10 /tmp/ccLuoTm6.o
+ .data          0x10000000       0x10 /tmp/ccmxxbNX.o
                 0x10000000                begin_signature
                 0x10000010                end_signature
  *(.sdata .sdata.*)
@@ -53,6 +53,6 @@ LOAD /tmp/ccLuoTm6.o
 OUTPUT(build/isa-data/generated/rv32mi/lw-misaligned/firmware.elf elf32-littleriscv)
 
 .riscv.attributes
-                0x00000000       0x55
+                0x00000000       0x50
  .riscv.attributes
-                0x00000000       0x55 /tmp/ccLuoTm6.o
+                0x00000000       0x50 /tmp/ccmxxbNX.o
