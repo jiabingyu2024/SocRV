@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-08-08T11:23:38+08:00",
+  "trigger": "方案 A：将 biRISC-V I/D Cache 的 AXI burst 后端改为 SocRV HXI 逐 word 事务",
+  "files_modified": [
+    {
+      "path": "rtl/cpu/biriscv/icache/icache.v",
+      "lines_changed": "HXI refill backend and refill error handling",
+      "change_type": "port_interface_and_logic_change"
+    },
+    {
+      "path": "rtl/cpu/biriscv/dcache/dcache.v",
+      "lines_changed": "physical-memory backend integration",
+      "change_type": "port_interface_change"
+    },
+    {
+      "path": "rtl/cpu/biriscv/dcache/dcache_hxi.v",
+      "lines_changed": "new buffered IDLE/REQ/RSP adapter",
+      "change_type": "new_module"
+    },
+    {
+      "path": "rtl/cpu/biriscv/core/riscv_core.v",
+      "lines_changed": "interrupt and preliminary commit export",
+      "change_type": "port_interface_change"
+    },
+    {
+      "path": "rtl/cpu/biriscv/core/biriscv_csr.v",
+      "lines_changed": "separate software/timer/external interrupt inputs",
+      "change_type": "port_interface_change"
+    },
+    {
+      "path": "rtl/cpu/biriscv/core/biriscv_csr_regfile.v",
+      "lines_changed": "MSIP input support",
+      "change_type": "logic_change"
+    },
+    {
+      "path": "rtl/cpu/biriscv/core/biriscv_issue.v",
+      "lines_changed": "preliminary single-slot commit export",
+      "change_type": "port_interface_change"
+    },
+    {
+      "path": "rtl/cpu/biriscv/biriscv_cpu_core.sv",
+      "lines_changed": "new SocRV HXI/core wrapper",
+      "change_type": "new_module"
+    },
+    {
+      "path": "rtl/cpu/cpu_subsystem.sv",
+      "lines_changed": "CPU implementation selection",
+      "change_type": "integration_change"
+    },
+    {
+      "path": "rtl/filelist.f",
+      "lines_changed": "biRISC-V source inventory",
+      "change_type": "filelist_change"
+    }
+  ],
+  "cascade_scope": "full_reverify",
+  "notes": "Single-issue bring-up is selected. HXI cache paths elaborate without UNOPTFLAT. The current commit trace is preliminary; next-PC, architectural cause/tval, memory trace, CSR snapshots and counters still require retirement-accurate exports before final DiffTest."
+}

@@ -27,6 +27,7 @@ public:
 
     bool uart_tx() const;
     bool commit_valid() const;
+    std::uint32_t retired_count() const;
     std::uint32_t commit_pc() const;
     std::vector<ArchEvent> arch_events() const;
     std::vector<IrqEvent> irq_events() const;

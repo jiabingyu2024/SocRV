@@ -22,6 +22,7 @@ module fpga_top #(
   logic test_pass;
   logic [31:0] test_code;
   cpu_types_pkg::commit_trace_t commit;
+  logic [1:0] retire_count;
   logic cpu_fault;
 
   assign gpio_i = '0;
@@ -50,6 +51,7 @@ module fpga_top #(
     .test_pass_o(test_pass),
     .test_code_o(test_code),
     .commit_o(commit),
+    .retire_count_o(retire_count),
     .cpu_fault_o(cpu_fault)
   );
 
@@ -83,4 +85,7 @@ module fpga_top #(
     .virtual_led_o(virtual_led),
     .virtual_seg_o(virtual_seg)
   );
+
+  logic unused;
+  assign unused = ^retire_count;
 endmodule

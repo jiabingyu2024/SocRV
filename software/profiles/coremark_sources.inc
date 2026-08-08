@@ -16,4 +16,5 @@ COREMARK_CFLAGS := \
 	-DITERATIONS=$(COREMARK_ITERATIONS) \
 	-DCOREMARK_TICKS_PER_SEC=$(COREMARK_TICKS_PER_SEC) \
 	-DFLAGS_STR=\"$(COREMARK_FLAGS_TEXT)\" \
-	-Wno-error=maybe-uninitialized
+	-Wno-error=maybe-uninitialized \
+	-Wno-error=unused-parameter

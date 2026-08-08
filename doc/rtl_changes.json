@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-08-08T12:46:15+08:00",
+  "trigger": "Enable biRISC-V dual issue; fix HXI I-cache refill placement found by smoke simulation",
+  "files_modified": [
+    {"path": "rtl/cpu/cpu_subsystem.sv", "lines_changed": "enable dual issue and export retire_count_o", "change_type": "port_interface_and_parameter_change"},
+    {"path": "rtl/cpu/biriscv/biriscv_cpu_core.sv", "lines_changed": "dual-slot event/order accounting and retire_count_o", "change_type": "port_interface_and_logic_change"},
+    {"path": "rtl/cpu/biriscv/core/biriscv_issue.v", "lines_changed": "document slot-1 performance export contract", "change_type": "comment_only"},
+    {"path": "rtl/soc/soc_core.sv", "lines_changed": "propagate retire_count_o", "change_type": "port_interface_change"},
+    {"path": "rtl/soc/soc_top_generic.sv", "lines_changed": "propagate retire_count_o", "change_type": "port_interface_change"},
+    {"path": "tb/soc/soc_sim_top.sv", "lines_changed": "export retire_count_o to Verilator", "change_type": "simulation_interface_change"},
+    {"path": "fpga/boards/kintex7_competition/rtl/fpga_top.sv", "lines_changed": "connect retire_count_o explicitly", "change_type": "integration_change"},
+    {"path": "tb/cpp/adapter/soc_dut_adapter.h", "lines_changed": "declare retired_count accessor", "change_type": "simulation_interface_change"},
+    {"path": "tb/cpp/adapter/soc_dut_adapter.cpp", "lines_changed": "read dual-slot retirement count", "change_type": "simulation_interface_change"},
+    {"path": "tb/cpp/common/sim_control.cpp", "lines_changed": "use RTL retirement count for IPC statistics", "change_type": "performance_accounting_change"},
+    {"path": "rtl/cpu/biriscv/icache/icache.v", "lines_changed": "start serialized HXI refill writes at the 32-byte cache-line base", "change_type": "logic_fix"},
+    {"path": "rtl/cpu/biriscv/dcache/dcache_hxi.v", "lines_changed": "serialize read bursts into per-word HXI requests and complete write bursts after the final word response", "change_type": "logic_fix"}
+  ],
+  "cascade_scope": "full_reverify",
+  "notes": "The performance path counts 0, 1, or 2 retired instructions per cycle. DiffTest remains single-event and does not validate slot 1 until a second architectural trace payload is added. The I-cache fix prevents a miss at a nonzero word offset from rotating refill data within the line. The D-cache bridge now honors burst length while preserving the one-outstanding HXI contract."
+}

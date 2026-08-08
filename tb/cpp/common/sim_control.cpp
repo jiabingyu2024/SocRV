@@ -66,13 +66,10 @@ SimResult SimControl::run() {
         }
         std::vector<ArchEvent> arch_events = dut_.arch_events();
         const std::vector<IrqEvent> irq_events = dut_.irq_events();
-        std::uint32_t retired_count = 0;
+        std::uint32_t retired_count = dut_.retired_count();
         for (const ArchEvent& event : arch_events) {
             if (event.valid) {
                 last_commit_pc = event.pc_rdata;
-            }
-            if (event.valid && event.retired) {
-                ++retired_count;
             }
         }
         if (!difftest_fault_injected &&

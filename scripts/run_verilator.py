@@ -66,6 +66,7 @@ DEFAULT_CHECKERS = {
 
 DEFAULT_UART_EXPECT = {
     "smoke": ("SocRV smoke PASS",),
+    "coremark-smoke": ("Correct operation validated",),
     "rtthread": (
         "Thread Nano Operating System",
         "SocRV RT-Thread boot",
@@ -82,6 +83,7 @@ DEFAULT_UART_REJECT = {
         "ERROR! list crc",
         "ERROR! matrix crc",
         "ERROR! state crc",
+        "Errors detected",
         "Cannot validate operation",
     ),
     "rtthread-coremark": (

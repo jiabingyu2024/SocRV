@@ -4,7 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifndef HAS_FLOAT
 #define HAS_FLOAT 1
+#endif
 #define HAS_TIME_H 0
 #define USE_CLOCK 0
 #define HAS_STDIO 0

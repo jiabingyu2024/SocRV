@@ -66,6 +66,10 @@ bool SocDutAdapter::commit_valid() const {
     return dut_->commit_valid_o;
 }
 
+std::uint32_t SocDutAdapter::retired_count() const {
+    return dut_->retire_count_o;
+}
+
 std::uint32_t SocDutAdapter::commit_pc() const {
     return dut_->commit_pc_o;
 }

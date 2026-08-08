@@ -2,7 +2,7 @@ include profiles/baremetal_sources.inc
 
 COREMARK_ITERATIONS := 1
 COREMARK_TICKS_PER_SEC := 1
-COREMARK_FLAGS_TEXT := O3-rv32imfd_zicsr_zicntr_zifencei-ilp32d-functional-smoke
+COREMARK_FLAGS_TEXT := O3-rv32im_zicsr_zicntr_zifencei-ilp32-biriscv-functional-smoke
 include profiles/coremark_sources.inc
 
 PROFILE_KIND := coremark-baremetal-functional

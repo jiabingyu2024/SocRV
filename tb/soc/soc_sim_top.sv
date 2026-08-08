@@ -7,6 +7,7 @@ module soc_sim_top (
   output logic test_pass_o,
   output logic [31:0] test_code_o,
   output logic cpu_fault_o,
+  output logic [1:0] retire_count_o,
   output logic commit_valid_o,
   output logic commit_retired_o,
   output logic [63:0] commit_order_o,
@@ -104,6 +105,7 @@ module soc_sim_top (
     .test_pass_o,
     .test_code_o,
     .commit_o(commit),
+    .retire_count_o,
     .cpu_fault_o
   );
 
