@@ -14,6 +14,7 @@ def find_vivado() -> Path:
     override = os.environ.get("VIVADO")
     candidates = [
         Path(override) if override else None,
+        Path(r"D:\Xilinx\Vivado\2023.2\bin\vivado.bat"),
         Path(r"D:\AppMajor\xilinx\Vivado\2023.2\bin\vivado.bat"),
     ]
     for candidate in candidates:
@@ -30,11 +31,23 @@ def main() -> int:
         default="rtthread-coremark",
     )
     parser.add_argument("--jobs", type=int, default=4)
+    parser.add_argument(
+        "--build-tag",
+        help="append a stable iteration tag to the Vivado build directory",
+    )
+    parser.add_argument(
+        "--allow-timing-violations",
+        action="store_true",
+        help="record reports and bitstream even when timing is not met",
+    )
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
-    build_root = repo_path("build", "vivado", f"kintex7-{args.profile}")
+    suffix = f"-{args.build_tag}" if args.build_tag else ""
+    build_root = repo_path(
+        "build", "vivado", f"kintex7-{args.profile}{suffix}"
+    )
     if args.check_only:
-        check(build_root)
+        check(build_root, require_timing=not args.allow_timing_violations)
         return 0
 
     _, image_dir = build_profile(args.profile)
@@ -46,6 +59,7 @@ def main() -> int:
         build_root / "result.json",
         project_dir / "socrv.runs" / "impl_1" / "fpga_top.bit",
         project_dir / "reports" / "post_impl_timing_summary.rpt",
+        project_dir / "reports" / "post_impl_timing_paths.rpt",
         project_dir / "reports" / "post_impl_drc.rpt",
     ]
     for artifact in stale_artifacts:
@@ -65,7 +79,7 @@ def main() -> int:
     completed = subprocess.run(command, cwd=build_root, check=False)
     if completed.returncode != 0:
         parser.error(f"Vivado failed with exit code {completed.returncode}")
-    check(build_root)
+    check(build_root, require_timing=not args.allow_timing_violations)
     return 0
 
 

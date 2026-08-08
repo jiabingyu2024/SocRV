@@ -54,5 +54,6 @@ read_xdc [file join $repo_dir fpga boards kintex7_competition constraints cdc.xd
 set_property top fpga_top [current_fileset]
 set_property generic [list "CODE_MEM_FILE=$code_mem" "DATA_MEM_FILE=$data_mem"] [current_fileset]
 set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY rebuilt [get_runs synth_1]
+set_property STRATEGY Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
 update_compile_order -fileset sources_1
 puts "SOCRV_PROJECT=[get_property DIRECTORY [current_project]]"

@@ -11,7 +11,7 @@ module board_clock_reset (
     .clk_200mhz_p_i(sys_clk_p_i),
     .clk_200mhz_n_i(sys_clk_n_i),
     .reset_i(1'b0),
-    .clk_50mhz_o(soc_clk_o),
+    .clk_soc_o(soc_clk_o),
     .locked_o(mmcm_locked)
   );
 

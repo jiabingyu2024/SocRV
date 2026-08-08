@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "soc_config.h"
+
 #define HAS_FLOAT 1
 #define HAS_TIME_H 0
 #define USE_CLOCK 0
@@ -41,7 +43,7 @@ typedef uint64_t CORETIMETYPE;
 #define MAIN_HAS_NORETURN 0
 
 #ifndef COREMARK_TICKS_PER_SEC
-#define COREMARK_TICKS_PER_SEC 50000000u
+#define COREMARK_TICKS_PER_SEC SOCRV_TIMER_CLOCK_HZ
 #endif
 
 typedef struct CORE_PORTABLE_S {

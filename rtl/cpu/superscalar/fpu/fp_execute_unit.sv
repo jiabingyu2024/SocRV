@@ -24,12 +24,12 @@ module fp_execute_unit (
 
     // Split the wide FP64 datapaths at FPnew's intended internal boundaries.
     // ADDMUL/CONV also use an output register so result/flag generation cannot
-    // form a single path through the CPU scoreboard at the 50 MHz FPGA target.
+    // form a single path through the CPU scoreboard at the 120 MHz FPGA target.
     localparam fpu_implementation_t SOCRV_PIPELINED = '{
-        PipeRegs:   '{'{default: 3}, // ADDMUL: input, internal and output
+        PipeRegs:   '{'{default: 5}, // ADDMUL: input, pre-add, internal, pre-round and output
                       '{default: 1}, // DIVSQRT: output
                       '{default: 1}, // NONCOMP: input
-                      '{default: 3}},// CONV: input, internal and output
+                      '{default: 4}},// CONV: input, internal, pre-round and output
         UnitTypes:  '{'{default: PARALLEL}, // ADDMUL
                       '{default: MERGED},   // DIVSQRT
                       '{default: PARALLEL}, // NONCOMP

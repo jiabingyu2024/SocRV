@@ -1,7 +1,7 @@
 include profiles/baremetal_sources.inc
 
 COREMARK_ITERATIONS ?= 2000
-COREMARK_TICKS_PER_SEC := 50000000
+COREMARK_TICKS_PER_SEC := $(SOCRV_TIMER_CLOCK_HZ)
 COREMARK_FLAGS_TEXT := O3-rv32imfd_zicsr_zicntr_zifencei-ilp32d-formal-baremetal
 include profiles/coremark_sources.inc
 

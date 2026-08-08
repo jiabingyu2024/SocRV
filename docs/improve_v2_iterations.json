@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "target_version": "improve_v2",
+  "branch": "dev-improve-v1",
+  "target_frequency_mhz": 120,
+  "implementation_strategy": "Performance_ExplorePostRoutePhysOpt",
+  "cycle_limit": 4000000,
+  "iterations": [
+    {
+      "version": "v1.1",
+      "summary": "Unmodified efc7f0da baseline and WSL cycle reproduction.",
+      "archive": "backup/improve_v1/v1.1_baseline/manifest.json",
+      "wns_ns": -2.076,
+      "tns_ns": -746.495,
+      "failing_endpoints": 1528,
+      "coremark_exact_ticks": 3899524,
+      "coremark_window_cycles": 3899577,
+      "status": "baseline"
+    },
+    {
+      "version": "v1.2",
+      "summary": "Rejected merged FP32/FP64 FMA area-sharing trial; functional but substantially worse TNS.",
+      "archive": "backup/improve_v1/v1.2_merged/manifest.json",
+      "wns_ns": -2.089,
+      "tns_ns": -1227.061,
+      "failing_endpoints": 1797,
+      "coremark_exact_ticks": 3899511,
+      "coremark_window_cycles": 3899564,
+      "status": "rejected"
+    },
+    {
+      "version": "v1.3",
+      "summary": "Accepted fourth ADDMUL pipeline stage placed before the wide FMA adder; PARALLEL FMA and branch predictor retained.",
+      "archive": "backup/improve_v1/v1.3_fma_preadd/manifest.json",
+      "wns_ns": -0.431,
+      "tns_ns": -46.846,
+      "failing_endpoints": 280,
+      "coremark_exact_ticks": 3899511,
+      "coremark_window_cycles": 3899564,
+      "status": "current_best"
+    },
+    {
+      "version": "v1.4",
+      "summary": "Reset-free FMA pre-adder payload and first fully unified 120 MHz hardware/software build; function passed but timing was rejected.",
+      "archive": "backup/improve_v1/v1.4_resetfree_120mhz/manifest.json",
+      "wns_ns": -2.384,
+      "tns_ns": -5298.901,
+      "failing_endpoints": 4209,
+      "coremark_exact_ticks": 3899508,
+      "coremark_window_cycles": 3899561,
+      "status": "rejected_for_timing"
+    },
+    {
+      "version": "v1.5",
+      "summary": "Selected final improve_v2 implementation: a fifth ADDMUL boundary and fourth CONV boundary split normalization/adjustment from rounding at a unified 120 MHz.",
+      "archive": "backup/improve_v1/v1.5_preround_120mhz/manifest.json",
+      "wns_ns": -0.349,
+      "tns_ns": -60.336,
+      "failing_endpoints": 453,
+      "coremark_exact_ticks": 3899508,
+      "coremark_window_cycles": 3899561,
+      "status": "selected_final"
+    }
+  ],
+  "board_safety": {
+    "rule": "Hardware MMCM, SoC/timer clock contract, UART divisor, CoreMark ticks per second and embedded BRAM image must be generated for the same frequency.",
+    "reason": "Changing only the MMCM creates a bitstream whose UART/timer/CoreMark timebase does not match the firmware."
+  }
+}

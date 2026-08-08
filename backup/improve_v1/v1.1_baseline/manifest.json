@@ -1,0 +1,22 @@
+{
+  "version": "v1.1",
+  "name": "baseline",
+  "git_commit": "efc7f0dacd66c0daeb55ee0a0d233613bd544fd0",
+  "branch": "dev-improve-v1",
+  "rtl_changes": "none",
+  "frequency_mhz": 100,
+  "strategy": "Performance_ExplorePostRoutePhysOpt",
+  "timing": {
+    "wns_ns": -2.076,
+    "tns_ns": -746.495,
+    "failing_endpoints": 1528,
+    "source": "D:/jichuang_database/report/socrv_efc7f0da_50_100MHz_Performance_ExplorePostRoutePhysOpt/100MHz"
+  },
+  "coremark": {
+    "iterations": 10,
+    "exact_ticks": 3899524,
+    "performance_window_cycles": 3899577,
+    "crc": "PASS",
+    "result": "build/result/soc/improve-v1-v1.1-baseline.json"
+  }
+}

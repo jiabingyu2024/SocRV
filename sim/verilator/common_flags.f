@@ -2,9 +2,11 @@
 --exe
 --build
 --timing
+-fno-dfg-peephole
 --trace
 -Wall
 -Wno-fatal
+-Wno-BLKANDNBLK
 -Wno-DECLFILENAME
 -Wno-UNUSEDPARAM
 -Wno-UNUSEDSIGNAL

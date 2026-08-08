@@ -86,6 +86,10 @@ module fpnew_cast_multi #(
   localparam int unsigned INT_EXP_WIDTH = fpnew_pkg::maximum($clog2(MAX_INT_WIDTH),
       fpnew_pkg::maximum(SUPER_EXP_BITS, $clog2(SUPER_BIAS + SUPER_MAN_BITS))) + 1;
   // Pipelines
+  // SocRV uses the fourth distributed conversion register after the adjustment shifter. Stock
+  // FPnew would duplicate the internal stage and leave shift, rounding and selection uncut.
+  localparam NUM_PREROUND_REGS = (PipeConfig == fpnew_pkg::DISTRIBUTED && NumPipeRegs >= 4)
+                                 ? 1 : 0;
   localparam NUM_INP_REGS = PipeConfig == fpnew_pkg::BEFORE
                             ? NumPipeRegs
                             : (PipeConfig == fpnew_pkg::DISTRIBUTED
@@ -94,7 +98,7 @@ module fpnew_cast_multi #(
   localparam NUM_MID_REGS = PipeConfig == fpnew_pkg::INSIDE
                           ? NumPipeRegs
                           : (PipeConfig == fpnew_pkg::DISTRIBUTED
-                             ? ((NumPipeRegs + 2) / 3) // First to get distributed regs
+                             ? ((NumPipeRegs + 2) / 3) - NUM_PREROUND_REGS
                              : 0); // no regs here otherwise
   localparam NUM_OUT_REGS = PipeConfig == fpnew_pkg::AFTER
                             ? NumPipeRegs
@@ -503,7 +507,7 @@ module fpnew_cast_multi #(
   // ----------------------------
   // Rounding and classification
   // ----------------------------
-  logic [WIDTH-1:0] pre_round_abs;  // absolute value of result before rnd
+  logic [WIDTH-1:0] pre_round_abs_d; // absolute value of result before pre-round register
   logic             of_after_round; // overflow
   logic             uf_after_round; // underflow
 
@@ -556,15 +560,83 @@ module fpnew_cast_multi #(
   end
 
   // Select output with destination format and operation
-  assign pre_round_abs = dst_is_int_q ? ifmt_pre_round_abs[int_fmt_q2] : fmt_pre_round_abs[dst_fmt_q2];
+  assign pre_round_abs_d = dst_is_int_q ? ifmt_pre_round_abs[int_fmt_q2]
+                                        : fmt_pre_round_abs[dst_fmt_q2];
+
+  // ------------------
+  // Pre-round pipeline
+  // ------------------
+  // Register the adjusted mantissa and all control needed by rounding/special-case selection. This
+  // keeps the variable adjustment shift out of the output result/status cone.
+  typedef struct packed {
+    logic [WIDTH-1:0]                 abs;
+    logic [1:0]                       fp_rs;
+    logic [1:0]                       int_rs;
+    logic [1:0]                       rs;
+    logic                             fp_carry_sticky;
+    logic                             of_before;
+    logic                             input_sign;
+    logic signed [INT_EXP_WIDTH-1:0]  input_exp;
+    logic                             src_is_int;
+    logic                             dst_is_int;
+    fpnew_pkg::fp_info_t              info;
+    logic                             mant_is_zero;
+    logic                             op_mod;
+    fpnew_pkg::roundmode_e            rnd_mode;
+    fpnew_pkg::fp_format_e            dst_fmt;
+    fpnew_pkg::int_format_e           int_fmt;
+    TagType                           tag;
+    logic                             mask;
+    AuxType                           aux;
+  } cast_pre_round_t;
+
+  cast_pre_round_t [0:NUM_PREROUND_REGS] pre_round_q;
+  cast_pre_round_t                       pre_round;
+  logic            [0:NUM_PREROUND_REGS] pre_round_valid_q;
+  logic            [0:NUM_PREROUND_REGS] pre_round_ready;
+
+  assign pre_round_q[0] = '{
+    abs:               pre_round_abs_d,
+    fp_rs:             fp_round_sticky_bits,
+    int_rs:            int_round_sticky_bits,
+    rs:                round_sticky_bits,
+    fp_carry_sticky:   destination_mant[NUM_FP_STICKY-1],
+    of_before:         of_before_round,
+    input_sign:        input_sign_q,
+    input_exp:         input_exp_q,
+    src_is_int:        src_is_int_q,
+    dst_is_int:        dst_is_int_q,
+    info:              info_q,
+    mant_is_zero:      mant_is_zero_q,
+    op_mod:            op_mod_q2,
+    rnd_mode:          rnd_mode_q,
+    dst_fmt:           dst_fmt_q2,
+    int_fmt:           int_fmt_q2,
+    tag:               mid_pipe_tag_q[NUM_MID_REGS],
+    mask:              mid_pipe_mask_q[NUM_MID_REGS],
+    aux:               mid_pipe_aux_q[NUM_MID_REGS]
+  };
+  assign pre_round_valid_q[0] = mid_pipe_valid_q[NUM_MID_REGS];
+  assign mid_pipe_ready[NUM_MID_REGS] = pre_round_ready[0];
+
+  for (genvar i = 0; i < NUM_PREROUND_REGS; i++) begin : gen_pre_round_pipeline
+    logic reg_ena;
+    assign pre_round_ready[i] = pre_round_ready[i+1] | ~pre_round_valid_q[i+1];
+    `FFLARNC(pre_round_valid_q[i+1], pre_round_valid_q[i], pre_round_ready[i], flush_i, 1'b0, clk_i, rst_ni)
+    assign reg_ena = (pre_round_ready[i] & pre_round_valid_q[i])
+                     | reg_ena_i[NUM_INP_REGS + NUM_MID_REGS + i];
+    `FFLNR(pre_round_q[i+1], pre_round_q[i], reg_ena, clk_i)
+  end
+
+  assign pre_round = pre_round_q[NUM_PREROUND_REGS];
 
   fpnew_rounding #(
     .AbsWidth ( WIDTH )
   ) i_fpnew_rounding (
-    .abs_value_i             ( pre_round_abs     ),
-    .sign_i                  ( input_sign_q      ), // source format
-    .round_sticky_bits_i     ( round_sticky_bits ),
-    .rnd_mode_i              ( rnd_mode_q        ),
+    .abs_value_i             ( pre_round.abs      ),
+    .sign_i                  ( pre_round.input_sign ), // source format
+    .round_sticky_bits_i     ( pre_round.rs       ),
+    .rnd_mode_i              ( pre_round.rnd_mode ),
     .effective_subtraction_i ( 1'b0              ), // no operation happened
     .abs_rounded_o           ( rounded_abs       ),
     .sign_o                  ( rounded_sign      ),
@@ -584,13 +656,16 @@ module fpnew_cast_multi #(
       always_comb begin : post_process
         // detect of / uf
         fmt_uf_after_round[fmt] = (rounded_abs[EXP_BITS+MAN_BITS-1:MAN_BITS] == '0) // denormal
-            || ((pre_round_abs[EXP_BITS+MAN_BITS-1:MAN_BITS] == '0) && (rounded_abs[EXP_BITS+MAN_BITS-1:MAN_BITS] == 1) &&
-               ((round_sticky_bits != 2'b11) || (!destination_mant[NUM_FP_STICKY-1] && ((rnd_mode_q == fpnew_pkg::RNE) || (rnd_mode_q == fpnew_pkg::RMM)))));
+            || ((pre_round.abs[EXP_BITS+MAN_BITS-1:MAN_BITS] == '0) &&
+                (rounded_abs[EXP_BITS+MAN_BITS-1:MAN_BITS] == 1) &&
+                ((pre_round.rs != 2'b11) || (!pre_round.fp_carry_sticky &&
+                 ((pre_round.rnd_mode == fpnew_pkg::RNE) ||
+                  (pre_round.rnd_mode == fpnew_pkg::RMM)))));
         fmt_of_after_round[fmt] = rounded_abs[EXP_BITS+MAN_BITS-1:MAN_BITS] == '1; // inf exp.
 
         // Assemble regular result, nan box short ones. Int zeroes need to be detected`
         fmt_result[fmt]               = '1;
-        fmt_result[fmt][FP_WIDTH-1:0] = src_is_int_q & mant_is_zero_q
+        fmt_result[fmt][FP_WIDTH-1:0] = pre_round.src_is_int & pre_round.mant_is_zero
                                         ? '0
                                         : {rounded_sign, rounded_abs[EXP_BITS+MAN_BITS-1:0]};
       end
@@ -620,8 +695,8 @@ module fpnew_cast_multi #(
     end
   end
   
-  assign rounded_int_res = ifmt_rounded_signed_res[int_fmt_q2];
-  assign rounded_int_res_zero = (rounded_int_res == '0) && (pre_round_abs == '0);
+  assign rounded_int_res = ifmt_rounded_signed_res[pre_round.int_fmt];
+  assign rounded_int_res_zero = (rounded_int_res == '0) && (pre_round.abs == '0);
 
   // Detect integer overflows after rounding (only positives)
   for (genvar ifmt = 0; ifmt < int'(NUM_INT_FORMATS); ifmt++) begin : gen_int_overflow
@@ -632,14 +707,14 @@ module fpnew_cast_multi #(
       always_comb begin : detect_overflow
         ifmt_of_after_round[ifmt] = 1'b0;
         // Int result can overflow if we're at the max exponent
-        if (!rounded_sign && input_exp_q == signed'(INT_WIDTH - 2 + op_mod_q2)) begin
+        if (!rounded_sign && pre_round.input_exp == signed'(INT_WIDTH - 2 + pre_round.op_mod)) begin
           // Check whether the rounded MSB differs from unrounded MSB
-          ifmt_of_after_round[ifmt] = ~rounded_int_res[INT_WIDTH-2+op_mod_q2];
+          ifmt_of_after_round[ifmt] = ~rounded_int_res[INT_WIDTH-2+pre_round.op_mod];
         end
         // Negative overflow: value at exp=INT_WIDTH-1 rounded more negative than INT_MIN
         // This can happen with RDN/RNE when fractional bits cause rounding away from zero.
         // Detect by checking if the negated magnitude overflowed INT_MIN's bit position.
-        if (!op_mod_q2 && rounded_sign && input_exp_q == signed'(INT_WIDTH - 1)) begin
+        if (!pre_round.op_mod && rounded_sign && pre_round.input_exp == signed'(INT_WIDTH - 1)) begin
             ifmt_of_after_round[ifmt] = ~rounded_uint_res[INT_WIDTH-1];
             // If bit INT_WIDTH-1 is set in the two's complement negative result, it means
             // -(magnitude) underflowed past INT_MIN = -2^(INT_WIDTH-1)
@@ -651,8 +726,9 @@ module fpnew_cast_multi #(
   end
 
   // Classification after rounding select by destination format
-  assign uf_after_round = fmt_uf_after_round[dst_fmt_q2];
-  assign of_after_round = dst_is_int_q ? ifmt_of_after_round[int_fmt_q2] : fmt_of_after_round[dst_fmt_q2];
+  assign uf_after_round = fmt_uf_after_round[pre_round.dst_fmt];
+  assign of_after_round = pre_round.dst_is_int ? ifmt_of_after_round[pre_round.int_fmt]
+                                               : fmt_of_after_round[pre_round.dst_fmt];
 
   // -------------------------
   // FP Special case handling
@@ -676,8 +752,8 @@ module fpnew_cast_multi #(
     if (FpFmtConfig[fmt]) begin : active_format
       always_comb begin : special_results
         logic [FP_WIDTH-1:0] special_res;
-        special_res = info_q.is_zero
-                      ? input_sign_q << FP_WIDTH-1 // signed zero
+        special_res = pre_round.info.is_zero
+                      ? pre_round.input_sign << FP_WIDTH-1 // signed zero
                       : {1'b0, QNAN_EXPONENT, QNAN_MANTISSA}; // qNaN
 
         // Initialize special result with ones (NaN-box)
@@ -690,15 +766,15 @@ module fpnew_cast_multi #(
   end
 
   // Detect special case from source format, I2F casts don't produce a special result
-  assign fp_result_is_special = ~src_is_int_q & (info_q.is_zero |
-                                                 info_q.is_nan |
-                                                 ~info_q.is_boxed);
+  assign fp_result_is_special = ~pre_round.src_is_int & (pre_round.info.is_zero |
+                                                         pre_round.info.is_nan |
+                                                         ~pre_round.info.is_boxed);
 
   // Signalling input NaNs raise invalid flag, otherwise no flags set
-  assign fp_special_status = '{NV: info_q.is_signalling, default: 1'b0};
+  assign fp_special_status = '{NV: pre_round.info.is_signalling, default: 1'b0};
 
   // Assemble result according to destination format
-  assign fp_special_result = fmt_special_result[dst_fmt_q2]; // destination format
+  assign fp_special_result = fmt_special_result[pre_round.dst_fmt]; // destination format
 
   // --------------------------
   // INT Special case handling
@@ -720,10 +796,10 @@ module fpnew_cast_multi #(
 
         // Default is overflow to positive max, which is 2**INT_WIDTH-1 or 2**(INT_WIDTH-1)-1
         special_res[INT_WIDTH-2:0] = '1;       // alone yields 2**(INT_WIDTH-1)-1
-        special_res[INT_WIDTH-1]   = op_mod_q2; // for unsigned casts yields 2**INT_WIDTH-1
+        special_res[INT_WIDTH-1]   = pre_round.op_mod; // for unsigned casts yields 2**INT_WIDTH-1
 
         // Negative special case (except for nans) tie to -max or 0
-        if (input_sign_q && !info_q.is_nan)
+        if (pre_round.input_sign && !pre_round.info.is_nan)
           special_res = ~special_res;
 
         // Initialize special result with sign-extension
@@ -736,15 +812,15 @@ module fpnew_cast_multi #(
   end
 
   // Detect special case from source format (inf, nan, overflow, nan-boxing or negative unsigned)
-  assign int_result_is_special = info_q.is_nan | info_q.is_inf |
-                                 of_before_round | of_after_round | ~info_q.is_boxed |
-                                 (input_sign_q & op_mod_q2 & ~rounded_int_res_zero);
+  assign int_result_is_special = pre_round.info.is_nan | pre_round.info.is_inf |
+                                 pre_round.of_before | of_after_round | ~pre_round.info.is_boxed |
+                                 (pre_round.input_sign & pre_round.op_mod & ~rounded_int_res_zero);
 
   // All integer special cases are invalid
   assign int_special_status = '{NV: 1'b1, default: 1'b0};
 
   // Assemble result according to destination format
-  assign int_special_result = ifmt_special_result[int_fmt_q2]; // destination format
+  assign int_special_result = ifmt_special_result[pre_round.int_fmt]; // destination format
 
   // -----------------
   // Result selection
@@ -756,13 +832,17 @@ module fpnew_cast_multi #(
 
   assign fp_regular_status.NV = 1'b0; // floating-point results are always valid
   assign fp_regular_status.DZ = 1'b0; // no divisions
-  assign fp_regular_status.OF = (src_is_int_q | ~info_q.is_inf) & (of_before_round | of_after_round); // inf casts no OF
+  assign fp_regular_status.OF = (pre_round.src_is_int | ~pre_round.info.is_inf)
+                                & (pre_round.of_before | of_after_round); // inf casts no OF
   assign fp_regular_status.UF = uf_after_round & fp_regular_status.NX;
-  assign fp_regular_status.NX = (| fp_round_sticky_bits) | ((src_is_int_q | ~info_q.is_inf) & (of_before_round | of_after_round));
-  assign int_regular_status = '{NV: of_before_round | of_after_round, // overflow is invalid for F2I casts
-                                NX: (| int_round_sticky_bits), default: 1'b0};
+  assign fp_regular_status.NX = (| pre_round.fp_rs)
+                                | ((pre_round.src_is_int | ~pre_round.info.is_inf)
+                                   & (pre_round.of_before | of_after_round));
+  assign int_regular_status = '{NV: pre_round.of_before | of_after_round,
+                                NX: (| pre_round.int_rs), default: 1'b0};
 
-  assign fp_result  = fp_result_is_special  ? fp_special_result  : fmt_result[dst_fmt_q2];
+  assign fp_result  = fp_result_is_special  ? fp_special_result
+                                             : fmt_result[pre_round.dst_fmt];
   assign fp_status  = fp_result_is_special  ? fp_special_status  : fp_regular_status;
   assign int_result = int_result_is_special ? int_special_result : rounded_int_res;
   assign int_status = int_result_is_special ? int_special_status : int_regular_status;
@@ -773,11 +853,11 @@ module fpnew_cast_multi #(
   logic               extension_bit;
 
   // Select output depending on special case detection
-  assign result_d = dst_is_int_q ? int_result : fp_result;
-  assign status_d = dst_is_int_q ? int_status : fp_status;
+  assign result_d = pre_round.dst_is_int ? int_result : fp_result;
+  assign status_d = pre_round.dst_is_int ? int_status : fp_status;
 
   // MSB of int result decides extension, otherwise NaN box
-  assign extension_bit = dst_is_int_q ? int_result[WIDTH-1] : 1'b1;
+  assign extension_bit = pre_round.dst_is_int ? int_result[WIDTH-1] : 1'b1;
 
   // ----------------
   // Output Pipeline
@@ -797,12 +877,12 @@ module fpnew_cast_multi #(
   assign out_pipe_result_q[0]  = result_d;
   assign out_pipe_status_q[0]  = status_d;
   assign out_pipe_ext_bit_q[0] = extension_bit;
-  assign out_pipe_tag_q[0]     = mid_pipe_tag_q[NUM_MID_REGS];
-  assign out_pipe_mask_q[0]    = mid_pipe_mask_q[NUM_MID_REGS];
-  assign out_pipe_aux_q[0]     = mid_pipe_aux_q[NUM_MID_REGS];
-  assign out_pipe_valid_q[0]   = mid_pipe_valid_q[NUM_MID_REGS];
-  // Input stage: Propagate pipeline ready signal to inside pipe
-  assign mid_pipe_ready[NUM_MID_REGS] = out_pipe_ready[0];
+  assign out_pipe_tag_q[0]     = pre_round.tag;
+  assign out_pipe_mask_q[0]    = pre_round.mask;
+  assign out_pipe_aux_q[0]     = pre_round.aux;
+  assign out_pipe_valid_q[0]   = pre_round_valid_q[NUM_PREROUND_REGS];
+  // Input stage: Propagate pipeline ready signal through the pre-round boundary.
+  assign pre_round_ready[NUM_PREROUND_REGS] = out_pipe_ready[0];
   // Generate the register stages
   for (genvar i = 0; i < NUM_OUT_REGS; i++) begin : gen_output_pipeline
     // Internal register enable for this stage
@@ -814,7 +894,8 @@ module fpnew_cast_multi #(
     // Valid: enabled by ready signal, synchronous clear with the flush signal
     `FFLARNC(out_pipe_valid_q[i+1], out_pipe_valid_q[i], out_pipe_ready[i], flush_i, 1'b0, clk_i, rst_ni)
     // Enable register if pipleine ready and a valid data item is present
-    assign reg_ena = (out_pipe_ready[i] & out_pipe_valid_q[i]) | reg_ena_i[NUM_INP_REGS + NUM_MID_REGS + i];
+    assign reg_ena = (out_pipe_ready[i] & out_pipe_valid_q[i])
+                     | reg_ena_i[NUM_INP_REGS + NUM_MID_REGS + NUM_PREROUND_REGS + i];
     // Generate the pipeline registers within the stages, use enable-registers
     `FFL(out_pipe_result_q[i+1],  out_pipe_result_q[i],  reg_ena, '0)
     `FFL(out_pipe_status_q[i+1],  out_pipe_status_q[i],  reg_ena, '0)
@@ -833,12 +914,17 @@ module fpnew_cast_multi #(
   assign mask_o          = out_pipe_mask_q[NUM_OUT_REGS];
   assign aux_o           = out_pipe_aux_q[NUM_OUT_REGS];
   assign out_valid_o     = out_pipe_valid_q[NUM_OUT_REGS];
-  assign busy_o          = (| {inp_pipe_valid_q, mid_pipe_valid_q, out_pipe_valid_q});
+  assign busy_o          = (| {inp_pipe_valid_q, mid_pipe_valid_q,
+                                pre_round_valid_q, out_pipe_valid_q});
 
   // Early valid_o signal. This is used for dispatching instructions for dual-issue processor.
   if (NUM_OUT_REGS > 0) begin
     assign early_out_valid_o = |{out_pipe_valid_q[NUM_OUT_REGS] & ~out_pipe_ready[NUM_OUT_REGS],
                                  out_pipe_valid_q[NUM_OUT_REGS-1]};
+  end else if (NUM_PREROUND_REGS > 0) begin
+    assign early_out_valid_o = |{pre_round_valid_q[NUM_PREROUND_REGS]
+                                 & ~pre_round_ready[NUM_PREROUND_REGS],
+                                 pre_round_valid_q[NUM_PREROUND_REGS-1]};
   end else if (NUM_MID_REGS > 0) begin
     assign early_out_valid_o = |{mid_pipe_valid_q[NUM_MID_REGS] & ~mid_pipe_ready[NUM_OUT_REGS],
                                  mid_pipe_valid_q[NUM_MID_REGS-1]};

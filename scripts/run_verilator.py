@@ -238,12 +238,13 @@ def build_model(*, force: bool = False, difftest: bool = False) -> None:
     if object_dir.exists():
         shutil.rmtree(object_dir)
     object_dir.mkdir(parents=True, exist_ok=True)
-    cpp_sources = list(CPP_SOURCES)
+    repo_wsl = to_wsl_path(repo_path())
+    cpp_sources = [f"{repo_wsl}/{relative}" for relative in CPP_SOURCES]
     cflags = (
         "-std=c++17 -O2 "
-        "-I../../../../tb/cpp/common "
-        "-I../../../../tb/cpp/adapter "
-        "-I../../../../tb/cpp/difftest"
+        f"-I{repo_wsl}/tb/cpp/common "
+        f"-I{repo_wsl}/tb/cpp/adapter "
+        f"-I{repo_wsl}/tb/cpp/difftest"
     )
     argv = [
         "verilator",
@@ -262,9 +263,10 @@ def build_model(*, force: bool = False, difftest: bool = False) -> None:
         cflags,
     ]
     if difftest:
-        cpp_sources.append(SPIKE_COSIM_SOURCE)
+        spike_source_wsl = f"{repo_wsl}/{SPIKE_COSIM_SOURCE}"
+        cpp_sources.append(spike_source_wsl)
         argv[argv.index("--Mdir") - 1:argv.index("--Mdir") - 1] = [
-            SPIKE_COSIM_SOURCE
+            spike_source_wsl
         ]
         spike_install = repo_path(
             "build", "reference", "spike", "install"

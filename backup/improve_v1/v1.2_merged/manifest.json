@@ -1,0 +1,62 @@
+{
+  "version": "v1.2",
+  "name": "merged_fma_trial",
+  "git_base": "efc7f0dacd66c0daeb55ee0a0d233613bd544fd0",
+  "branch": "dev-improve-v1",
+  "frequency_mhz": 100,
+  "strategy": "Performance_ExplorePostRoutePhysOpt",
+  "rtl_changes": [
+    "ADDMUL UnitTypes changed from PARALLEL to MERGED",
+    "Upstream CVFPU fmalza dependency restored for the merged FMA"
+  ],
+  "timing": {
+    "wns_ns": -2.089,
+    "tns_ns": -1227.061,
+    "failing_endpoints": 1797,
+    "critical_path": {
+      "block": "FPnew merged FP64 FMA input pipeline to mid_pipe_sum",
+      "data_path_delay_ns": 11.999,
+      "logic_levels": 34,
+      "logic": "25 CARRY4, 3 DSP48E1, 4 LUT4, 2 LUT5"
+    }
+  },
+  "utilization": {
+    "total_luts": 17497,
+    "logic_luts": 17323,
+    "ffs": 9505,
+    "ramb36": 44,
+    "ramb18": 1,
+    "dsp_blocks": 13,
+    "fp_execute_luts": 8227,
+    "fp_execute_ffs": 1532,
+    "fp_execute_dsps": 9
+  },
+  "coremark": {
+    "iterations": 10,
+    "exact_ticks": 3899511,
+    "performance_window_cycles": 3899564,
+    "time_seconds_at_100mhz": 0.03899511,
+    "crc": "PASS",
+    "result": "build/result/soc/improve-v1-v1.2-merged.json"
+  },
+  "isa_gate": {
+    "gate": "fp-double",
+    "passed": 21,
+    "total": 21,
+    "summary": "build/regression/isa/fp-double/summary.json"
+  },
+  "artifacts": {
+    "build_root": "build/vivado/kintex7-rtthread-coremark-v1.2-merged-100mhz",
+    "timing_report": "build/vivado/kintex7-rtthread-coremark-v1.2-merged-100mhz/project/reports/post_impl_timing_summary.rpt",
+    "utilization_report": "build/vivado/kintex7-rtthread-coremark-v1.2-merged-100mhz/project/reports/post_impl_utilization.rpt",
+    "checkpoint": "build/vivado/kintex7-rtthread-coremark-v1.2-merged-100mhz/project/socrv.runs/impl_1/fpga_top_postroute_physopt.dcp",
+    "checkpoint_sha256": "cfa9650ce391b8581a4fe9c3c543937c207a4935b54f2491d990e6991ed1007e",
+    "bitstream": "build/vivado/kintex7-rtthread-coremark-v1.2-merged-100mhz/project/socrv.runs/impl_1/fpga_top.bit",
+    "bitstream_sha256": "2b502462253a4bd15c90ebfc24233fdcb18efeedf6b33ec52a705606cfe81a87",
+    "firmware_elf_sha256": "e69229e1c800d2cb8a20b6850467c7fd0020ddf9b4a99c1863923940060f954f",
+    "code_mem_sha256": "9e920eada1f4d5ae29fe80abc0cb0cb968cf892e6c8553c98d53ac7bca8fcaf2",
+    "data_mem_sha256": "e980606d60cf5acd677f689fde20d9ccbdf3bc25e78963a3ca916452ca36b33f"
+  },
+  "decision": "rejected",
+  "reason": "CoreMark changed by only -13 cycles while WNS regressed by 0.013 ns and TNS regressed by 480.566 ns versus v1.1."
+}

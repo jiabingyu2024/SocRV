@@ -25,6 +25,7 @@ rtl/cpu/superscalar/fpu/vendor/fpnew/divsqrt/div_sqrt_mvp_wrapper.sv
 rtl/cpu/superscalar/fpu/vendor/fpnew/src/fpnew_rounding.sv
 rtl/cpu/superscalar/fpu/vendor/fpnew/src/fpnew_classifier.sv
 rtl/cpu/superscalar/fpu/vendor/fpnew/src/fpnew_fma.sv
+rtl/cpu/superscalar/fpu/vendor/fpnew/vendor/cvw/fma/fmalza.sv
 rtl/cpu/superscalar/fpu/vendor/fpnew/src/fpnew_fma_multi.sv
 rtl/cpu/superscalar/fpu/vendor/fpnew/src/fpnew_cast_multi.sv
 rtl/cpu/superscalar/fpu/vendor/fpnew/src/fpnew_noncomp.sv

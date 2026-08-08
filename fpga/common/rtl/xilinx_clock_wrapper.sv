@@ -2,13 +2,13 @@ module xilinx_clock_wrapper (
   input logic clk_200mhz_p_i,
   input logic clk_200mhz_n_i,
   input logic reset_i,
-  output logic clk_50mhz_o,
+  output logic clk_soc_o,
   output logic locked_o
 );
   logic clk_input;
   logic clk_feedback;
   logic clk_feedback_buffered;
-  logic clk_50mhz_unbuffered;
+  logic clk_soc_unbuffered;
 
   IBUFDS u_input_buffer (
     .I(clk_200mhz_p_i),
@@ -20,8 +20,8 @@ module xilinx_clock_wrapper (
     .BANDWIDTH("OPTIMIZED"),
     .CLKIN1_PERIOD(5.000),
     .DIVCLK_DIVIDE(1),
-    .CLKFBOUT_MULT_F(5.000),
-    .CLKOUT0_DIVIDE_F(20.000),
+    .CLKFBOUT_MULT_F(6.000),
+    .CLKOUT0_DIVIDE_F(10.000),
     .STARTUP_WAIT("FALSE")
   ) u_mmcm (
     .CLKIN1(clk_input),
@@ -30,7 +30,7 @@ module xilinx_clock_wrapper (
     .PWRDWN(1'b0),
     .CLKFBOUT(clk_feedback),
     .CLKFBOUTB(),
-    .CLKOUT0(clk_50mhz_unbuffered),
+    .CLKOUT0(clk_soc_unbuffered),
     .LOCKED(locked_o),
     .CLKOUT0B(),
     .CLKOUT1(),
@@ -50,7 +50,7 @@ module xilinx_clock_wrapper (
   );
 
   BUFG u_soc_clock_buffer (
-    .I(clk_50mhz_unbuffered),
-    .O(clk_50mhz_o)
+    .I(clk_soc_unbuffered),
+    .O(clk_soc_o)
   );
 endmodule

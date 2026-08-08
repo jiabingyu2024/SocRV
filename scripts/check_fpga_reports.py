@@ -9,7 +9,7 @@ from lib.manifest import write_json_atomic
 from lib.repo import repo_path
 
 
-def check(build_root: Path) -> Path:
+def check(build_root: Path, *, require_timing: bool = True) -> Path:
     project = build_root / "project"
     bitstream = project / "socrv.runs" / "impl_1" / "fpga_top.bit"
     report_dir = project / "reports"
@@ -46,9 +46,12 @@ def check(build_root: Path) -> Path:
             },
         },
     )
-    if status != "PASS":
+    if drc_errors != 0 or (require_timing and not timing_met):
         raise ValueError(f"FPGA report gate failed: timing_met={timing_met}, drc_errors={drc_errors}")
-    print(f"FPGA reports PASS: timing met, DRC errors 0, warnings {warnings}")
+    print(
+        f"FPGA reports recorded: timing_met={timing_met}, "
+        f"DRC errors 0, warnings {warnings}"
+    )
     print(f"Bitstream: {bitstream} ({bitstream.stat().st_size} bytes)")
     return result_path
 

@@ -1,4 +1,5 @@
 include toolchain/riscv_gcc.mk
+include bsp/include/soc_config.mk
 
 PROFILE ?= smoke
 OUT ?= ../build/software/$(PROFILE)
