@@ -1,0 +1,145 @@
+{
+  "version": "v2.1",
+  "release": "improve_v2",
+  "name": "rv32f_only_120mhz",
+  "git_base": "66d4f9cc305f7c435fc1b91de94e1fe5fca486c0",
+  "branch": "dev-improve-v1",
+  "frequency_mhz": 120,
+  "frequency_promotion": {
+    "candidate_mhz": 150,
+    "attempted": false,
+    "reason": "The unified 120 MHz implementation still has setup violations, so the user-specified zero-violation promotion condition was not met."
+  },
+  "strategy": "Performance_ExplorePostRoutePhysOpt",
+  "rtl_changes": [
+    "FPnew is configured for a 32-bit datapath with only the FP32 format enabled",
+    "floating-point register, issue, scoreboard, completion and memory paths are narrowed from 64 to 32 bits",
+    "FLD/FSD state is removed and binary64 decode requests trap as illegal instructions",
+    "MISA advertises RV32IMF instead of RV32IMFD",
+    "the v1.5 FMA/CONV pipeline boundaries are retained",
+    "branch predictor RTL and prediction policy are unchanged"
+  ],
+  "software_contract": {
+    "march": "rv32imf_zicsr_zicntr_zifencei",
+    "mabi": "ilp32f",
+    "isa_gate": "fp-single",
+    "final_suites": [
+      "rv32ui",
+      "rv32mi",
+      "rv32um",
+      "rv32uf"
+    ]
+  },
+  "timing": {
+    "wns_ns": -0.458,
+    "tns_ns": -69.791,
+    "failing_endpoints": 613,
+    "whs_ns": 0.056,
+    "ths_ns": 0.0,
+    "estimated_fmax_mhz": 113.75,
+    "critical_path": {
+      "block": "branch predictor BTB read through interconnect/data-memory reset control",
+      "source": "u_frontend/u_branch_predictor/btb_mem_reg/CLKARDCLK",
+      "destination": "u_data_memory/u_inferred_bram/storage_reg_1_3/RSTRAMB",
+      "data_path_delay_ns": 8.727,
+      "logic_delay_ns": 2.805,
+      "route_delay_ns": 5.922,
+      "logic_levels": 15,
+      "logic": "3 CARRY4, 1 LUT3, 1 LUT4, 2 LUT5 and 8 LUT6"
+    }
+  },
+  "comparison_to_v1_5": {
+    "wns_delta_ns": -0.109,
+    "tns_delta_ns": -9.455,
+    "failing_endpoint_delta": 160,
+    "coremark_window_cycle_delta": -9696,
+    "note": "Removing FP64 eliminates the previous FP64 FMA critical path and greatly reduces resources, but the deterministic placer exposes a non-FPU frontend/interconnect path; therefore WNS/TNS are slightly worse than v1.5 despite the area reduction."
+  },
+  "utilization": {
+    "total_luts": 13118,
+    "logic_luts": 12944,
+    "lutram": 174,
+    "ffs": 8792,
+    "ramb36": 41,
+    "ramb18": 4,
+    "dsp_blocks": 6,
+    "fp_execute_luts": 3806,
+    "fp_execute_ffs": 1118,
+    "fp_execute_dsps": 2,
+    "fp_execute_reduction_vs_v1_5": {
+      "luts_percent": 54.56,
+      "ffs_percent": 55.10,
+      "dsps_percent": 81.82
+    }
+  },
+  "coremark": {
+    "profile_optimization": "CoreMark kernels -O3; RT-Thread, FinSH and formatting support -Os",
+    "iterations": 10,
+    "exact_ticks": 3889808,
+    "performance_window_cycles": 3889865,
+    "cycle_limit": 4000000,
+    "time_seconds_at_120mhz": 0.032415542,
+    "iterations_per_second": 308.493997,
+    "crc": "PASS",
+    "result": "build/result/soc/improve-v2-v2.1-rv32f-hybrid-120mhz.json"
+  },
+  "verification": {
+    "verilator_lint": "PASS",
+    "verilator_model_sha256": "79359cbb52aede529b133db833eb8c0fc031cf3bc839da40c2bb97c13717882b",
+    "fp_single_gate": "11/11 PASS",
+    "final_gate": "76/76 PASS",
+    "final_gate_suites": "rv32ui/rv32mi/rv32um/rv32uf",
+    "drc_errors": 0,
+    "drc_warnings": 57,
+    "methodology_warning_violations": 20,
+    "dpor_1_violations": 0
+  },
+  "trials": [
+    {
+      "name": "all-Os firmware",
+      "result": "rejected",
+      "performance_window_cycles": 5494381,
+      "reason": "exceeds the 4000000-cycle limit"
+    },
+    {
+      "name": "all-O2 firmware",
+      "result": "rejected",
+      "performance_window_cycles": 4051138,
+      "reason": "exceeds the 4000000-cycle limit"
+    },
+    {
+      "name": "O3 CoreMark plus Os runtime firmware",
+      "result": "selected",
+      "performance_window_cycles": 3889865
+    },
+    {
+      "name": "incremental implementation from v1.5 DCP",
+      "result": "rejected before route",
+      "reason": "Vivado disabled incremental reuse because cell/net matching was only 67.06/64.19 percent; subsequent placement checksums and timing estimates exactly matched the selected deterministic run"
+    }
+  ],
+  "artifacts": {
+    "build_root": "build/vivado/kintex7-rtthread-coremark-v2.1-rv32f-120mhz",
+    "timing_report": "build/vivado/kintex7-rtthread-coremark-v2.1-rv32f-120mhz/project/reports/post_impl_timing_summary.rpt",
+    "timing_paths_report": "build/vivado/kintex7-rtthread-coremark-v2.1-rv32f-120mhz/project/reports/post_impl_timing_paths.rpt",
+    "utilization_report": "build/vivado/kintex7-rtthread-coremark-v2.1-rv32f-120mhz/project/reports/post_impl_utilization.rpt",
+    "drc_report": "build/vivado/kintex7-rtthread-coremark-v2.1-rv32f-120mhz/project/reports/post_impl_drc.rpt",
+    "checkpoint": "build/vivado/kintex7-rtthread-coremark-v2.1-rv32f-120mhz/project/socrv.runs/impl_1/fpga_top_postroute_physopt.dcp",
+    "checkpoint_sha256": "6a2e561822a44619da7de67766f25738f68cba1da9fc0a043118bba1805a448a",
+    "bitstream": "build/vivado/kintex7-rtthread-coremark-v2.1-rv32f-120mhz/project/socrv.runs/impl_1/fpga_top.bit",
+    "bitstream_sha256": "fde87af7ed50e604e9ba81cab3e21e092fca421c7938ea73bfd0108d0830e5fa",
+    "firmware_elf_sha256": "5bef17e97bda64b37eb7565131ec12ca103164b112087a0802a4f564785a398d",
+    "code_mem_sha256": "b85a5d162f11f8896d43e987714cc22126a511d8863bb6e1158e902f98c47c5f",
+    "data_mem_sha256": "e980606d60cf5acd677f689fde20d9ccbdf3bc25e78963a3ca916452ca36b33f",
+    "bitstream_export": "Manual write_bitstream from fpga_top_postroute_physopt.dcp after the implementation strategy stopped after post-route physical optimization"
+  },
+  "board_safety": {
+    "clock_contract_hz": 120000000,
+    "embedded_code_mem": "build/images/rtthread-coremark/code.mem",
+    "embedded_data_mem": "build/images/rtthread-coremark/data.mem",
+    "synthesis_binding_verified": true,
+    "historical_trap_avoided": "MMCM, board metadata, RTL/software clock contract, timer, UART, CoreMark timebase and embedded firmware remain one generated 120 MHz set; the MMCM was not changed in isolation."
+  },
+  "decision": "selected_v2.1",
+  "reason": "v2.1 fulfills the requested RV32F-only architecture, passes WSL functional and CoreMark gates, stays below 4000000 cycles, and sharply reduces FP resources. It remains at 120 MHz because setup timing is not clean; the remaining critical paths are outside the removed FP64 datapath."
+}

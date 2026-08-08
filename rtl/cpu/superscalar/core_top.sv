@@ -85,7 +85,7 @@ module core_top (
     logic fetch_valid, fetch_pop;
 
     logic [31:0] rf_rs1_data, rf_rs2_data, rf_write_data;
-    logic [63:0] fp_rs1_data, fp_rs2_data, fp_rs3_data;
+    logic [31:0] fp_rs1_data, fp_rs2_data, fp_rs3_data;
     logic rf_write_valid;
     logic wb_valid_q;
     logic [4:0] wb_rd_q;

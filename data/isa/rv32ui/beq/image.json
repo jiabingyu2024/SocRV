@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/beq/firmware.elf",
-    "sha256": "cfa2adec9469f0fe67be500c01613ed3e0064050e18757ec44404481551be602"
+    "sha256": "0d04d2610b5e51f3d7e5791d62a12e947ae79d5f6fda69017a00a34541eecc0b"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32ui/beq",
   "regions": [
     {

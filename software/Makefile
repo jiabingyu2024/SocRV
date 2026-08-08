@@ -19,6 +19,7 @@ ASFLAGS += $(PROFILE_ASFLAGS)
 LDLIBS += -lgcc
 
 OBJECTS := $(addprefix $(OUT)/objects/,$(SOURCES:=.o))
+PROFILE_HOT_OBJECTS := $(addprefix $(OUT)/objects/,$(PROFILE_HOT_SOURCES:=.o))
 DEPFILES := $(OBJECTS:.o=.d)
 BUILD_CONFIG_FILES := $(MAKEFILE_LIST)
 ELF := $(OUT)/firmware.elf
@@ -35,6 +36,12 @@ all: $(ELF) $(BIN) $(DIS) $(SIZE_TXT)
 # optimization, profile macros, or source lists cannot silently reuse stale
 # objects from an earlier software contract.
 $(OBJECTS): $(BUILD_CONFIG_FILES)
+
+# Profiles that combine size-sensitive support code with performance-critical
+# kernels can opt selected translation units back into a stronger optimizer.
+ifneq ($(strip $(PROFILE_HOT_OPTIMIZATION)),)
+$(PROFILE_HOT_OBJECTS): CFLAGS := $(filter-out -O%,$(CFLAGS)) $(PROFILE_HOT_OPTIMIZATION)
+endif
 
 $(OUT)/objects/%.S.o: %.S
 	@mkdir -p $(dir $@)

@@ -14,17 +14,17 @@ module fp_execute_unit (
     import core_types_pkg::*;
     import fpnew_pkg::*;
 
-    localparam fpu_features_t SOCRV_RV32FD = '{
-        Width:         64,
+    localparam fpu_features_t SOCRV_RV32F = '{
+        Width:         32,
         EnableVectors: 1'b0,
         EnableNanBox:  1'b1,
-        FpFmtMask:     5'b11000,
+        FpFmtMask:     5'b10000,
         IntFmtMask:    4'b0010
     };
 
-    // Split the wide FP64 datapaths at FPnew's intended internal boundaries.
-    // ADDMUL/CONV also use an output register so result/flag generation cannot
-    // form a single path through the CPU scoreboard at the 120 MHz FPGA target.
+    // Keep the proven v1.5 stage boundaries for the remaining FP32 datapaths.
+    // The complete FP interface is 32-bit so no binary64 slice, register-file
+    // half, or scoreboard payload can survive synthesis.
     localparam fpu_implementation_t SOCRV_PIPELINED = '{
         PipeRegs:   '{'{default: 5}, // ADDMUL: input, pre-add, internal, pre-round and output
                       '{default: 1}, // DIVSQRT: output
@@ -41,12 +41,11 @@ module fp_execute_unit (
     exec_req_t req_q;
     logic [2:0] rm_q;
     logic fp_in_valid, fp_in_ready;
-    logic [2:0][63:0] operands;
+    logic [2:0][31:0] operands;
     roundmode_e round_mode;
     operation_e operation;
     logic op_mod;
-    fp_format_e src_fmt, dst_fmt;
-    logic [63:0] fp_result;
+    logic [31:0] fp_result;
     status_t fp_status;
     logic fp_out_valid;
     logic [core_config_pkg::TRANS_ID_W-1:0] fp_tag;
@@ -56,9 +55,6 @@ module fp_execute_unit (
     // a flush -> busy -> fence commit -> flush loop after pipelining.
     assign req_ready_o = !pending_q && !active_q;
     assign fp_in_valid = pending_q;
-    assign src_fmt = req_q.uop.fp_fmt ? FP64 : FP32;
-    assign dst_fmt = req_q.uop.fp_dst_fmt ? FP64 : FP32;
-
     always_comb begin
         operands = '0;
         round_mode = roundmode_e'(rm_q);
@@ -98,7 +94,7 @@ module fp_execute_unit (
             FP_I2F: begin
                 operation = I2F;
                 op_mod = req_q.uop.fp_unsigned;
-                operands[0] = {32'd0, req_q.op1};
+                operands[0] = req_q.op1;
             end
             FP_F2F: operation = F2F;
             FP_MV_X_W: begin
@@ -106,21 +102,21 @@ module fp_execute_unit (
             end
             FP_MV_W_X: begin
                 operation = SGNJ; round_mode = RUP;
-                operands[0] = {32'hffff_ffff, req_q.op1};
+                operands[0] = req_q.op1;
             end
             default: operation = ADD;
         endcase
     end
 
     fpnew_top #(
-        .Features(SOCRV_RV32FD),
+        .Features(SOCRV_RV32F),
         .Implementation(SOCRV_PIPELINED),
         .DivSqrtSel(PULP),
         .TagType(logic [core_config_pkg::TRANS_ID_W-1:0])
     ) u_fpnew (
         .clk_i(clk), .rst_ni(!rst), .operands_i(operands),
         .rnd_mode_i(round_mode), .op_i(operation), .op_mod_i(op_mod),
-        .src_fmt_i(src_fmt), .dst_fmt_i(dst_fmt), .int_fmt_i(INT32),
+        .src_fmt_i(FP32), .dst_fmt_i(FP32), .int_fmt_i(INT32),
         .vectorial_op_i(1'b0), .tag_i(req_q.trans_id), .simd_mask_i(1'b1),
         .in_valid_i(fp_in_valid), .in_ready_o(fp_in_ready), .flush_i(flush_i),
         .result_o(fp_result), .status_o(fp_status), .tag_o(fp_tag),

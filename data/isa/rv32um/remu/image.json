@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32um/remu/firmware.elf",
-    "sha256": "56553a52b3fed0bdfb5314a011e4e1f776840501b134927036133c7373b45c13"
+    "sha256": "ff8da40eb9c79142d0256421113da0860250d7a2db86d52d186502517c5d9bc8"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32um/remu",
   "regions": [
     {

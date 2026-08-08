@@ -412,6 +412,18 @@ module decoder (
             default: begin end
         endcase
 
+        // v2.1 is an RV32F implementation. Any operation selecting binary64
+        // is illegal and must not reach the FP32-only execution or memory unit.
+        if ((uop_o.fu inside {FU_FP, FU_FP_MEM}) &&
+            (uop_o.fp_fmt || uop_o.fp_dst_fmt)) begin
+            uop_o.fu              = FU_ALU;
+            uop_o.writes_rd       = 1'b0;
+            uop_o.writes_frd      = 1'b0;
+            uop_o.exception_valid = 1'b1;
+            uop_o.exception_cause = 5'd2;
+            uop_o.exception_tval  = fetch_i.instr;
+        end
+
         // An instruction-side HXI error is an architectural instruction
         // access fault, not an illegal instruction and not an internal fault.
         if (fetch_i.access_fault) begin

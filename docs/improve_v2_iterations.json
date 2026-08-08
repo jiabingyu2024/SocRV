@@ -59,7 +59,18 @@
       "failing_endpoints": 453,
       "coremark_exact_ticks": 3899508,
       "coremark_window_cycles": 3899561,
-      "status": "selected_final"
+      "status": "previous_release_final"
+    },
+    {
+      "version": "v2.1",
+      "summary": "Removed architectural and implementation support for FP64 while retaining RV32F; narrowed the FP register/execute/memory paths to 32 bits and kept the branch predictor RTL unchanged. The unified 120 MHz build passed functional gates and the cycle limit, but did not meet the zero-violation requirement for promotion to 150 MHz.",
+      "archive": "backup/improve_v2/v2.1_rv32f_120mhz/manifest.json",
+      "wns_ns": -0.458,
+      "tns_ns": -69.791,
+      "failing_endpoints": 613,
+      "coremark_exact_ticks": 3889808,
+      "coremark_window_cycles": 3889865,
+      "status": "selected_v2.1"
     }
   ],
   "board_safety": {

@@ -1,17 +1,17 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/instret_overflow/firmware.elf",
-    "sha256": "d7ee5f6f11cd0dc10dcd1e755ef35df87ff9f97afd413b05bacda5b5f22cebe7"
+    "sha256": "66ee0c9c835cf13a8d561a41f6a5ac30300a0e833068c9803b09243da99adc78"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32imfd_zicsr_zicntr_zifencei",
+    "march": "rv32imf_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32mi/instret_overflow",
   "regions": [
     {

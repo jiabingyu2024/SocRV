@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32uf/recoding/firmware.elf",
-    "sha256": "ffabd50a0ea1a0c06852e84958f98928bdec4c418a75110f2f44399a9f816731"
+    "sha256": "63fa7c9f1dcfe49e3c2b7a8566132412a149ed147fc1a507e879f9ab96aad5f9"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32uf/recoding",
   "regions": [
     {

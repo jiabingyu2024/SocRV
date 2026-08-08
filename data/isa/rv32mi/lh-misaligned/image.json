@@ -1,17 +1,17 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/lh-misaligned/firmware.elf",
-    "sha256": "9fa2ac2de2a1aa7bcd699f735342e08ed8528f2d4a7245a04b451ad65a60a589"
+    "sha256": "68e4a555bd08b4f0329f090aadf4febc2c3fc180a81d9e7a6c4191066c9039cb"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32imfd_zicsr_zicntr_zifencei",
+    "march": "rv32imf_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32mi/lh-misaligned",
   "regions": [
     {

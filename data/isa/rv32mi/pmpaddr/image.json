@@ -1,17 +1,17 @@
 {
   "elf": {
     "path": "data/isa/rv32mi/pmpaddr/firmware.elf",
-    "sha256": "0145b77615bb75b68a751b6c34aff0ffa9610e28b3ea49f6596cb49c250ef9c7"
+    "sha256": "184f7b1e9e9312ee4cd0e24a64e60bc2cfa8609df43bc803eab05b17d0fbdb31"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32imfd_zicsr_zicntr_zifencei",
+    "march": "rv32imf_zicsr_zicntr_zifencei",
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32mi/pmpaddr",
   "regions": [
     {

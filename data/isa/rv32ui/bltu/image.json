@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/bltu/firmware.elf",
-    "sha256": "8e70ac0e337673600119d033e2a27754ec565c78c89e488184daf038c3c417c5"
+    "sha256": "2e1db298d3354cec98f4a19fed897f770c5aedca97f96d6ce724296f83d1273c"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32ui/bltu",
   "regions": [
     {

@@ -1,8 +1,8 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccR8W1HY.o
- .bss           0x00000000        0x0 /tmp/ccR8W1HY.o
+ .text          0x00000000        0x0 /tmp/cciJjhUP.o
+ .bss           0x00000000        0x0 /tmp/cciJjhUP.o
 
 Memory Configuration
 
@@ -13,7 +13,7 @@ DATA             0x10000000         0x00010000         xrw
 
 Linker script and memory map
 
-LOAD /tmp/ccR8W1HY.o
+LOAD /tmp/cciJjhUP.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
                 0x00010000                        SOCRV_CODE_LENGTH = 0x10000
                 0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
@@ -21,7 +21,7 @@ LOAD /tmp/ccR8W1HY.o
 
 .text           0x00000000      0xed4
  *(.text.init)
- .text.init     0x00000000      0xed4 /tmp/ccR8W1HY.o
+ .text.init     0x00000000      0xed4 /tmp/cciJjhUP.o
                 0x00000000                _start
  *(.text .text.*)
  *(.rodata .rodata.*)
@@ -30,11 +30,11 @@ LOAD /tmp/ccR8W1HY.o
 
 .rela.dyn       0x00000ed4        0x0
  .rela.text.init
-                0x00000ed4        0x0 /tmp/ccR8W1HY.o
+                0x00000ed4        0x0 /tmp/cciJjhUP.o
 
 .data           0x10000000       0x50
  *(.data .data.*)
- .data          0x10000000       0x50 /tmp/ccR8W1HY.o
+ .data          0x10000000       0x50 /tmp/cciJjhUP.o
                 0x10000000                begin_signature
                 0x10000050                end_signature
  *(.sdata .sdata.*)
@@ -54,4 +54,4 @@ OUTPUT(build/isa-data/generated/rv32ui/ld_st/firmware.elf elf32-littleriscv)
 .riscv.attributes
                 0x00000000       0x33
  .riscv.attributes
-                0x00000000       0x33 /tmp/ccR8W1HY.o
+                0x00000000       0x33 /tmp/cciJjhUP.o

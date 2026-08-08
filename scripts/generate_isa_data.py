@@ -247,6 +247,7 @@ def gate_manifest(
         "single": [fp_suites["single"]],
         "double": [fp_suites["single"], fp_suites["double"]],
     }
+    double_ready = fp_selection == "double"
     final_suites = list(mandatory)
     ready = fp_selection in fp_suites
     if ready:
@@ -274,11 +275,15 @@ def gate_manifest(
             "blocked_reason": None,
         },
         "fp-double": {
-            "ready": True,
+            "ready": double_ready,
             "suites": selected_fp_suites["double"],
             "excluded_tests": [],
             "description": "Candidate double-precision floating-point gate",
-            "blocked_reason": None,
+            "blocked_reason": (
+                None
+                if double_ready
+                else "The selected CPU contract implements RV32F without RV32D"
+            ),
         },
         "final": {
             "ready": ready,

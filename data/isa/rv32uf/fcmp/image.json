@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32uf/fcmp/firmware.elf",
-    "sha256": "192e3c4ddabfe1b6a7f96df6fe33b881d0f0a710f68f777c4e650cd25fd5d735"
+    "sha256": "c7e0c588ef2e1c276b3cc14c30cff24e56679c4c034c7835e510fa9ebbe2cad0"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32uf/fcmp",
   "regions": [
     {

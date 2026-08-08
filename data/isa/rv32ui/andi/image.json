@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/andi/firmware.elf",
-    "sha256": "cfbacc3aa53c89e2304f61233ab7801b0bfdd0a20ae6a78838789d9a3a8ed962"
+    "sha256": "9fc14f243285793255ee082a151b9327db51dc40846e170a5b77c326f3d6cdf1"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32ui/andi",
   "regions": [
     {

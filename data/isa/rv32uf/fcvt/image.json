@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32uf/fcvt/firmware.elf",
-    "sha256": "cc162c82494ebbcacb6e70d33e4a02c286bed26ef85ced7c6b5ed7b3af20a4b1"
+    "sha256": "9aec3311fc9041f290f669beadb11ac575138d031f56c5dddf60ed5f534819fc"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32uf/fcvt",
   "regions": [
     {

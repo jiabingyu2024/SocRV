@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/lbu/firmware.elf",
-    "sha256": "affc26521a3a1b8eadac0e5749dbe3559f93470a0040cd63c00226a8e1265d0b"
+    "sha256": "a94ac1e3bdaee3f5f19a82bc6f8d34cee6519d48d56c778240cbc7568bacaf8e"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32ui/lbu",
   "regions": [
     {

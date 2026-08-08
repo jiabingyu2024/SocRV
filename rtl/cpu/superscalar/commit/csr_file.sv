@@ -126,7 +126,7 @@ module csr_file (
             12'h002: read_data_o = {29'd0, frm_q};
             12'h003: read_data_o = {24'd0, frm_q, fflags_q};
             12'h300: read_data_o = mstatus_read;
-            12'h301: read_data_o = 32'h4010_1128;
+            12'h301: read_data_o = 32'h4010_1120;
             12'h304: read_data_o = mie_q;
             12'h305: read_data_o = mtvec_q;
             12'h306: read_data_o = mcounteren_q;

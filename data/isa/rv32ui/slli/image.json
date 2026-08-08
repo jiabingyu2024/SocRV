@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/slli/firmware.elf",
-    "sha256": "8376d229ab428909993d9f186338615291ece0c8303582ca052be8b360169af8"
+    "sha256": "53a743a7dfe20662d90b5ae6eb3b6a81ea8417342c3942c9fa7dfc8b0a50b4f9"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32ui/slli",
   "regions": [
     {

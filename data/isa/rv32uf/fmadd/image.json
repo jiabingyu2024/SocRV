@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32uf/fmadd/firmware.elf",
-    "sha256": "22b234ae8a93f3f6d5311a7c71dcb195eeb5a3911fe12d19ef52d2e574ef488e"
+    "sha256": "a574c9685531c0466fe227d7c660f9d35608934304c7595e3cb9d41a8a3cf6dc"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32uf/fmadd",
   "regions": [
     {

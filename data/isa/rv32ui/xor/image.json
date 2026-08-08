@@ -1,7 +1,7 @@
 {
   "elf": {
     "path": "data/isa/rv32ui/xor/firmware.elf",
-    "sha256": "493fb83e54bac870663cd0dba2947f360c796fcf01c12a34666870ac3163a581"
+    "sha256": "75e31596f48822fa7beeacafac7c5e490d8adf97373d90130d1d0610cd6eb790"
   },
   "endianness": "little",
   "entry": "0x00000000",
@@ -11,7 +11,7 @@
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "41ec5a5b5db585aec3d0486b037545eb3a8d0a08bfb64c89f8b291623eb81298",
   "profile": "riscv-tests/rv32ui/xor",
   "regions": [
     {
