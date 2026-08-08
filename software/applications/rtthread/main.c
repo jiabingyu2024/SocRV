@@ -5,8 +5,8 @@
 static void worker(void *parameter)
 {
     RT_UNUSED(parameter);
-    rt_kprintf("SocRV RT-Thread worker PASS\n");
     test_status_pass(0u);
+    rt_kprintf("SocRV RT-Thread worker PASS\n");
 }
 
 int main(void)

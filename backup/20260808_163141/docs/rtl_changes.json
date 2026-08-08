@@ -1,0 +1,414 @@
+{
+  "schema_version": 1,
+  "change": "SocRV framework RTL generation and shared memory latency update",
+  "confirmed_contract": {
+    "hxi": {
+      "address_width": 32,
+      "data_width": 32,
+      "write_strobe_width": 4,
+      "masters": ["instruction", "data"],
+      "outstanding_per_master": {
+        "code_and_data_memory": 8,
+        "timer_irq_apb_default": 1
+      },
+      "parallel_different_targets": true,
+      "same_target_arbitration": "per-slave round-robin",
+      "response": ["valid", "ready", "rdata", "error"]
+    },
+    "reset_vector": "0x00000000",
+    "clock_hz": 50000000,
+    "uart_baud": 115200
+  },
+  "incremental_changes": [
+    {
+      "date": "2026-08-04",
+      "scope": [
+        "rtl/common/pkg/soc_config_pkg.sv",
+        "rtl/memory/generic/generic_rom.sv",
+        "rtl/memory/generic/generic_spram.sv"
+      ],
+      "summary": "Added one shared configurable response latency for code and data memories.",
+      "defaults": {
+        "code_memory_response_cycles": 1,
+        "data_memory_response_cycles": 1
+      },
+      "consistency": "The Verilator SoC top and FPGA memory backends instantiate the same generic memory modules, so both paths use the same defaults.",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "rtthread-coremark UART command simulation PASS"
+      ],
+      "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-05",
+      "scope": [
+        "rtl/bus/hxi/hxi_crossbar.sv"
+      ],
+      "backup": "backup/20260805_095831/rtl/bus/hxi/hxi_crossbar.sv",
+      "summary": "Removed global HXI serialization. Instruction and data masters now each own one outstanding slot and may access different slaves concurrently; same-slave conflicts use per-slave round-robin arbitration.",
+      "interface_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "correctness regression PASS",
+        "performance regression PASS",
+        "current ISA gate PASS: 40 RV32UI tests"
+      ],
+      "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-05",
+      "scope": [
+        "rtl/cpu/pkg/cpu_types_pkg.sv",
+        "rtl/cpu/demo/demo_cpu_core.sv",
+        "tb/soc/soc_sim_top.sv"
+      ],
+      "summary": "Added a single-slot retirement event contract for Spike DiffTest, including ordered normal/synchronous-trap events, architectural memory effects, pre-instruction Machine CSR snapshots, and ordered asynchronous interrupt notifications.",
+      "interface_change": true,
+      "timing_behavior_change": false,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "normal Verilator model build PASS",
+        "normal baremetal smoke PASS"
+      ],
+      "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-05",
+      "scope": [
+        "rtl/cpu/demo/demo_cpu_core.sv"
+      ],
+      "summary": "Completed the demo core functional DiffTest baseline: RV32M arithmetic, fence.i, precise alignment traps, U/M privilege transitions, Machine CSR legality and WARL behavior, counters, minimal PMP state, and trigger CSR discovery state.",
+      "interface_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "frequency_note": "The demo RV32M multiply/divide implementation is combinational and is a correctness scaffold, not a final FPGA timing implementation.",
+      "verification": [
+        "Verilator RTL lint PASS",
+        "RV32UI DiffTest PASS: 41/41",
+        "RV32UM DiffTest PASS: 8/8",
+        "RV32MI DiffTest PASS: 16/16, including independently validated address-trigger breakpoint traps",
+        "baremetal smoke DiffTest PASS",
+        "trap/timer DiffTest PASS",
+        "RT-Thread UART command DiffTest PASS",
+        "RT-Thread CoreMark 3 command and CRC PASS"
+      ],
+      "vivado_invoked": false
+    },
+    {
+      "date": "2026-08-06",
+      "scope": [
+        "rtl/cpu/superscalar/",
+        "rtl/cpu/cpu_subsystem.sv",
+        "rtl/cpu/pkg/cpu_config_pkg.sv",
+        "rtl/cpu/pkg/cpu_types_pkg.sv",
+        "rtl/filelist.f",
+        "rtl/cpu/demo/demo_cpu_core.sv"
+      ],
+      "backup": [
+        "backup/2026-08-06_20-56-36/rtl/cpu/demo/demo_cpu_core.sv",
+        "backup/2026-08-06_21-14-09/docs/rtl_changes.json"
+      ],
+      "summary": "Replaced the demo CPU instance with the imported superscalar core, adapted the core locally to the unchanged SocRV reset vector, memory map, HXI protocol, interrupt inputs and commit-trace contract, and removed the validated demo RTL from the active tree.",
+      "address_contract": {
+        "reset_pc": "cpu_config_pkg::CPU_RESET_VECTOR (0x00000000)",
+        "code": "memory_map_pkg::CODE_BASE/SIZE (0x00000000, 64 KiB)",
+        "data_cacheable": "memory_map_pkg::DATA_BASE/SIZE (0x10000000, 64 KiB)",
+        "mmio": "all addresses outside DATA are uncached and ordered through D-HXI"
+      },
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "soc_contract_files_changed": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "make check PASS",
+        "Spike DiffTest final-base PASS: RV32UI 41/41, RV32MI 16/16, RV32UM 8/8",
+        "difftest-selftest ORDER/NEXT_PC/GPR/MEM PASS",
+        "diff-smoke PASS",
+        "diff-rtthread PASS with socrv_info command and second msh prompt",
+        "sim-trap-timer PASS",
+        "sim-full PASS: final-base, RT-Thread, MSH help/ps/uptime, CoreMark 10 CRC",
+        "CoreMark 3 PASS: 5121478 ticks",
+        "CoreMark 10 PASS: 17070246 ticks",
+        "Vivado rtthread-coremark PASS: timing met, 0 DRC errors, bitstream generated",
+        "check-images PASS and release-check PASS: 11 packaged files"
+      ],
+      "fpga": {
+        "profile": "rtthread-coremark",
+        "bitstream_sha256": "38891bce598cf02c972eb945a6ed4fdb769b2ee174db0f3f0e7b497f4c16427e",
+        "drc_warnings": 46,
+        "warning_note": "REQP-1840 warnings on D-cache tag RAM address drivers with asynchronous-reset registers; no DRC errors and timing met."
+      },
+      "known_limitations": [
+        "Unexpected D-HXI rsp_err responses are promoted to fault_o; precise load/store access-fault retirement is not covered by the current final-base or RT-Thread regression.",
+        "Physical board UART validation must be performed after programming; no board was connected during this run."
+      ]
+    },
+    {
+      "date": "2026-08-06",
+      "scope": [
+        "software/bsp/drivers/drv_uart.c",
+        "software/Makefile",
+        "software/toolchain/common_flags.mk",
+        "software/profiles/coremark-baremetal.mk",
+        "software/profiles/coremark-smoke.mk",
+        "software/profiles/rtthread-coremark.mk",
+        "data/soc/software_contract.json",
+        "data/tests/soc.json",
+        "Makefile"
+      ],
+      "backup": "backup/2026-08-06_22-00-02/",
+      "summary": "Changed the formal software baseline to RV32IM + Zicsr + Zicntr + Zifencei, made UART newline output emit CRLF, and made every software object depend on all parsed make/profile fragments so ISA or profile changes cannot reuse stale objects.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "rtl_change": false,
+      "cascade_scope": "full_reverify",
+      "software": {
+        "march": "rv32im_zicsr_zicntr_zifencei",
+        "mabi": "ilp32",
+        "elf_sha256": "f5b3bcb74dec54250d02240947034422ff9426bb38ae71a107106334b77d098b",
+        "m_instruction_counts": {
+          "mul": 40,
+          "div": 2,
+          "divu": 18,
+          "rem": 1,
+          "remu": 14
+        }
+      },
+      "verification": [
+        "make check PASS",
+        "Spike DiffTest final-base PASS: RV32UI 41/41, RV32MI 16/16, RV32UM 8/8",
+        "diff-rtthread PASS with RV32IM software and second msh prompt",
+        "sim-full PASS: final-base, RT-Thread, MSH help/ps/uptime, CoreMark 10 CRC",
+        "CoreMark 3 PASS: 1996686 exact ticks",
+        "CoreMark 10 PASS: 6653657 exact ticks, 61.02% fewer than the previous 17070246-tick RV32I software baseline",
+        "Raw UART stdout confirms 0x0d 0x0a after newline",
+        "Vivado rtthread-coremark PASS: WNS 6.926 ns, 0 DRC errors, bitstream generated"
+      ],
+      "fpga": {
+        "profile": "rtthread-coremark",
+        "muldiv_sources": [
+          "rtl/cpu/superscalar/ip/MUL_0.sv",
+          "rtl/cpu/superscalar/ip/DIV_0.sv",
+          "rtl/cpu/superscalar/execute/muldiv_unit.sv"
+        ],
+        "synthesis_confirmation": "All three modules are present in socrv.xpr and synthesized; the multiplier maps to four DSP48E1 blocks.",
+        "bitstream_sha256": "1bfab26c8c138fe778109c9b2790ad4c98ff17f2648259ef08367a60f6ef97fe",
+        "wns_ns": 6.926,
+        "drc_errors": 0,
+        "drc_warnings": 46
+      },
+      "known_limitations": [
+        "Physical board UART and coremark 10000 validation remain a manual step; no board was programmed during this run."
+      ]
+    },
+    {
+      "date": "2026-08-07",
+      "trigger": "User-requested formal double-precision floating-point baseline",
+      "scope": [
+        "rtl/cpu/superscalar/fpu/",
+        "rtl/cpu/superscalar/commit/csr_file.sv",
+        "rtl/cpu/superscalar/core_top.sv",
+        "rtl/cpu/superscalar/decode/decoder.sv",
+        "rtl/cpu/superscalar/issue/issue_control.sv",
+        "rtl/cpu/superscalar/issue/scoreboard.sv",
+        "rtl/cpu/superscalar/pkg/core_types_pkg.sv",
+        "rtl/filelist.f"
+      ],
+      "backup": [
+        "backup/2026-08-06_23-57-02/",
+        "backup/20260807_005035/"
+      ],
+      "summary": "Upgraded the active CPU to RV32IMFD using synthesizable OpenHW FPnew RTL (cvfpu commit 355c388ed0899643d41194aed22d3bd2c09e84b3). Added 32 x 64-bit FPRs, F/D arithmetic and conversions, FMA/divide/sqrt, FLW/FLD/FSW/FSD, fflags/frm/fcsr, mstatus.FS and misa.F/D while preserving the CPU subsystem's SoC-facing interface and memory map.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "RV32F/RV32D ISA gate PASS: 21/21",
+        "Final ISA gate PASS: 86/86",
+        "RT-Thread RV32IMFD context and CoreMark command regression PASS",
+        "Vivado synthesis confirms shared FPnew RTL and 15 total DSP blocks"
+      ]
+    },
+    {
+      "date": "2026-08-07",
+      "trigger": "Vivado diagnostics: post-route WNS -6.424 ns/TNS -4321.306 ns on the unpipelined FMA path, followed by LUTLP-1 on the FPnew busy/fence.i flush feedback path after pipelining",
+      "scope": [
+        "rtl/cpu/superscalar/fpu/fp_execute_unit.sv"
+      ],
+      "backup": [
+        "backup/20260807_015115/fp_execute_unit.sv",
+        "backup/20260807_022435/fp_execute_unit.sv"
+      ],
+      "summary": "Replaced the combinational DEFAULT_NOREGS FPnew configuration with a distributed RV32FD pipeline. ADDMUL and CONV use input/internal/output stages; DIVSQRT and NONCOMP each use one stage at the FPnew-defined boundary. The wrapper now tracks its single outstanding FP transaction in active_q instead of feeding FPnew's combinational busy output back into the core fence/flush decision, removing the LUTLP-1 loop without changing interfaces.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "make sim-isa ISA_GATE=fp-double PASS: 21/21",
+        "make sim-isa ISA_GATE=final PASS: 86/86",
+        "make sim-rtthread PASS",
+        "make sim-msh PASS: help, ps and uptime",
+        "make sim-coremark COREMARK_ITERATIONS=3 PASS: decimal timing, CRC, ps/help after CoreMark and four prompts",
+        "make check PASS",
+        "make fpga-build PROFILE=rtthread-coremark JOBS=4 PASS",
+        "make fpga-check PROFILE=rtthread-coremark PASS"
+      ],
+      "fpga": {
+        "device": "xc7k325tffg900-2",
+        "wns_ns": 4.615,
+        "tns_ns": 0.0,
+        "failing_endpoints": 0,
+        "drc_errors": 0,
+        "drc_warnings": 81,
+        "luts": 16639,
+        "ffs": 9367,
+        "ramb36": 41,
+        "ramb18": 1,
+        "dsps": 15,
+        "bitstream_bytes": 11443717,
+        "bitstream_sha256": "34b6306322148758b8097a2ba2a89ddb6ccd5f918e93a094d8521caa6b2ff9e4"
+      }
+    },
+    {
+      "date": "2026-08-07",
+      "trigger": "User-requested pipelined IROM/DATA RAM access without changing the SoC address map or peripheral contracts",
+      "scope": [
+        "rtl/bus/hxi/hxi_crossbar.sv",
+        "rtl/cpu/superscalar/frontend/frontend.sv",
+        "rtl/cpu/superscalar/memory/dcache.sv",
+        "rtl/cpu/superscalar/memory/dmem_regslice.sv",
+        "rtl/cpu/superscalar/superscalar_cpu_core.sv",
+        "rtl/memory/generic/generic_rom.sv",
+        "rtl/memory/generic/generic_spram.sv"
+      ],
+      "backup": "backup/20260807_120000_hxi_pipeline/",
+      "summary": "Converted the CODE and DATA memory paths from request/wait serialization to strict in-order pipelining. The frontend now overlaps synchronous branch prediction with one 32-bit instruction request per cycle, tracks pending PC/prediction metadata with redirect epochs, the HXI crossbar uses per-master route and per-slave owner FIFOs, the generic FPGA memories accept one operation per cycle, DCache sends all four refill words independently of their responses, and the D-HXI wrapper tracks read/write response types in order. Timer, IRQ, APB, default-slave behavior and all address ranges remain unchanged.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "pipeline_contract": {
+        "code_data_max_outstanding": 8,
+        "side_effecting_slave_max_outstanding": 1,
+        "response_order": "strict request order; no transaction IDs",
+        "irom_steady_state_throughput": "one 32-bit request/response per cycle when unstalled",
+        "data_ram_steady_state_throughput": "one 32-bit read or write per cycle when unstalled",
+        "dcache_refill": "four 32-bit beats issued in consecutive accepted cycles"
+      },
+      "performance": {
+        "workload": "RT-Thread CoreMark command, 3 iterations, identical 899617-commit performance window",
+        "before_cycles": 1904032,
+        "after_cycles": 1326922,
+        "cycle_reduction_percent": 30.31,
+        "before_ipc": 0.47248,
+        "after_ipc": 0.677972782,
+        "ipc_improvement_percent": 43.49,
+        "exact_total_ticks": 1326867
+      },
+      "verification": [
+        "make check PASS on final RTL",
+        "baremetal smoke PASS on final RTL: 80535 cycles",
+        "baremetal smoke Spike DiffTest PASS",
+        "trap/timer PASS: 52842 cycles",
+        "final-base non-DiffTest ISA PASS: RV32UI/RV32MI/RV32UM 65/65",
+        "fp-double ISA PASS: RV32UF/RV32UD 21/21",
+        "RT-Thread MSH help/ps/uptime PASS",
+        "CoreMark 3 CRC PASS; shell returned and ps/help both completed",
+        "Vivado rtthread-coremark build and fpga-check PASS"
+      ],
+      "fpga": {
+        "device": "xc7k325tffg900-2",
+        "wns_ns": 4.028,
+        "tns_ns": 0.0,
+        "drc_errors": 0,
+        "drc_warnings": 81,
+        "luts": 16580,
+        "ffs": 9493,
+        "ramb36": 41,
+        "ramb18": 1,
+        "dsps": 15,
+        "code_memory_inference": "16 RAMB36",
+        "data_memory_inference": "16 RAMB36",
+        "bitstream_bytes": 11443717,
+        "bitstream_sha256": "35c59b1a0927d95357fda3235d1453c640903fa06b06bb24e275789bcedf41dd"
+      },
+      "known_limitations": [
+        "The pre-existing RV32FD CSR permission path does not trap an FP instruction when mstatus.FS is Off; rv32mi/csr therefore still fails Spike DiffTest when the reference ISA is correctly set to RV32IMFD. This is independent of the memory-pipeline changes.",
+        "Makefile DIFFTEST_ISA still defaults to RV32IM while the current hardware MISA exposes F/D, so CSR/MISA DiffTest must use DIFFTEST_ISA=rv32imfd_zicsr_zicntr_zifencei until that pre-existing baseline setting is corrected.",
+        "Physical-board UART/CoreMark 10000 validation remains manual; the generated bitstream passed implementation but no board was connected in this run."
+      ]
+    },
+    {
+      "date": "2026-08-07",
+      "trigger": "User-requested IPC optimization with frequency-preservation constraint",
+      "scope": [
+        "rtl/cpu/superscalar/core_top.sv",
+        "rtl/cpu/superscalar/issue/operand_resolver.sv",
+        "rtl/cpu/superscalar/pkg/core_config_pkg.sv"
+      ],
+      "backup": "backup/20260807_150000_ipc_fmax_opt/",
+      "summary": "Completed the three prioritized performance changes: correct-prediction branches may continue issuing while branch-miss uops are blocked before scoreboard allocation; registered DCache load completion now bypasses into the load/store address-generation operand path; and load/store queue capacity was increased to reduce back-pressure. No new RAM-to-AGU asynchronous path or speculative backend flush path was introduced.",
+      "performance": {
+        "workload": "RT-Thread CoreMark command, 3 iterations",
+        "baseline_cycles": 1326922,
+        "baseline_ipc": 0.677972782,
+        "agu_bypass_and_queue_cycles": 1301722,
+        "agu_bypass_and_queue_ipc": 0.691097638,
+        "final_cycles": 1170463,
+        "final_ipc": 0.768599264,
+        "cycle_reduction_percent_vs_baseline": 11.79,
+        "ipc_improvement_percent_vs_baseline": 13.37
+      },
+      "frequency_guard": {
+        "clock_hz": 50000000,
+        "post_route_wns_ns_before": 4.028,
+        "post_route_wns_ns_after": 4.137,
+        "post_route_tns_ns_after": 0.0,
+        "failing_endpoints_after": 0,
+        "note": "The final branch-miss gating uses the current-cycle compare result because the existing recovery controller redirects frontend state but does not flush backend scoreboard state; a registered gate allowed wrong-path uops to pollute the scoreboard."
+      },
+      "queue_depth": {
+        "load_queue_before": 2,
+        "load_queue_after": 4,
+        "store_buffer_before": 4,
+        "store_buffer_after": 8
+      },
+      "fpga": {
+        "device": "xc7k325tffg900-2",
+        "luts": 17327,
+        "ffs": 9677,
+        "ramb36": 44,
+        "ramb18": 1,
+        "dsps": 15,
+        "drc_errors": 0,
+        "drc_warnings": 81,
+        "bitstream_sha256": "231b94f8d2f9e58db328e6830faa0d16d6987957da35aafa07e6911a872b8a96"
+      },
+      "verification": [
+        "make check PASS",
+        "RV32UI/RV32MI/RV32UM/RV32UF/RV32UD ISA gate PASS: 86/86",
+        "RT-Thread and MSH help/ps prompt recovery PASS",
+        "CoreMark 3 and 10 PASS with CRC PASS and decimal timing output",
+        "Vivado post-route timing PASS",
+        "make fpga-check PROFILE=rtthread-coremark PASS"
+      ]
+    }
+  ],
+  "assumptions": [
+    "Each HXI master permits up to eight strictly ordered CODE/DATA transactions; side-effecting slaves remain single-outstanding.",
+    "Two masters contending for the same HXI slave are serialized by per-slave round-robin arbitration.",
+    "Code and data memory are each 64 KiB.",
+    "Memory response latency parameters must be at least one cycle.",
+    "The superscalar core is the active and final CPU implementation; the demo core has been removed after full regression."
+  ]
+}

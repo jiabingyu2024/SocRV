@@ -1,10 +1,8 @@
 module soc_core #(
   parameter int unsigned GPIO_WIDTH = 16
 ) (
-  input logic core_clk_i,
-  input logic core_rst_ni,
-  input logic periph_clk_i,
-  input logic periph_rst_ni,
+  input logic clk_i,
+  input logic rst_ni,
   mem_native_if.master code_mem,
   mem_native_if.master data_mem,
   input logic uart_rx_i,
@@ -20,28 +18,19 @@ module soc_core #(
   output logic [1:0] retire_count_o,
   output logic cpu_fault_o
 );
-  // core_clk domain: CPU tile, caches and both local BRAM paths.
-  hxi_if cpu_i_hxi(core_clk_i);
-  hxi_if cpu_d_hxi(core_clk_i);
-  hxi_if code_hxi(core_clk_i);
-  hxi_if data_hxi(core_clk_i);
-  hxi_if mmio_core_hxi(core_clk_i);
+  hxi_if cpu_i_hxi(clk_i);
+  hxi_if cpu_d_hxi(clk_i);
+  hxi_if code_hxi(clk_i);
+  hxi_if data_hxi(clk_i);
+  hxi_if timer_hxi(clk_i);
+  hxi_if irq_hxi(clk_i);
+  hxi_if apb_hxi(clk_i);
+  hxi_if default_hxi(clk_i);
 
-  // periph_clk domain: all side-effecting slaves sit behind one CDC bridge.
-  hxi_if mmio_periph_hxi(periph_clk_i);
-  hxi_if timer_hxi(periph_clk_i);
-  hxi_if irq_hxi(periph_clk_i);
-  hxi_if apb_hxi(periph_clk_i);
-  hxi_if default_hxi(periph_clk_i);
-
-  logic irq_software_periph;
-  logic irq_timer_periph;
-  logic irq_external_periph;
-  logic irq_software_core;
-  logic irq_timer_core;
-  logic irq_external_core;
+  logic irq_software;
+  logic irq_timer;
+  logic irq_external;
   logic uart_irq;
-  logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] ext_irq_periph;
   logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] irq_sources;
 
   logic [31:0] paddr;
@@ -66,50 +55,35 @@ module soc_core #(
   logic test_pready;
   logic test_pslverr;
 
-  cdc_sync_level #(
-    .WIDTH(soc_config_pkg::EXT_IRQ_COUNT)
-  ) u_ext_irq_sync (
-    .clk_i(periph_clk_i),
-    .rst_ni(periph_rst_ni),
-    .async_i(ext_irq_i),
-    .sync_o(ext_irq_periph)
-  );
-
   always_comb begin
-    irq_sources = ext_irq_periph;
-    irq_sources[0] = ext_irq_periph[0] | uart_irq;
+    irq_sources = ext_irq_i;
+    irq_sources[0] = ext_irq_i[0] | uart_irq;
   end
 
-  cdc_sync_level #(.WIDTH(3)) u_irq_to_core_sync (
-    .clk_i(core_clk_i),
-    .rst_ni(core_rst_ni),
-    .async_i({irq_software_periph, irq_timer_periph, irq_external_periph}),
-    .sync_o({irq_software_core, irq_timer_core, irq_external_core})
-  );
-
   cpu_subsystem u_cpu (
-    .clk_i(core_clk_i),
-    .rst_ni(core_rst_ni),
+    .clk_i,
+    .rst_ni,
     .instr_hxi(cpu_i_hxi),
     .data_hxi(cpu_d_hxi),
-    .irq_software_i(irq_software_core),
-    .irq_timer_i(irq_timer_core),
-    .irq_external_i(irq_external_core),
+    .irq_software_i(irq_software),
+    .irq_timer_i(irq_timer),
+    .irq_external_i(irq_external),
     .commit_o,
     .retire_count_o,
     .fault_o(cpu_fault_o)
   );
 
-  // I-cache refill and D-cache local RAM accesses bypass the old six-slave
-  // crossbar.  Only D-port requests outside CODE/DATA enter the CDC bridge.
-  hxi_cpu_local_router u_local_router (
-    .clk_i(core_clk_i),
-    .rst_ni(core_rst_ni),
-    .instr_i(cpu_i_hxi),
-    .data_i(cpu_d_hxi),
-    .code_o(code_hxi),
-    .data_o(data_hxi),
-    .peripheral_o(mmio_core_hxi)
+  hxi_crossbar u_crossbar (
+    .clk_i,
+    .rst_ni,
+    .m0_i(cpu_i_hxi),
+    .m1_i(cpu_d_hxi),
+    .s0_o(code_hxi),
+    .s1_o(data_hxi),
+    .s2_o(timer_hxi),
+    .s3_o(irq_hxi),
+    .s4_o(apb_hxi),
+    .s5_o(default_hxi)
   );
 
   memory_subsystem u_memory (
@@ -119,52 +93,31 @@ module soc_core #(
     .data_mem
   );
 
-  // The bridge permits one strongly ordered MMIO request.  Slow-ready logic
-  // is contained here and cannot form a combinational path back into core.
-  hxi_async_bridge u_mmio_bridge (
-    .src_clk_i(core_clk_i),
-    .src_rst_ni(core_rst_ni),
-    .dst_clk_i(periph_clk_i),
-    .dst_rst_ni(periph_rst_ni),
-    .src_hxi(mmio_core_hxi),
-    .dst_hxi(mmio_periph_hxi)
-  );
-
-  hxi_peripheral_router u_peripheral_router (
-    .clk_i(periph_clk_i),
-    .rst_ni(periph_rst_ni),
-    .input_i(mmio_periph_hxi),
-    .timer_o(timer_hxi),
-    .irq_o(irq_hxi),
-    .apb_o(apb_hxi),
-    .default_o(default_hxi)
-  );
-
   machine_timer u_timer (
-    .clk_i(periph_clk_i),
-    .rst_ni(periph_rst_ni),
+    .clk_i,
+    .rst_ni,
     .hxi(timer_hxi),
-    .irq_timer_o(irq_timer_periph)
+    .irq_timer_o(irq_timer)
   );
 
   interrupt_controller u_irq (
-    .clk_i(periph_clk_i),
-    .rst_ni(periph_rst_ni),
+    .clk_i,
+    .rst_ni,
     .ext_irq_i(irq_sources),
     .hxi(irq_hxi),
-    .irq_software_o(irq_software_periph),
-    .irq_external_o(irq_external_periph)
+    .irq_software_o(irq_software),
+    .irq_external_o(irq_external)
   );
 
   hxi_default_slave u_default (
-    .clk_i(periph_clk_i),
-    .rst_ni(periph_rst_ni),
+    .clk_i,
+    .rst_ni,
     .hxi(default_hxi)
   );
 
   hxi_to_apb u_hxi_to_apb (
-    .clk_i(periph_clk_i),
-    .rst_ni(periph_rst_ni),
+    .clk_i,
+    .rst_ni,
     .hxi(apb_hxi),
     .paddr_o(paddr),
     .psel_o(psel),
@@ -202,8 +155,8 @@ module soc_core #(
   );
 
   apb_uart u_uart (
-    .clk_i(periph_clk_i),
-    .rst_ni(periph_rst_ni),
+    .clk_i,
+    .rst_ni,
     .paddr_i(paddr),
     .psel_i(uart_psel),
     .penable_i(penable),
@@ -219,8 +172,8 @@ module soc_core #(
   );
 
   apb_gpio #(.WIDTH(GPIO_WIDTH)) u_gpio (
-    .clk_i(periph_clk_i),
-    .rst_ni(periph_rst_ni),
+    .clk_i,
+    .rst_ni,
     .paddr_i(paddr),
     .psel_i(gpio_psel),
     .penable_i(penable),
@@ -236,8 +189,8 @@ module soc_core #(
   );
 
   apb_test_status u_test_status (
-    .clk_i(periph_clk_i),
-    .rst_ni(periph_rst_ni),
+    .clk_i,
+    .rst_ni,
     .paddr_i(paddr),
     .psel_i(test_psel),
     .penable_i(penable),

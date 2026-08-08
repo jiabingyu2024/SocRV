@@ -129,9 +129,15 @@ SimResult SimControl::run() {
         }
         if (dut_.test_done()) {
             const bool passed = dut_.test_pass();
-            if (passed &&
-                !config_.uart_command.empty() &&
-                !checker.command_complete()) {
+            if (passed && !checker.output_complete()) {
+                if (cycle + 1 == config_.max_cycles) {
+                    std::cerr << "\nTIMEOUT waiting for configured UART output after "
+                              << config_.max_cycles << " cycles\n";
+                    result.status = "TIMEOUT";
+                    result.exit_reason = "uart_output_timeout";
+                    result.cycles = config_.max_cycles;
+                    break;
+                }
                 continue;
             }
             std::cout << "\n" << (passed ? "PASS" : "FAIL")

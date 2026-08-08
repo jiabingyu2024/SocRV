@@ -36,16 +36,16 @@ void rt_hw_console_output(const char *text)
 
 signed char rt_hw_console_getchar(void)
 {
+    static unsigned int idle_polls;
     char character;
     if (uart_getc_nonblocking(&character)) {
+        idle_polls = 0u;
         return (signed char)character;
     }
-    /*
-     * This board uses a polled UART instead of an RT-Thread device object.
-     * Yield while the RX FIFO is empty so the FinSH thread cannot starve
-     * lower-priority application threads.
-     */
-    rt_thread_mdelay(1);
+    if (++idle_polls >= 10000u) {
+        idle_polls = 0u;
+        rt_thread_mdelay(1);
+    }
     return (signed char)-1;
 }
 

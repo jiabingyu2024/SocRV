@@ -467,6 +467,21 @@ begin
         csr_mtime_ie_r  = 1'b0;
     end
 
+    if (csr_mideleg_q[`SR_IP_MEIP_R]) begin
+        csr_mip_r[`SR_IP_SEIP_R] = ext_intr_i;
+        csr_mip_next_r[`SR_IP_SEIP_R] = 1'b0;
+    end else begin
+        csr_mip_r[`SR_IP_MEIP_R] = ext_intr_i;
+        csr_mip_next_r[`SR_IP_MEIP_R] = 1'b0;
+    end
+    if (csr_mideleg_q[`SR_IP_MTIP_R]) begin
+        csr_mip_r[`SR_IP_STIP_R] = timer_intr_i;
+        csr_mip_next_r[`SR_IP_STIP_R] = 1'b0;
+    end else begin
+        csr_mip_r[`SR_IP_MTIP_R] = timer_intr_i;
+        csr_mip_next_r[`SR_IP_MTIP_R] = 1'b0;
+    end
+
     csr_mip_r = csr_mip_r | csr_mip_next_r;
 end
 

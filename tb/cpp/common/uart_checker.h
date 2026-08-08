@@ -34,6 +34,7 @@ public:
     bool prompt_seen() const;
     std::uint64_t prompt_count() const;
     bool command_complete() const;
+    bool output_complete() const;
     UartCheckSnapshot evaluate(
         bool test_passed,
         bool performance_complete) const;

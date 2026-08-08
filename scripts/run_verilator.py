@@ -567,7 +567,7 @@ def run_image(
         argv.extend(
             [
                 "--uart-command",
-                uart_command + "\r",
+                uart_command + "\n",
                 "--uart-prompt",
                 uart_prompt,
                 "--uart-prompt-timeout",
@@ -577,7 +577,7 @@ def run_image(
             ]
         )
         for followup in uart_followup_commands:
-            argv.extend(["--uart-followup-command", followup + "\r"])
+            argv.extend(["--uart-followup-command", followup + "\n"])
     if wave_path:
         argv.extend(["--trace", relative_to_repo(wave_path)])
     command = in_repo(repo_path(), argv)

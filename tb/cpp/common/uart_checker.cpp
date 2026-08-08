@@ -56,6 +56,18 @@ bool UartChecker::command_complete() const {
            prompt_count_ >= 2 + config_.uart_followup_commands.size();
 }
 
+bool UartChecker::output_complete() const {
+    if (!config_.uart_command.empty() && !command_complete()) {
+        return false;
+    }
+    for (const std::string& expected : config_.uart_expect) {
+        if (!contains(transcript_, expected)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool UartChecker::contains_number_after(
     const std::string& prefix) const {
     const std::size_t position = transcript_.find(prefix);

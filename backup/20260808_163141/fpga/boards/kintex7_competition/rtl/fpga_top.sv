@@ -9,13 +9,11 @@ module fpga_top #(
   output logic [31:0] virtual_led,
   output logic [39:0] virtual_seg
 );
-  logic core_clk;
-  logic periph_clk;
-  logic core_rst_n;
-  logic periph_rst_n;
+  logic soc_clk;
+  logic soc_rst_n;
   logic clock_locked;
-  mem_native_if code_mem(core_clk);
-  mem_native_if data_mem(core_clk);
+  mem_native_if code_mem(soc_clk);
+  mem_native_if data_mem(soc_clk);
   logic [15:0] gpio_i;
   logic [15:0] gpio_o;
   logic [15:0] gpio_oe;
@@ -33,18 +31,14 @@ module fpga_top #(
   board_clock_reset u_clock_reset (
     .sys_clk_p_i(i_sys_clk_p),
     .sys_clk_n_i(i_sys_clk_n),
-    .core_clk_o(core_clk),
-    .periph_clk_o(periph_clk),
-    .core_rst_no(core_rst_n),
-    .periph_rst_no(periph_rst_n),
+    .soc_clk_o(soc_clk),
+    .soc_rst_no(soc_rst_n),
     .clock_locked_o(clock_locked)
   );
 
   soc_core u_soc (
-    .core_clk_i(core_clk),
-    .core_rst_ni(core_rst_n),
-    .periph_clk_i(periph_clk),
-    .periph_rst_ni(periph_rst_n),
+    .clk_i(soc_clk),
+    .rst_ni(soc_rst_n),
     .code_mem,
     .data_mem,
     .uart_rx_i(i_uart_rx),
@@ -65,8 +59,8 @@ module fpga_top #(
     .BYTES(memory_map_pkg::CODE_SIZE),
     .MEM_FILE(CODE_MEM_FILE)
   ) u_code_memory (
-    .clk_i(core_clk),
-    .rst_ni(core_rst_n),
+    .clk_i(soc_clk),
+    .rst_ni(soc_rst_n),
     .mem(code_mem)
   );
 
@@ -74,8 +68,8 @@ module fpga_top #(
     .BYTES(memory_map_pkg::DATA_SIZE),
     .MEM_FILE(DATA_MEM_FILE)
   ) u_data_memory (
-    .clk_i(core_clk),
-    .rst_ni(core_rst_n),
+    .clk_i(soc_clk),
+    .rst_ni(soc_rst_n),
     .mem(data_mem)
   );
 

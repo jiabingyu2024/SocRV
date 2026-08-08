@@ -12,7 +12,6 @@ rtl/cpu/superscalar/fpu/vendor/fpnew/src/fpnew_pkg.sv
 rtl/cpu/superscalar/fpu/vendor/fpnew/divsqrt/defs_div_sqrt_mvp.sv
 rtl/cpu/superscalar/pkg/core_types_pkg.sv
 rtl/common/sync/reset_sync.sv
-rtl/common/sync/cdc_sync_level.sv
 rtl/common/util/skid_buffer.sv
 # biRISC-V core and HXI-native caches
 +incdir+rtl/cpu/biriscv/core
@@ -101,9 +100,6 @@ rtl/cpu/superscalar/superscalar_cpu_core.sv
 rtl/cpu/cpu_subsystem.sv
 rtl/bus/hxi/hxi_default_slave.sv
 rtl/bus/hxi/hxi_crossbar.sv
-rtl/bus/hxi/hxi_cpu_local_router.sv
-rtl/bus/hxi/hxi_peripheral_router.sv
-rtl/bus/bridge/hxi_async_bridge.sv
 rtl/bus/bridge/hxi_to_apb.sv
 rtl/bus/bridge/apb_interconnect.sv
 rtl/memory/adapter/hxi_code_mem_slave.sv

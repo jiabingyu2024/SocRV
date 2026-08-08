@@ -22,12 +22,8 @@ module soc_top_generic #(
   mem_native_if data_mem(clk_i);
 
   soc_core #(.GPIO_WIDTH(GPIO_WIDTH)) u_soc (
-    .core_clk_i(clk_i),
-    .core_rst_ni(rst_ni),
-    // Generic simulation intentionally uses one clock.  The same soc_core
-    // instance receives separate clocks from fpga_top.
-    .periph_clk_i(clk_i),
-    .periph_rst_ni(rst_ni),
+    .clk_i,
+    .rst_ni,
     .code_mem,
     .data_mem,
     .uart_rx_i,
