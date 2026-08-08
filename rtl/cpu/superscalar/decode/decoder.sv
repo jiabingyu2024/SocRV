@@ -58,6 +58,20 @@ module decoder (
         uop_o.exception_tval  = fetch_i.instr;
 
         unique case (opcode)
+            7'b0001011: begin // SocRV custom-0 DSP accumulate primitives
+                uop_o.fu = FU_BITMANIP;
+                uop_o.uses_rs1 = 1'b1;
+                uop_o.uses_rs2 = 1'b1;
+                uop_o.uses_rd_src = 1'b1;
+                uop_o.writes_rd = 1'b1;
+                if (CFG_XMAC16 && funct7 == 7'b0000000 && funct3 == 3'b000) begin
+                    uop_o.bitmanip_op = BM_MACC16;
+                    uop_o.exception_valid = 1'b0;
+                end else if (CFG_XMAC16 && funct7 == 7'b0000001 && funct3 == 3'b000) begin
+                    uop_o.bitmanip_op = BM_BFMACC16;
+                    uop_o.exception_valid = 1'b0;
+                end
+            end
             7'b0110111: begin // LUI
                 uop_o.fu = FU_ALU; uop_o.alu_op = ALU_COPY_B; uop_o.imm = imm_u;
                 uop_o.writes_rd = 1'b1; uop_o.exception_valid = 1'b0;

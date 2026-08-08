@@ -34,7 +34,8 @@ package core_types_pkg;
         BM_CLMUL, BM_CLMULH, BM_CLMULR,
         BM_BREV8, BM_PACK, BM_PACKH, BM_UNZIP, BM_ZIP,
         BM_XPERM4, BM_XPERM8,
-        BM_BCLR, BM_BEXT, BM_BINV, BM_BSET
+        BM_BCLR, BM_BEXT, BM_BINV, BM_BSET,
+        BM_MACC16, BM_BFMACC16
     } bitmanip_op_e;
 
     typedef enum logic [2:0] {
@@ -80,6 +81,7 @@ package core_types_pkg;
         logic [4:0]  frd;
         logic        uses_rs1;
         logic        uses_rs2;
+        logic        uses_rd_src;
         logic        writes_rd;
         logic        uses_frs1;
         logic        uses_frs2;
@@ -176,6 +178,7 @@ package core_types_pkg;
         uop_t uop;
         logic [31:0] op1;
         logic [31:0] op2;
+        logic [31:0] op3;
         logic [63:0] fp_op1;
         logic [63:0] fp_op2;
         logic [63:0] fp_op3;

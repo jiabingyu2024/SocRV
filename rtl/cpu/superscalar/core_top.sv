@@ -84,7 +84,7 @@ module core_top (
     fetch_entry_t fetch_head_entry;
     logic fetch_valid, fetch_pop;
 
-    logic [31:0] rf_rs1_data, rf_rs2_data, rf_write_data;
+    logic [31:0] rf_rs1_data, rf_rs2_data, rf_rs3_data, rf_write_data;
     logic [63:0] fp_rs1_data, fp_rs2_data, fp_rs3_data;
     logic rf_write_valid;
     logic wb_valid_q;
@@ -93,8 +93,8 @@ module core_top (
     logic [TRANS_ID_W-1:0] issue_ptr_q, commit_ptr_q;
     logic [SB_CNT_W-1:0] scoreboard_count_q;
     logic serial_pending_q;
-    logic sb_src1_ready, sb_src2_ready;
-    logic [31:0] sb_src1_data, sb_src2_data;
+    logic sb_src1_ready, sb_src2_ready, sb_src3_ready;
+    logic [31:0] sb_src1_data, sb_src2_data, sb_src3_data;
 
     exec_req_t exec_q;
     completion_t fixed_completion, fixed_completion_raw;
@@ -118,9 +118,10 @@ module core_top (
     logic load_active_q;
     load_entry_t load_active_meta_q;
 
-    logic [31:0] src1_value, src2_value, src1_mem_value;
-    logic src1_ready, src2_ready, src1_mem_ready, src1_found, src2_found;
-    logic [TRANS_ID_W-1:0] src1_tid, src2_tid;
+    logic [31:0] src1_value, src2_value, src3_value, src1_mem_value;
+    logic src1_ready, src2_ready, src3_ready, src1_mem_ready;
+    logic src1_found, src2_found, src3_found;
+    logic [TRANS_ID_W-1:0] src1_tid, src2_tid, src3_tid;
     logic [31:0] csr_src_value;
     logic issue_fire, issue_fire_raw;
     logic exec_load_enqueue, exec_store_enqueue;
@@ -240,7 +241,8 @@ module core_top (
     assign perf_stall_load_use_o = stall_load_use_q;
 
     assign stall_raw_c = id_valid_q && ((!src1_ready && src1_found) ||
-                                        (!src2_ready && src2_found));
+                                        (!src2_ready && src2_found) ||
+                                        (!src3_ready && src3_found));
     assign stall_mem_c = id_valid_q &&
                          (id_uop_q.fu == FU_LOAD || id_uop_q.fu == FU_STORE) && !issue_fire;
     assign stall_muldiv_c = id_valid_q &&
@@ -297,7 +299,8 @@ module core_top (
     assign rf_write_data = wb_data_q;
     regfile u_regfile (
         .clk(clk), .rst(rst), .rs1_addr_i(id_uop_q.rs1), .rs2_addr_i(id_uop_q.rs2),
-        .rs1_data_o(rf_rs1_data), .rs2_data_o(rf_rs2_data),
+        .rs3_addr_i(id_uop_q.rd), .rs1_data_o(rf_rs1_data),
+        .rs2_data_o(rf_rs2_data), .rs3_data_o(rf_rs3_data),
         .write_valid_i(rf_write_valid), .write_addr_i(wb_rd_q),
         .write_data_i(rf_write_data)
     );
@@ -329,7 +332,9 @@ module core_top (
         .query_rs1_found_o(src1_found), .query_rs1_ready_o(sb_src1_ready),
         .query_rs1_trans_id_o(src1_tid), .query_rs1_data_o(sb_src1_data),
         .query_rs2_found_o(src2_found), .query_rs2_ready_o(sb_src2_ready),
-        .query_rs2_trans_id_o(src2_tid), .query_rs2_data_o(sb_src2_data)
+        .query_rs2_trans_id_o(src2_tid), .query_rs2_data_o(sb_src2_data),
+        .query_rs3_found_o(src3_found), .query_rs3_ready_o(sb_src3_ready),
+        .query_rs3_trans_id_o(src3_tid), .query_rs3_data_o(sb_src3_data)
     );
 
     always_ff @(posedge clk) begin
@@ -350,12 +355,15 @@ module core_top (
 
     operand_resolver u_operand_resolver (
         .uop_i(id_uop_q), .rf_rs1_data_i(rf_rs1_data),
-        .rf_rs2_data_i(rf_rs2_data), .wb_valid_i(wb_valid_q),
+        .rf_rs2_data_i(rf_rs2_data), .rf_rs3_data_i(rf_rs3_data),
+        .wb_valid_i(wb_valid_q),
         .wb_rd_i(wb_rd_q), .wb_data_i(wb_data_q),
         .rs1_found_i(src1_found), .rs1_scoreboard_ready_i(sb_src1_ready),
         .rs1_trans_id_i(src1_tid), .rs1_scoreboard_data_i(sb_src1_data),
         .rs2_found_i(src2_found), .rs2_scoreboard_ready_i(sb_src2_ready),
         .rs2_trans_id_i(src2_tid), .rs2_scoreboard_data_i(sb_src2_data),
+        .rs3_found_i(src3_found), .rs3_scoreboard_ready_i(sb_src3_ready),
+        .rs3_trans_id_i(src3_tid), .rs3_scoreboard_data_i(sb_src3_data),
         .fixed_completion_valid_i(fixed_completion_valid),
         .fixed_completion_i(fixed_completion),
         .load_completion_valid_i(load_completion_valid),
@@ -364,8 +372,10 @@ module core_top (
         .slow_completion_trans_id_i(slow_resp_tid),
         .slow_completion_result_i(slow_resp_result),
         .src1_value_o(src1_value), .src2_value_o(src2_value),
+        .src3_value_o(src3_value),
         .src1_memory_value_o(src1_mem_value), .src1_ready_o(src1_ready),
-        .src2_ready_o(src2_ready), .src1_memory_ready_o(src1_mem_ready),
+        .src2_ready_o(src2_ready), .src3_ready_o(src3_ready),
+        .src1_memory_ready_o(src1_mem_ready),
         .src1_found_o(), .src2_found_o()
     );
 
@@ -428,6 +438,7 @@ module core_top (
         .id_valid_i(id_valid_q), .uop_i(issue_uop),
         .src1_ready_i(src1_ready), .src1_memory_ready_i(src1_mem_ready),
         .src2_ready_i(src2_ready), .scoreboard_count_i(scoreboard_count_q),
+        .src3_ready_i(src3_ready),
         .store_count_i(store_count_q), .load_count_i(load_count_q),
         .exec_i(exec_q), .serial_pending_i(serial_pending_q),
         .mdu_req_ready_i(mdu_req_ready), .mdu_busy_i(mdu_busy),
@@ -518,6 +529,7 @@ module core_top (
         .req_trans_id_i(exec_q.trans_id), .req_op_i(exec_q.uop.bitmanip_op),
         .req_a_i(exec_q.op1),
         .req_b_i(exec_q.uop.uses_rs2 ? exec_q.op2 : exec_q.uop.imm),
+        .req_acc_i(exec_q.op3),
         .resp_valid_o(bm_resp_valid), .resp_trans_id_o(bm_resp_tid),
         .resp_result_o(bm_resp_result), .busy_o(bm_busy)
     );
@@ -851,6 +863,7 @@ module core_top (
                                    (issue_uop.fu == FU_STORE)) ?
                                   src1_mem_value : src1_value;
                     exec_q.op2 <= src2_value;
+                    exec_q.op3 <= src3_value;
                     exec_q.fp_op1 <= fp_rs1_data;
                     exec_q.fp_op2 <= fp_rs2_data;
                     exec_q.fp_op3 <= fp_rs3_data;

@@ -39,6 +39,10 @@ module scoreboard #(
     output logic query_rs2_ready_o,
     output logic [core_config_pkg::TRANS_ID_W-1:0] query_rs2_trans_id_o,
     output logic [31:0] query_rs2_data_o
+    ,output logic query_rs3_found_o
+    ,output logic query_rs3_ready_o
+    ,output logic [core_config_pkg::TRANS_ID_W-1:0] query_rs3_trans_id_o
+    ,output logic [31:0] query_rs3_data_o
 );
     import core_config_pkg::*;
     import core_types_pkg::*;
@@ -71,6 +75,15 @@ module scoreboard #(
                             entries_q[query_rs2_trans_id_o].done;
         query_rs2_data_o = query_rs2_found_o ?
                            entries_q[query_rs2_trans_id_o].result : 32'd0;
+
+        query_rs3_found_o = query_uop_i.uses_rd_src && query_uop_i.rd != 0 &&
+                            producer_valid_q[query_uop_i.rd];
+        query_rs3_trans_id_o = query_rs3_found_o ?
+                               producer_tid_q[query_uop_i.rd] : '0;
+        query_rs3_ready_o = !query_rs3_found_o ||
+                            entries_q[query_rs3_trans_id_o].done;
+        query_rs3_data_o = query_rs3_found_o ?
+                           entries_q[query_rs3_trans_id_o].result : 32'd0;
         load_complete_accepted_o = load_complete_i && entries_q[load_trans_id_i].occupied;
     end
 

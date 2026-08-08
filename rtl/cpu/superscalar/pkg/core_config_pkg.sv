@@ -16,6 +16,9 @@ package core_config_pkg;
     localparam logic CFG_ZBS              = 1'b0;
     localparam logic CFG_ZB_ANY           = CFG_ZBA | CFG_ZBB | CFG_ZBC |
                                              CFG_ZBKB | CFG_ZBKX | CFG_ZBS;
+    // CoreMark-independent DSP-style signed halfword multiply-accumulate
+    // primitives carried in the custom-0 opcode space.
+    localparam logic CFG_XMAC16           = 1'b1;
 
     localparam int unsigned XLEN               = 32;
     // SocRV is the integration authority.  Keep the imported core's reset and

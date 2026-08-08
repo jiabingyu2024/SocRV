@@ -10,6 +10,7 @@ module issue_control #(
     input  logic src1_ready_i,
     input  logic src1_memory_ready_i,
     input  logic src2_ready_i,
+    input  logic src3_ready_i,
     input  logic [SB_CNT_W-1:0] scoreboard_count_i,
     input  logic [ST_CNT_W-1:0] store_count_i,
     input  logic [LD_CNT_W-1:0] load_count_i,
@@ -59,7 +60,7 @@ module issue_control #(
         issue_o = id_valid_i &&
                   ((uop_i.fu == FU_LOAD || uop_i.fu == FU_STORE) ?
                    src1_memory_ready_i : src1_ready_i) &&
-                  src2_ready_i && fu_ready &&
+                  src2_ready_i && src3_ready_i && fu_ready &&
                   (scoreboard_count_i < SB_CNT_W'(SCOREBOARD_DEPTH) || commit_i) &&
                   !branch_resolve_i && !redirect_i;
     end

@@ -9,6 +9,7 @@ module bitmanip_unit (
     input  core_types_pkg::bitmanip_op_e req_op_i,
     input  logic [31:0] req_a_i,
     input  logic [31:0] req_b_i,
+    input  logic [31:0] req_acc_i,
     output logic resp_valid_o,
     output logic [core_config_pkg::TRANS_ID_W-1:0] resp_trans_id_o,
     output logic [31:0] resp_result_o,
@@ -26,19 +27,28 @@ module bitmanip_unit (
     logic [63:0] clmul_acc_q, clmul_multiplicand_q, clmul_acc_next_c;
     logic [31:0] clmul_multiplier_q;
     logic req_is_clmul_c;
+    logic req_is_xmac_c;
+    logic xmac_v0_q, xmac_v1_q;
+    logic [TRANS_ID_W-1:0] xmac_tid0_q, xmac_tid1_q;
+    bitmanip_op_e xmac_op0_q;
+    logic signed [31:0] xmac_product0_q, xmac_contribution1_q;
+    logic [31:0] xmac_acc0_q, xmac_acc1_q;
     logic [31:0] simple_result_c;
     logic [4:0] shamt_c, inv_shamt_c;
     integer i;
     integer j;
 
-    assign req_ready_o = CFG_ZB_ANY && !clmul_busy_q;
-    assign busy_o = clmul_busy_q;
+    assign req_ready_o = (CFG_ZB_ANY || CFG_XMAC16) && !clmul_busy_q &&
+                         !xmac_v0_q && !xmac_v1_q;
+    assign busy_o = clmul_busy_q || xmac_v0_q || xmac_v1_q;
     assign resp_valid_o = resp_valid_q;
     assign resp_trans_id_o = resp_tid_q;
     assign resp_result_o = resp_result_q;
     assign req_is_clmul_c = CFG_ZBC &&
                             (req_op_i == BM_CLMUL || req_op_i == BM_CLMULH ||
                              req_op_i == BM_CLMULR);
+    assign req_is_xmac_c = CFG_XMAC16 &&
+                           (req_op_i == BM_MACC16 || req_op_i == BM_BFMACC16);
     assign clmul_acc_next_c = clmul_acc_q ^
                               (clmul_multiplier_q[0] ? clmul_multiplicand_q : 64'd0);
 
@@ -144,10 +154,21 @@ module bitmanip_unit (
             clmul_acc_q <= '0;
             clmul_multiplicand_q <= '0;
             clmul_multiplier_q <= '0;
+            xmac_v0_q <= 1'b0;
+            xmac_v1_q <= 1'b0;
+            xmac_tid0_q <= '0;
+            xmac_tid1_q <= '0;
+            xmac_op0_q <= BM_MACC16;
+            xmac_product0_q <= '0;
+            xmac_contribution1_q <= '0;
+            xmac_acc0_q <= '0;
+            xmac_acc1_q <= '0;
         end else begin
             resp_valid_q <= 1'b0;
             if (kill_i) begin
                 clmul_busy_q <= 1'b0;
+                xmac_v0_q <= 1'b0;
+                xmac_v1_q <= 1'b0;
             end else if (clmul_busy_q) begin
                 clmul_acc_q <= clmul_acc_next_c;
                 clmul_multiplicand_q <= clmul_multiplicand_q << 1;
@@ -164,8 +185,29 @@ module bitmanip_unit (
                 end else begin
                     clmul_iter_q <= clmul_iter_q + 1'b1;
                 end
-            end else if (req_valid_i && req_ready_o) begin
-                if (req_is_clmul_c) begin
+            end else begin
+                // XMAC stage 2: a small (4x7-bit for BFMACC16) product only.
+                xmac_v1_q <= xmac_v0_q;
+                xmac_v0_q <= 1'b0;
+                if (xmac_v0_q) begin
+                    xmac_tid1_q <= xmac_tid0_q;
+                    xmac_acc1_q <= xmac_acc0_q;
+                    if (xmac_op0_q == BM_BFMACC16)
+                        xmac_contribution1_q <=
+                            (($signed(xmac_product0_q) >>> 2) & 32'd15) *
+                            (($signed(xmac_product0_q) >>> 5) & 32'd127);
+                    else
+                        xmac_contribution1_q <= xmac_product0_q;
+                end
+
+                // XMAC stage 3: the architectural accumulator addition.
+                if (xmac_v1_q) begin
+                    resp_valid_q <= 1'b1;
+                    resp_tid_q <= xmac_tid1_q;
+                    resp_result_q <= xmac_acc1_q + xmac_contribution1_q;
+                end
+
+                if (req_valid_i && req_ready_o && req_is_clmul_c) begin
                     clmul_busy_q <= 1'b1;
                     clmul_tid_q <= req_trans_id_i;
                     clmul_op_q <= req_op_i;
@@ -173,7 +215,16 @@ module bitmanip_unit (
                     clmul_acc_q <= '0;
                     clmul_multiplicand_q <= {32'd0, req_a_i};
                     clmul_multiplier_q <= req_b_i;
-                end else begin
+                end else if (req_valid_i && req_ready_o && req_is_xmac_c) begin
+                    // XMAC stage 1: match the registered 16-bit multiply
+                    // boundary used by the ordinary multiplier datapath.
+                    xmac_v0_q <= 1'b1;
+                    xmac_tid0_q <= req_trans_id_i;
+                    xmac_op0_q <= req_op_i;
+                    xmac_acc0_q <= req_acc_i;
+                    xmac_product0_q <= $signed(req_a_i[15:0]) *
+                                       $signed(req_b_i[15:0]);
+                end else if (req_valid_i && req_ready_o) begin
                     resp_valid_q <= 1'b1;
                     resp_tid_q <= req_trans_id_i;
                     resp_result_q <= simple_result_c;

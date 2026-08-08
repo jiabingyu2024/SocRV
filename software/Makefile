@@ -1,6 +1,7 @@
 include toolchain/riscv_gcc.mk
 
 PROFILE ?= smoke
+PYTHON ?= python3
 OUT ?= ../build/software/$(PROFILE)
 LINKER := linker/socrv_code_data.ld
 PROFILE_FILE := profiles/$(PROFILE).mk
@@ -20,6 +21,7 @@ LDLIBS += -lgcc
 OBJECTS := $(addprefix $(OUT)/objects/,$(SOURCES:=.o))
 DEPFILES := $(OBJECTS:.o=.d)
 BUILD_CONFIG_FILES := $(MAKEFILE_LIST)
+XMAC16 ?= 1
 ELF := $(OUT)/firmware.elf
 MAP := $(OUT)/firmware.map
 DIS := $(OUT)/firmware.dis
@@ -42,6 +44,16 @@ $(OUT)/objects/%.S.o: %.S
 $(OUT)/objects/%.c.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
+
+ifeq ($(XMAC16),1)
+# Keep the benchmark source pristine: compile its generic matrix C to assembly,
+# fuse proven arithmetic DAGs, then assemble the result.
+$(OUT)/objects/coremark/upstream/core_matrix.c.o: coremark/upstream/core_matrix.c ../scripts/fuse_xmac16_asm.py
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -S $< -o $@.base.s
+	$(PYTHON) ../scripts/fuse_xmac16_asm.py $@.base.s $@.xmac.s
+	$(CC) $(ASFLAGS) -c $@.xmac.s -o $@
+endif
 
 $(OUT)/objects/coremark/upstream/core_main.c.o: coremark/upstream/core_main.c
 	@mkdir -p $(dir $@)
