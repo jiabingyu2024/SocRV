@@ -138,3 +138,57 @@ bool SocDutAdapter::test_pass() const {
 std::uint32_t SocDutAdapter::test_code() const {
     return dut_->test_code_o;
 }
+
+PerfCounterSample SocDutAdapter::perf_counters() const {
+    PerfCounterSample value;
+    value.icache_misses = dut_->perf_icache_misses_o;
+    value.load_misses = dut_->perf_load_misses_o;
+    value.store_misses = dut_->perf_store_misses_o;
+    value.branch_mispredicts = dut_->perf_branch_mispredicts_o;
+    value.decode_branch_mispredicts =
+        dut_->perf_decode_branch_mispredicts_o;
+    value.store_load_forwarding_failures =
+        dut_->perf_store_load_forwarding_failures_o;
+    value.memory_dependency_mispredicts =
+        dut_->perf_memory_dependency_mispredicts_o;
+    value.icache_stall = dut_->perf_icache_stall_o;
+    value.decode_stall = dut_->perf_decode_stall_o;
+    value.rename_stall = dut_->perf_rename_stall_o;
+    value.backend_stall = dut_->perf_backend_stall_o;
+    value.recovery_cycle = dut_->perf_recovery_cycle_o;
+    value.recovery_phase = dut_->perf_recovery_phase_o;
+    value.recovery_to_phase = dut_->perf_recovery_to_phase_o;
+    value.recovery_rmt = dut_->perf_recovery_rmt_o;
+    value.recovery_iq_return = dut_->perf_recovery_iq_return_o;
+    value.recovery_replay_flush = dut_->perf_recovery_replay_flush_o;
+    value.recovery_wakeup_flush = dut_->perf_recovery_wakeup_flush_o;
+    value.recovery_unable_start = dut_->perf_recovery_unable_start_o;
+    value.recovery_commit_exception = dut_->perf_recovery_commit_exception_o;
+    value.recovery_rw_exception = dut_->perf_recovery_rw_exception_o;
+    value.recovery_flush_all = dut_->perf_recovery_flush_all_o;
+    value.recovery_active_list = dut_->perf_recovery_active_list_o;
+    value.branch_events[0].valid = dut_->perf_branch_event_valid_o & 1U;
+    value.branch_events[1].valid = dut_->perf_branch_event_valid_o & 2U;
+    value.branch_events[0].mispred = dut_->perf_branch_event_mispred_o & 1U;
+    value.branch_events[1].mispred = dut_->perf_branch_event_mispred_o & 2U;
+    value.branch_events[0].conditional =
+        dut_->perf_branch_event_conditional_o & 1U;
+    value.branch_events[1].conditional =
+        dut_->perf_branch_event_conditional_o & 2U;
+    value.branch_events[0].pc = dut_->perf_branch_event_pc0_o;
+    value.branch_events[1].pc = dut_->perf_branch_event_pc1_o;
+    value.decode_flush_trigger[0] =
+        dut_->perf_decode_flush_trigger_o & 1U;
+    value.decode_flush_trigger[1] =
+        dut_->perf_decode_flush_trigger_o & 2U;
+    value.decode_branch_pc[0] = dut_->perf_decode_branch_pc0_o;
+    value.decode_branch_pc[1] = dut_->perf_decode_branch_pc1_o;
+    value.rename_no_physreg = dut_->perf_rename_no_physreg_o;
+    value.rename_no_iq = dut_->perf_rename_no_iq_o;
+    value.rename_no_rob = dut_->perf_rename_no_rob_o;
+    value.rename_no_lsq = dut_->perf_rename_no_lsq_o;
+    value.rename_serialize = dut_->perf_rename_serialize_o;
+    value.dispatch_count = dut_->perf_dispatch_count_o;
+    value.issue_count = dut_->perf_issue_count_o;
+    return value;
+}

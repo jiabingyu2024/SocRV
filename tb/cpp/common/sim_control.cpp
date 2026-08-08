@@ -118,7 +118,11 @@ SimResult SimControl::run() {
             }
         }
         difftest.observe_cycle(cycle, arch_events, irq_events);
-        stats.observe(cycle, retired_count, dut_.test_code());
+        stats.observe(
+            cycle,
+            retired_count,
+            dut_.test_code(),
+            dut_.perf_counters());
 
         if (!difftest.passed()) {
             std::cerr << "\nDIFF_MISMATCH: "

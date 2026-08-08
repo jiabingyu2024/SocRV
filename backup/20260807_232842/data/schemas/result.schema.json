@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socrv.local/schema/result.schema.json",
+  "title": "SocRV run result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "kind",
+    "status",
+    "target"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "kind": {"type": "string"},
+    "target": {"type": "string"},
+    "test": {"type": "string"},
+    "profile": {"type": "string"},
+    "status": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "TIMEOUT",
+        "ASSERTION",
+        "DIFF_MISMATCH",
+        "BUILD_ERROR",
+        "CONFIG_ERROR",
+        "CRASH",
+        "NO_RESULT",
+        "UNSUPPORTED"
+      ]
+    },
+    "seed": {"type": "integer", "minimum": 0},
+    "cycles": {"type": "integer", "minimum": 0},
+    "commits": {"type": "integer", "minimum": 0},
+    "ipc": {"type": "number", "minimum": 0},
+    "exit_reason": {"type": "string"},
+    "max_cycles": {"type": "integer", "minimum": 1},
+    "image": {"type": "string"},
+    "checker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "passed",
+        "message",
+        "prompt_seen",
+        "prompt_cycle",
+        "prompt_count",
+        "command_sent",
+        "command_cycle",
+        "command_complete",
+        "framing_error",
+        "decoded_bytes",
+        "missing",
+        "forbidden_seen"
+      ],
+      "properties": {
+        "name": {"type": "string"},
+        "passed": {"type": "boolean"},
+        "message": {"type": "string"},
+        "prompt_seen": {"type": "boolean"},
+        "prompt_cycle": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "prompt_count": {"type": "integer", "minimum": 0},
+        "command_sent": {"type": "boolean"},
+        "command_cycle": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "command_complete": {"type": "boolean"},
+        "framing_error": {"type": "boolean"},
+        "decoded_bytes": {"type": "integer", "minimum": 0},
+        "missing": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "forbidden_seen": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested",
+        "complete",
+        "iterations",
+        "start_cycle",
+        "end_cycle",
+        "cycles",
+        "commits",
+        "ipc",
+        "seconds",
+        "cycles_per_iteration",
+        "commits_per_iteration",
+        "iterations_per_second"
+      ],
+      "properties": {
+        "requested": {"type": "boolean"},
+        "complete": {"type": "boolean"},
+        "iterations": {"type": "integer", "minimum": 0},
+        "start_cycle": {"type": ["integer", "null"], "minimum": 0},
+        "end_cycle": {"type": ["integer", "null"], "minimum": 0},
+        "cycles": {"type": ["integer", "null"], "minimum": 0},
+        "commits": {"type": ["integer", "null"], "minimum": 0},
+        "ipc": {"type": ["number", "null"], "minimum": 0},
+        "seconds": {"type": ["number", "null"], "minimum": 0},
+        "cycles_per_iteration": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "commits_per_iteration": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "iterations_per_second": {
+          "type": ["number", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "difftest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "passed",
+        "backend",
+        "backend_version",
+        "mode",
+        "isa",
+        "compared_events",
+        "retired_instructions",
+        "mmio_syncs",
+        "last_order",
+        "log",
+        "trace"
+      ],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "passed": {"type": "boolean"},
+        "backend": {"type": "string"},
+        "backend_version": {"type": "string"},
+        "mode": {"type": "string"},
+        "isa": {"type": "string"},
+        "compared_events": {"type": "integer", "minimum": 0},
+        "retired_instructions": {"type": "integer", "minimum": 0},
+        "mmio_syncs": {"type": "integer", "minimum": 0},
+        "last_order": {"type": ["integer", "null"], "minimum": 0},
+        "log": {"type": ["string", "null"]},
+        "trace": {"type": ["string", "null"]}
+      }
+    },
+    "artifacts": {"type": "object"},
+    "failure": {"type": ["object", "null"]},
+    "reproduce": {"type": "string"}
+  }
+}

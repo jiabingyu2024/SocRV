@@ -24,36 +24,23 @@ function automatic logic SelectiveFlushDetector(
     input logic flushAllInsns,
     input ActiveListIndexPath opPtr
 );
+    ActiveListIndexPath rangeLength;
+    ActiveListIndexPath opOffset;
+
     if(!detectRange) begin
         return FALSE;
     end
     else if (flushAllInsns) begin
         return TRUE;
     end
-    else if(detectRange && tailPtr >= headPtr) begin
-        //  |---h***i***t-------|
-        if(opPtr >= headPtr && opPtr < tailPtr) begin
-            return TRUE;
-        end
-        else begin
-            return FALSE;
-        end
-    end
-    else if(detectRange && tailPtr < headPtr) begin
-        //  |*****t----h***i****|
-        if(opPtr >= headPtr && opPtr > tailPtr) begin
-            return TRUE;
-        end
-        //  |**i***t----h*******|
-        else if(opPtr < headPtr && opPtr < tailPtr) begin
-            return TRUE;
-        end
-        else begin
-            return FALSE;
-        end
-    end
     else begin
-        return FALSE;
+        // Active-list indices are modulo ACTIVE_LIST_ENTRY_NUM.  The
+        // half-open interval [headPtr, tailPtr) can therefore be tested by
+        // comparing modular distances.  This covers both non-wrapped and
+        // wrapped ranges without the duplicated >=/< comparison tree.
+        rangeLength = tailPtr - headPtr;
+        opOffset = opPtr - headPtr;
+        return opOffset < rangeLength;
     end
 endfunction
 

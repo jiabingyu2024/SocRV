@@ -502,6 +502,309 @@
         "The generated bitstream passed implementation, but physical-board UART and CoreMark 10000 remain a manual hardware validation step.",
         "DRC warnings are limited to configuration-voltage metadata, DSP pipeline recommendations, a gated-clock check and asynchronous-reset BRAM address checks; there are no DRC errors."
       ]
+    },
+    {
+      "date": "2026-08-08",
+      "trigger": "CoreMark performance-counter A/B experiment for branch predictor sizing",
+      "scope": [
+        "rtl/cpu/rsd/MicroArchConf.sv",
+        "data/schemas/result.schema.json",
+        "tb/soc/soc_sim_top.sv",
+        "tb/cpp/adapter/soc_dut_adapter.cpp",
+        "tb/cpp/adapter/soc_dut_adapter.h",
+        "tb/cpp/common/perf_counter_sample.h",
+        "tb/cpp/common/perf_stats.cpp",
+        "tb/cpp/common/perf_stats.h",
+        "tb/cpp/common/sim_control.cpp",
+        "tb/cpp/common/sim_result.cpp"
+      ],
+      "backup": [
+        "backup/20260807_232842/",
+        "backup/20260808_000634/",
+        "backup/20260808_001302/",
+        "backup/20260808_001810/",
+        "backup/20260808_002019/",
+        "backup/20260808_002614/",
+        "backup/20260808_004552/",
+        "backup/20260808_011100/",
+        "backup/20260808_012716/",
+        "backup/20260808_013005/",
+        "backup/20260808_013943/"
+      ],
+      "summary": "Added non-intrusive RSD performance-window statistics and isolated the branch predictor experiment. The formal configuration is restored to PHT2048/history10 after two single-variable alternatives were evaluated; the simulator now also classifies raw ICache/decode/rename/backend/recovery stall cycles and dispatch/issue utilization. No SoC interface or memory map changed.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "selected_configuration": {
+        "CONF_PHT_ENTRY_NUM": 2048,
+        "CONF_BRANCH_GLOBAL_HISTORY_BIT_WIDTH": 10
+      },
+      "diagnostics": {
+        "stall_signals": [
+          "ctrlIF.ifStageSendBubbleLower",
+          "ctrlIF.idStageStallUpper",
+          "ctrlIF.rnStageSendBubbleLower",
+          "ctrlIF.isStageStallUpper",
+          "recoveryManagerIF.phase != PHASE_COMMIT"
+        ],
+        "utilization_signals": [
+          "schedulerIF.write",
+          "schedulerIF.intIssue/memIssue/complexIssue/fpIssue"
+        ],
+        "rename_resource_signals": [
+          "!renameLogicIF.allocatable",
+          "!schedulerIF.allocatable",
+          "!activeListIF.allocatable",
+          "!loadStoreUnitIF.allocatable",
+          "rnStage.serialize"
+        ],
+        "scope": "simulation-only; no FPGA datapath change"
+      },
+      "experiments": [
+        {
+          "configuration": "PHT2048/history10",
+          "status": "PASS",
+          "cycles_per_iteration": 317014.0,
+          "commits_per_iteration": 299872.0,
+          "ipc": 0.945926678,
+          "branch_mispredicts": 19209,
+          "decode_branch_mispredicts": 12015,
+          "result": "build/result/soc/coremark-pht2k-gh10-restored.json"
+        },
+        {
+          "configuration": "PHT4096/history10",
+          "status": "REJECTED",
+          "reason": "UART input was received as coremark3; the performance window never started",
+          "result": "build/result/soc/coremark-pht4k-gh10.json"
+        },
+        {
+          "configuration": "PHT2048/history11",
+          "status": "REJECTED",
+          "cycles_per_iteration": 324119.666666667,
+          "ipc": 0.925189153,
+          "branch_mispredicts": 20766,
+          "decode_branch_mispredicts": 15776,
+          "result": "build/result/soc/coremark-pht2k-gh11.json"
+        },
+        {
+          "configuration": "PSCALAR64/FP64 -> PSCALAR128/FP128",
+          "status": "REJECTED",
+          "cycles_per_iteration": 313684.666666667,
+          "ipc": 0.955966395,
+          "reason": "CoreMark window improved 1.05%, but the complete checker ended with a CPU bus fault during post-CoreMark output",
+          "result": "build/result/soc/coremark-pscalar128fp128.json"
+        }
+      ],
+      "verification": [
+        "PHT2048/history10 rebuilt with Verilator and complete RT-Thread/CoreMark checker PASS",
+        "CONF_PSCALAR_NUM=128 with CONF_PSCALAR_FP_NUM=64 rejected by the RSD static register-file width contract",
+        "PHT4096/history10 rejected by the complete checker before performance measurement",
+        "PHT2048/history11 complete checker PASS but performance regressed",
+        "Current RTL configuration restored to PHT2048/history10"
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "scope": [
+        "tb/soc/soc_sim_top.sv",
+        "tb/cpp/adapter/soc_dut_adapter.cpp",
+        "tb/cpp/common/perf_counter_sample.h",
+        "tb/cpp/common/perf_stats.h",
+        "tb/cpp/common/perf_stats.cpp",
+        "tb/cpp/common/sim_result.cpp",
+        "data/schemas/result.schema.json"
+      ],
+      "summary": "Added simulation-only Recovery phase and blocking-cause counters to distinguish recovery start, RMT, Issue Queue, replay/wakeup flush, exception source, and ActiveList activity. No SoC interface, memory map, or CPU datapath was changed.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": false,
+      "cascade_scope": "simulation-observability",
+      "verification": [
+        "Verilator 3-iteration CoreMark checker PASS",
+        "Result: build/result/soc/coremark-recovery-breakdown-restored.json",
+        "Baseline restored after rejected RRMT and IQ24 candidates"
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "scope": [
+        "rtl/cpu/rsd/RenameLogic/RenameLogicTypes.sv"
+      ],
+      "backup": [
+        "backup/20260808_030000/RenameLogicTypes.sv"
+      ],
+      "summary": "Evaluated the existing Retirement RMT recovery mode as a single-variable recovery-latency candidate, then restored the ActiveList walk baseline after the candidate prevented the RT-Thread shell prompt from appearing.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "REJECTED: Verilator simulation did not produce the msh prompt before cycle 5000000",
+        "Restored RECOVERY_FROM_RRMT=FALSE and RECOVERY_FROM_ACTIVE_LIST=TRUE"
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "scope": [
+        "rtl/cpu/rsd/MicroArchConf.sv"
+      ],
+      "backup": [
+        "backup/20260808_031500/MicroArchConf.sv"
+      ],
+      "summary": "Evaluated a single-variable Issue Queue capacity increase from 16 to 24 entries, then restored 16 entries after the candidate produced a CPU bus fault during the CoreMark window.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "REJECTED: CPU bus fault at cycle 2045697 during the complete CoreMark checker",
+        "Restored CONF_ISSUE_QUEUE_ENTRY_NUM=16"
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "scope": [
+        "rtl/cpu/rsd/RenameLogic/RenameLogicCommitter.sv"
+      ],
+      "backup": [
+        "backup/20260808_033000/RenameLogicCommitter.sv"
+      ],
+      "summary": "Evaluated removing the zero-count recovery bubble, then restored the original FSM after the 10-iteration stress run produced ICache/DCache HXI errors, CoreMark CRC errors, and a CPU bus fault.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full_reverify",
+      "verification": [
+        "REJECTED: 10-iteration CoreMark run failed at cycle 7293494 with CPU bus fault",
+        "Observed RSD_ICACHE_HXI_ERROR/RSD_DCACHE_HXI_ERROR and CoreMark CRC failure",
+        "Restored original recoveryCount == 0 transition",
+        "3-iteration result was not accepted as a stable improvement"
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "scope": [
+        "tb/soc/soc_sim_top.sv",
+        "tb/cpp/adapter/soc_dut_adapter.cpp",
+        "tb/cpp/common/perf_counter_sample.h",
+        "tb/cpp/common/perf_stats.h",
+        "tb/cpp/common/perf_stats.cpp",
+        "tb/cpp/common/sim_result.cpp",
+        "data/schemas/result.schema.json"
+      ],
+      "summary": "Added simulation-only per-PC branch execution, execution-stage misprediction, conditional-misprediction, and decode-correction hotspots. Results include aggregate cross-check counters and the top 16 PCs ranked by total correction events.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": false,
+      "cascade_scope": "simulation-observability",
+      "verification": [
+        "Verilator rebuild and complete 3-iteration CoreMark checker PASS",
+        "Per-PC hotspot aggregate cross-check recorded in build/result/soc/coremark-branch-hotspots.json"
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "scope": [
+        "rtl/cpu/rsd/Decoder/DecodedBranchResolver.sv"
+      ],
+      "backup": [
+        "backup/20260808_041500_ras8/DecodedBranchResolver.sv",
+        "backup/20260808_043000_ras16/DecodedBranchResolver.sv"
+      ],
+      "summary": "Increased the decode-stage return-address stack from 4 to 8 entries to reduce indirect-call/return corrections. The change adds storage only and does not add a prediction-path logic level.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full-reverify",
+      "performance": {
+        "workload": "RT-Thread CoreMark command",
+        "three_iterations": {
+          "baseline_cycles": 951042,
+          "candidate_cycles": 945248,
+          "cycle_reduction_percent": 0.6095,
+          "baseline_ipc": 0.945926678,
+          "candidate_ipc": 0.951724838
+        },
+        "ten_iterations": {
+          "candidate_ticks": 3154803,
+          "candidate_ticks_per_iteration": 315480.3
+        }
+      },
+      "decision": "KEEP_PENDING_FPGA_TIMING",
+      "verification": [
+        "3-iteration CoreMark checker and CRC PASS",
+        "10-iteration CoreMark checker and CRC PASS",
+        "RAS16 rejected because the command stream became corrupted before the CoreMark performance window"
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "scope": [
+        "rtl/cpu/rsd/RenameLogic/RenameLogicCommitter.sv"
+      ],
+      "backup": [
+        "backup/20260808_061500_recovery-tail-guard/RenameLogicCommitter.sv"
+      ],
+      "summary": "Candidate recovery-tail optimization: permit the final ActiveList release batch to transition directly to commit only when RecoveryManager reports that IQ/replay/wakeup draining is complete; otherwise retain the recovery phase with a zero count.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full-reverify",
+      "decision": "REJECTED",
+      "verification": [
+        "REJECTED: Verilator 3-iteration run did not reach the RT-Thread msh prompt before cycle 5000000",
+        "Restored the original recoveryCount == 0 transition",
+        "Result: build/result/soc/coremark-recovery-tail-guard-3it.json"
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "scope": [
+        "rtl/cpu/rsd/MicroArchConf.sv"
+      ],
+      "backup": [
+        "backup/20260808_063000-pscalar96/MicroArchConf.sv"
+      ],
+      "summary": "Candidate rename-capacity optimization: increase integer and FP physical registers from 64 to 96. Each free list grows from 32 to 64 entries, preserving a power-of-two queue length while reducing no-physical-register stalls.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full-reverify",
+      "decision": "REJECTED",
+      "verification": [
+        "Verilator 3-iteration checker and CRC PASS",
+        "Performance regressed to 948381 cycles (IPC 0.948580792) versus the RAS8 baseline 945248 cycles (IPC 0.951724838)",
+        "no-physical-register stalls decreased, but branch recovery increased to 208198 cycles",
+        "Restored CONF_PSCALAR_NUM=64 and CONF_PSCALAR_FP_NUM=64",
+        "Result: build/result/soc/coremark-pscalar96-3it.json"
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "scope": [
+        "rtl/cpu/rsd/RenameLogic/ActiveListIndexTypes.sv"
+      ],
+      "backup": [
+        "backup/20260808_070000-selective-flush-modular/ActiveListIndexTypes.sv"
+      ],
+      "summary": "Candidate timing optimization: implement the modulo active-list half-open range detector with fixed-width distance subtraction, preserving flushAllInsns and [head, tail) semantics while removing duplicated wrapped/non-wrapped comparison trees.",
+      "interface_change": false,
+      "soc_functional_contract_change": false,
+      "memory_map_change": false,
+      "timing_behavior_change": true,
+      "cascade_scope": "full-reverify",
+      "decision": "PENDING_VERIFICATION",
+      "verification": []
     }
   ],
   "assumptions": [
