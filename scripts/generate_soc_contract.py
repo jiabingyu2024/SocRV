@@ -86,10 +86,11 @@ def render_config(contract: dict[str, object]) -> str:
         f"#define SOCRV_TARGET_DOUBLE_MARCH "
         f"\"{cpu['target']['floating_point']['candidates']['double']['march']}\"",
         f"#define SOCRV_SOC_CLOCK_HZ {clocks['soc_hz']}u",
+        f"#define SOCRV_PERIPH_CLOCK_HZ {clocks['peripheral_hz']}u",
         f"#define SOCRV_TIMER_CLOCK_HZ {clocks['timer_hz']}u",
         f"#define SOCRV_UART_BAUD {clocks['uart_baud']}u",
         f"#define SOCRV_UART_DIVISOR "
-        f"(SOCRV_SOC_CLOCK_HZ / SOCRV_UART_BAUD)",
+        f"(SOCRV_PERIPH_CLOCK_HZ / SOCRV_UART_BAUD)",
     ]
     return header_guard("SOCRV_SOC_CONFIG_H", body)
 
@@ -103,6 +104,7 @@ def render_make_config(contract: dict[str, object]) -> str:
             f"SOCRV_MARCH := {cpu['march']}",
             f"SOCRV_MABI := {cpu['mabi']}",
             f"SOCRV_SOC_CLOCK_HZ := {clocks['soc_hz']}",
+            f"SOCRV_PERIPH_CLOCK_HZ := {clocks['peripheral_hz']}",
             f"SOCRV_TIMER_CLOCK_HZ := {clocks['timer_hz']}",
             f"SOCRV_UART_BAUD := {clocks['uart_baud']}",
             "",

@@ -1,5 +1,5 @@
 module apb_uart #(
-  parameter int unsigned CLOCK_HZ = soc_config_pkg::SOC_CLOCK_HZ,
+  parameter int unsigned CLOCK_HZ = soc_config_pkg::PERIPH_CLOCK_HZ,
   parameter int unsigned BAUD = soc_config_pkg::UART_BAUD
 ) (
   input logic clk_i,

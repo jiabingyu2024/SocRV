@@ -3,8 +3,10 @@ module soc_top_generic #(
   parameter string CODE_MEM_FILE = "",
   parameter string DATA_MEM_FILE = ""
 ) (
-  input logic clk_i,
-  input logic rst_ni,
+  input logic core_clk_i,
+  input logic core_rst_ni,
+  input logic periph_clk_i,
+  input logic periph_rst_ni,
   input logic uart_rx_i,
   output logic uart_tx_o,
   input logic [GPIO_WIDTH-1:0] gpio_i,
@@ -17,12 +19,14 @@ module soc_top_generic #(
   output cpu_types_pkg::commit_trace_t commit_o,
   output logic cpu_fault_o
 );
-  mem_native_if code_mem(clk_i);
-  mem_native_if data_mem(clk_i);
+  mem_native_if code_mem(core_clk_i);
+  mem_native_if data_mem(core_clk_i);
 
   soc_core #(.GPIO_WIDTH(GPIO_WIDTH)) u_soc (
-    .clk_i,
-    .rst_ni,
+    .core_clk_i,
+    .core_rst_ni,
+    .periph_clk_i,
+    .periph_rst_ni,
     .code_mem,
     .data_mem,
     .uart_rx_i,
@@ -42,8 +46,8 @@ module soc_top_generic #(
     .BYTES(memory_map_pkg::CODE_SIZE),
     .MEM_FILE(CODE_MEM_FILE)
   ) u_code_memory (
-    .clk_i,
-    .rst_ni,
+    .clk_i(core_clk_i),
+    .rst_ni(core_rst_ni),
     .mem(code_mem)
   );
 
@@ -51,8 +55,8 @@ module soc_top_generic #(
     .BYTES(memory_map_pkg::DATA_SIZE),
     .MEM_FILE(DATA_MEM_FILE)
   ) u_data_memory (
-    .clk_i,
-    .rst_ni,
+    .clk_i(core_clk_i),
+    .rst_ni(core_rst_ni),
     .mem(data_mem)
   );
 endmodule

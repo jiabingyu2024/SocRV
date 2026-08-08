@@ -25,7 +25,9 @@
       "properties": {
         "frequency_hz": {"type": "integer", "minimum": 1},
         "differential": {"type": "boolean"},
-        "soc_frequency_hz": {"type": "integer", "minimum": 1}
+        "soc_frequency_hz": {"type": "integer", "minimum": 1},
+        "core_frequency_hz": {"type": "integer", "minimum": 1},
+        "peripheral_frequency_hz": {"type": "integer", "minimum": 1}
       }
     },
     "constraints": {

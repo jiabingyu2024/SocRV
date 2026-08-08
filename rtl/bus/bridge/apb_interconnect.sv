@@ -9,6 +9,14 @@ module apb_interconnect (
   output logic        pready_o,
   output logic        pslverr_o,
 
+  output logic        timer_psel_o,
+  input  logic [31:0] timer_prdata_i,
+  input  logic        timer_pready_i,
+  input  logic        timer_pslverr_i,
+  output logic        irq_psel_o,
+  input  logic [31:0] irq_prdata_i,
+  input  logic        irq_pready_i,
+  input  logic        irq_pslverr_i,
   output logic        uart_psel_o,
   input  logic [31:0] uart_prdata_i,
   input  logic        uart_pready_i,
@@ -24,15 +32,27 @@ module apb_interconnect (
 );
   import memory_map_pkg::*;
 
+  assign timer_psel_o = psel_i && in_region(paddr_i, TIMER_BASE, TIMER_SIZE);
+  assign irq_psel_o = psel_i && in_region(paddr_i, IRQ_CTRL_BASE, IRQ_CTRL_SIZE);
+  assign uart_psel_o = psel_i && in_region(paddr_i, UART_BASE, APB_SLOT_SIZE);
+  assign gpio_psel_o = psel_i && in_region(paddr_i, GPIO_BASE, APB_SLOT_SIZE);
+  assign test_psel_o = psel_i &&
+                       in_region(paddr_i, TEST_STATUS_BASE, APB_SLOT_SIZE);
+
   always_comb begin
-    uart_psel_o = psel_i && in_region(paddr_i, UART_BASE, APB_SLOT_SIZE);
-    gpio_psel_o = psel_i && in_region(paddr_i, GPIO_BASE, APB_SLOT_SIZE);
-    test_psel_o = psel_i && in_region(paddr_i, TEST_STATUS_BASE, APB_SLOT_SIZE);
     prdata_o    = 32'h0000_0000;
     pready_o    = 1'b1;
     pslverr_o   = psel_i;
 
-    if (uart_psel_o) begin
+    if (timer_psel_o) begin
+      prdata_o  = timer_prdata_i;
+      pready_o  = timer_pready_i;
+      pslverr_o = timer_pslverr_i;
+    end else if (irq_psel_o) begin
+      prdata_o  = irq_prdata_i;
+      pready_o  = irq_pready_i;
+      pslverr_o = irq_pslverr_i;
+    end else if (uart_psel_o) begin
       prdata_o  = uart_prdata_i;
       pready_o  = uart_pready_i;
       pslverr_o = uart_pslverr_i;

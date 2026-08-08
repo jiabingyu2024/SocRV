@@ -48,7 +48,8 @@
   },
   "clocks": {
     "soc_hz": 120000000,
-    "timer_hz": 120000000,
+    "peripheral_hz": 50000000,
+    "timer_hz": 50000000,
     "uart_baud": 115200
   },
   "interrupts": {
@@ -145,7 +146,7 @@
           "offset": "0x0000000c",
           "access": "RW",
           "reset": "0x000001b2",
-          "side_effect": "baud divisor is floor(soc_hz/uart_baud)"
+          "side_effect": "baud divisor is floor(peripheral_hz/uart_baud)"
         },
         "CONTROL": {
           "offset": "0x00000010",

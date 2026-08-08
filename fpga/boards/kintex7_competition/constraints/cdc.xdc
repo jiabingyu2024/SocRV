@@ -1,3 +1,6 @@
-# The design has a single functional clock domain. Reset is asynchronously
-# asserted and synchronously released by an ASYNC_REG-marked two-flop chain.
-# No broad CDC or timing exception is intentionally applied here.
+# The MMIO bridge and interrupt synchronizers deliberately isolate these clock
+# domains.  The bundled payload is held stable across the full toggle handshake
+# and every receiving register is ASYNC_REG-marked.
+set_clock_groups -asynchronous \
+  -group [get_clocks clk_core_unbuffered] \
+  -group [get_clocks clk_periph_unbuffered]

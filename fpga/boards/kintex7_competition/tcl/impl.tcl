@@ -16,6 +16,7 @@ report_utilization -hierarchical -file [file join $report_dir post_impl_utilizat
 report_timing_summary -file [file join $report_dir post_impl_timing_summary.rpt]
 report_timing -delay_type max -max_paths 100 -nworst 5 -sort_by group -input_pins \
     -file [file join $report_dir post_impl_timing_paths.rpt]
+report_cdc -details -file [file join $report_dir post_impl_cdc.rpt]
 report_drc -file [file join $report_dir post_impl_drc.rpt]
 report_methodology -file [file join $report_dir post_impl_methodology.rpt]
 close_project

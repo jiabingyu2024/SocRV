@@ -15,6 +15,7 @@ SocDutAdapter::SocDutAdapter(
     context_->traceEverOn(!trace_path.empty());
     dut_ = std::make_unique<Vsoc_sim_top>(context_.get());
     dut_->clk_i = 0;
+    dut_->periph_clk_i = 0;
     dut_->rst_ni = 0;
     dut_->uart_rx_i = 1;
     if (!trace_path.empty()) {
@@ -39,6 +40,11 @@ void SocDutAdapter::set_uart_rx(bool value) {
 void SocDutAdapter::step_cycle() {
     for (int phase = 0; phase < 2; ++phase) {
         dut_->clk_i = phase;
+        periph_phase_accumulator_ += kPeriphClockHz;
+        if (periph_phase_accumulator_ >= kCoreClockHz) {
+            periph_phase_accumulator_ -= kCoreClockHz;
+            dut_->periph_clk_i = !dut_->periph_clk_i;
+        }
         dut_->eval();
         if (trace_) {
             trace_->dump(context_->time());

@@ -88,9 +88,10 @@
     "clocks": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["soc_hz", "timer_hz", "uart_baud"],
+      "required": ["soc_hz", "peripheral_hz", "timer_hz", "uart_baud"],
       "properties": {
         "soc_hz": {"type": "integer", "minimum": 1},
+        "peripheral_hz": {"type": "integer", "minimum": 1},
         "timer_hz": {"type": "integer", "minimum": 1},
         "uart_baud": {"type": "integer", "minimum": 1}
       }

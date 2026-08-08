@@ -36,9 +36,12 @@ public:
     std::uint32_t test_code() const;
 
 private:
+    static constexpr std::uint64_t kCoreClockHz = 120000000;
+    static constexpr std::uint64_t kPeriphClockHz = 50000000;
     std::unique_ptr<VerilatedContext> context_;
     std::unique_ptr<Vsoc_sim_top> dut_;
     std::unique_ptr<VerilatedVcdC> trace_;
+    std::uint64_t periph_phase_accumulator_ = 0;
     bool finished_ = false;
 };
 

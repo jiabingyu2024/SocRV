@@ -1,5 +1,6 @@
 module soc_sim_top (
   input logic clk_i,
+  input logic periph_clk_i,
   input logic rst_ni,
   input logic uart_rx_i,
   output logic uart_tx_o,
@@ -92,8 +93,10 @@ module soc_sim_top (
   assign irq_event_mip_post_o = commit.irq_mip_post;
 
   soc_top_generic u_dut (
-    .clk_i,
-    .rst_ni,
+    .core_clk_i(clk_i),
+    .core_rst_ni(rst_ni),
+    .periph_clk_i,
+    .periph_rst_ni(rst_ni),
     .uart_rx_i,
     .uart_tx_o,
     .gpio_i,

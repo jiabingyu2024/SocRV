@@ -15,5 +15,5 @@ file mkdir $report_dir
 report_utilization -hierarchical -file [file join $report_dir post_synth_utilization.rpt]
 report_timing_summary -file [file join $report_dir post_synth_timing_summary.rpt]
 report_clock_utilization -file [file join $report_dir post_synth_clock_utilization.rpt]
-report_cdc -file [file join $report_dir post_synth_cdc.rpt]
+report_cdc -details -file [file join $report_dir post_synth_cdc.rpt]
 close_project

@@ -445,6 +445,13 @@ def run_image(
             if difftest_isa:
                 reproduce += f" --difftest-isa {difftest_isa}"
 
+    software_contract = read_json(
+        repo_path("data", "soc", "software_contract.json")
+    )
+    uart_cycles_per_bit = (
+        int(software_contract["clocks"]["soc_hz"])
+        // int(software_contract["clocks"]["uart_baud"])
+    )
     argv = [
         relative_to_repo(executable),
         f"+code_mem={relative_to_repo(image_dir / 'code.mem')}",
@@ -467,6 +474,8 @@ def run_image(
         reproduce,
         "--checker",
         checker,
+        "--uart-cycles-per-bit",
+        str(uart_cycles_per_bit),
         *performance_arguments(performance, benchmark_iterations),
     ]
     if difftest:
@@ -557,13 +566,6 @@ def run_image(
     for forbidden in uart_reject:
         argv.extend(["--uart-reject", forbidden])
     if uart_command:
-        contract = read_json(
-            repo_path("data", "soc", "software_contract.json")
-        )
-        cycles_per_bit = (
-            int(contract["clocks"]["soc_hz"])
-            // int(contract["clocks"]["uart_baud"])
-        )
         argv.extend(
             [
                 "--uart-command",
@@ -572,8 +574,6 @@ def run_image(
                 uart_prompt,
                 "--uart-prompt-timeout",
                 str(uart_prompt_timeout),
-                "--uart-cycles-per-bit",
-                str(cycles_per_bit),
             ]
         )
         for followup in uart_followup_commands:

@@ -16,6 +16,13 @@ SECTIONS
     KEEP(*(.text.start))
     KEEP(*(.text.trap))
     *(.text .text.*)
+    . = ALIGN(4);
+    __code_end = .;
+  } > CODE
+
+  .data : ALIGN(4)
+  {
+    __data_start = .;
     *(.rodata .rodata.*)
     . = ALIGN(4);
     __rt_init_start = .;
@@ -25,13 +32,6 @@ SECTIONS
     __fsymtab_start = .;
     KEEP(*(FSymTab))
     __fsymtab_end = .;
-    . = ALIGN(4);
-    __code_end = .;
-  } > CODE
-
-  .data : ALIGN(4)
-  {
-    __data_start = .;
     *(.data .data.*)
     *(.sdata .sdata.*)
     . = ALIGN(4);
