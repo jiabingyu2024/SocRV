@@ -57,10 +57,22 @@
     {
       "version": "v3.2",
       "summary": "Removed the DCache load-completion bypass from the next memory operation's AGU base while retaining it for ordinary consumers, then increased the direct-mapped BTB from 128 to 512 entries to recover the dependent-memory stall cost without changing prediction policy, history or update semantics.",
-      "status": "implementation_candidate",
+      "status": "archived_150mhz_candidate_pending_170mhz_comparison",
       "timing": {
-        "status": "pending_150mhz_performance_explore_post_route_physopt",
-        "targeted_path": "DCache data-bank BRAM through load-completion operand bypass and address generation to exec_mem_addr_q"
+        "status": "post_route_physopt_recovered_from_routed_checkpoint",
+        "post_synth_wns_ns": -2.469,
+        "post_synth_tns_ns": -421.103,
+        "routed_wns_ns": -0.548,
+        "routed_tns_ns": -267.836,
+        "final_wns_ns": -0.309,
+        "final_tns_ns": -145.213,
+        "failing_endpoints": 1312,
+        "whs_ns": 0.071,
+        "ths_ns": 0.0,
+        "estimated_timing_limited_fmax_mhz": 143.35,
+        "targeted_path": "DCache data-bank BRAM through load-completion operand bypass and address generation to exec_mem_addr_q",
+        "final_worst_path": "integer branch-result and issue-fire control cone into scoreboard fp_flags reset; 73 percent route delay",
+        "targeted_path_result": "The DCache BRAM-to-AGU path no longer appears among the tightest setup/hold endpoints."
       },
       "coremark": {
         "iterations": 10,
@@ -99,7 +111,10 @@
         "WSL FP-single gate PASS: 11/11 RV32UF",
         "RT-Thread CoreMark 10 CRC PASS",
         "RT-Thread ps/help follow-up commands and four shell prompts PASS",
-        "UART framing error check PASS"
+        "UART framing error check PASS",
+        "Vivado DRC: 0 errors / 54 warnings",
+        "Automatic post-route physopt crashed before checkpoint export; clean recovery from fpga_top_routed.dcp with phys_opt_design -directive Explore PASS",
+        "Recovered checkpoint, timing reports and bitstream export PASS"
       ]
     }
   ],
@@ -118,8 +133,8 @@
     }
   },
   "decision": {
-    "selected": "v3.2_implementation_candidate",
-    "reason": "The BTB512 combination retains a 47486-cycle margin under the 4 million limit and is within 743 exact ticks of v3.1 while structurally removing the routed DCache-to-AGU critical path. Final selection depends on the 150 MHz routed timing result.",
+    "selected": "pending_true_170mhz_v3_1_v3_2_comparison",
+    "reason": "v3.2 retains a 47486-cycle margin and structurally removes the DCache-to-AGU tight endpoint, but its recovered 150 MHz placement has worse aggregate WNS/TNS than v3.1. Final selection therefore uses fresh, frequency-consistent 170 MHz builds of both versions.",
     "v3_1_board_reference_seconds": 26.3,
     "v3_2_predicted_coremark_10000_seconds_at_150mhz": 26.350093
   }
