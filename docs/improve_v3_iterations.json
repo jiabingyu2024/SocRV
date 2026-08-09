@@ -53,13 +53,61 @@
         "Manual bitstream export from final post-route physopt checkpoint PASS",
         "Physical board validation PASS at 150 MHz; CoreMark 10000 measured approximately 26.3 seconds"
       ]
+    },
+    {
+      "version": "v3.2",
+      "summary": "Removed the DCache load-completion bypass from the next memory operation's AGU base while retaining it for ordinary consumers, then increased the direct-mapped BTB from 128 to 512 entries to recover the dependent-memory stall cost without changing prediction policy, history or update semantics.",
+      "status": "implementation_candidate",
+      "timing": {
+        "status": "pending_150mhz_performance_explore_post_route_physopt",
+        "targeted_path": "DCache data-bank BRAM through load-completion operand bypass and address generation to exec_mem_addr_q"
+      },
+      "coremark": {
+        "iterations": 10,
+        "exact_ticks": 3952514,
+        "performance_window_cycles": 3952569,
+        "commits": 2998684,
+        "ipc": 0.758667085,
+        "time_seconds_at_150mhz": 0.026350093,
+        "predicted_coremark_10000_seconds_at_150mhz": 26.350093,
+        "cycle_delta_vs_v3_1": 743,
+        "cycle_penalty_percent_vs_v3_1": 0.0188,
+        "cycle_limit_margin": 47486,
+        "crc": "PASS"
+      },
+      "exploration": [
+        {
+          "variant": "memory_AGU_load_completion_bypass_cut_only",
+          "exact_ticks": 4039737,
+          "result": "rejected_cycle_limit"
+        },
+        {
+          "variant": "memory_AGU_bypass_cut_plus_BTB256",
+          "exact_ticks": 3973668,
+          "result": "pass_but_low_margin"
+        },
+        {
+          "variant": "memory_AGU_bypass_cut_plus_BTB512",
+          "exact_ticks": 3952514,
+          "result": "selected_for_implementation"
+        }
+      ],
+      "verification": [
+        "RTL lint PASS with only existing FPnew/vendor warnings",
+        "150 MHz WSL smoke PASS: 236760 cycles",
+        "WSL final ISA gate PASS: 76/76 RV32UI/RV32MI/RV32UM/RV32UF",
+        "WSL FP-single gate PASS: 11/11 RV32UF",
+        "RT-Thread CoreMark 10 CRC PASS",
+        "RT-Thread ps/help follow-up commands and four shell prompts PASS",
+        "UART framing error check PASS"
+      ]
     }
   ],
   "board_safety": {
     "request_slice_policy": "Requests already accepted by the frontend are never flushed in the slice; stale responses return normally and are discarded by the frontend epoch mechanism. Flushing an accepted request would strand its pending metadata and can cause the historical no-response or repeated-trap board failure.",
     "clock_contract": "MMCM, RTL/board metadata, SoC and timer frequency, UART cycles per bit, CoreMark timebase and embedded firmware all remain one generated 150 MHz set.",
     "uart_simulation_fix": "The Verilator launcher now applies the generated UART cycles-per-bit contract to every simulation, including receive-less smoke tests.",
-    "branch_prediction": "No branch predictor table, policy, history or update logic was changed.",
+    "branch_prediction": "v3.1 did not change the branch predictor. v3.2 preserves the predictor policy, GShare history, counters and update rules while increasing only direct-mapped BTB capacity from 128 to 512 entries to reduce alias conflicts.",
     "physical_board_status": "PASS: v3.1 was physically validated at 150 MHz; user-reported CoreMark 10000 runtime is approximately 26.3 seconds.",
     "board_coremark_10000": {
       "iterations": 10000,
@@ -70,9 +118,9 @@
     }
   },
   "decision": {
-    "selected": "v3.1",
-    "reason": "It enters the accepted timing envelope with a 99.46 percent TNS reduction while retaining the CoreMark cycle limit. Further pipelining of the new DCache-to-AGU worst path would directly risk the remaining 48168-cycle margin and broaden the board-validation surface.",
-    "estimated_runtime_at_timing_limited_fmax_seconds": 0.027112202,
-    "estimated_runtime_improvement_vs_v2_1_at_its_timing_limited_fmax_percent": 20.40
+    "selected": "v3.2_implementation_candidate",
+    "reason": "The BTB512 combination retains a 47486-cycle margin under the 4 million limit and is within 743 exact ticks of v3.1 while structurally removing the routed DCache-to-AGU critical path. Final selection depends on the 150 MHz routed timing result.",
+    "v3_1_board_reference_seconds": 26.3,
+    "v3_2_predicted_coremark_10000_seconds_at_150mhz": 26.350093
   }
 }

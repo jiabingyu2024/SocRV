@@ -30,7 +30,11 @@ package core_config_pkg;
     // cache/HXI stage is introduced by the capacity increase.
     localparam int unsigned STORE_BUFFER_DEPTH = 8;
     localparam int unsigned LOAD_QUEUE_DEPTH   = 4;
-    localparam int unsigned BTB_ENTRIES        = 128;
+    // Increase direct-mapped BTB capacity without changing predictor policy,
+    // history or update rules.  Extra index bits can only split conflicts that
+    // existed in the smaller table; they cannot merge previously distinct
+    // indices.  The 512-entry payload uses two 18 Kb block RAMs.
+    localparam int unsigned BTB_ENTRIES        = 512;
     localparam int unsigned GSHARE_HISTORY_BITS = 8;
     localparam int unsigned GSHARE_PHT_ENTRIES  = 1 << GSHARE_HISTORY_BITS;
     localparam int unsigned RAS_DEPTH          = 8;

@@ -7,7 +7,7 @@
   "clock": {
     "frequency_hz": 200000000,
     "differential": true,
-    "soc_frequency_hz": 170000000
+    "soc_frequency_hz": 150000000
   },
   "constraints": [
     "constraints/pins.xdc",
