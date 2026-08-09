@@ -2,140 +2,128 @@
   "schema_version": 1,
   "release": "improve_v3",
   "branch": "dev-improve",
-  "target_frequency_mhz": 150,
+  "target_frequency_mhz": 170,
   "implementation_strategy": "Performance_ExplorePostRoutePhysOpt",
   "cycle_limit": 4000000,
   "git_base": "a5ed40c99dc305baaf98569f637aaf01ed096b08",
+  "frequency_contract_fix_commit": "932c677",
   "iterations": [
     {
       "version": "v3.1",
-      "summary": "Inserted a fully registered instruction-request slice between the frontend and instruction HXI master. The slice breaks the branch-miss, queue-credit and fetch-request control cone before HXI arbitration and external BRAM controls while retaining one accepted request per cycle.",
-      "status": "selected_release",
+      "summary": "Inserted a fully registered instruction-request slice between the frontend and instruction HXI master. The slice breaks the branch-miss, queue-credit and fetch-request control cone while retaining one accepted request per cycle.",
+      "status": "true_170mhz_baseline_archived",
+      "git_commit": "79e7b57c47f80aafa9ad34275e57187f06aa43fe",
+      "archive": "D:/jichuang_database/improve_v3/v3.1_170MHz",
       "timing": {
-        "post_synth_wns_ns": -2.469,
-        "post_synth_tns_ns": -857.336,
-        "final_wns_ns": -0.194,
-        "final_tns_ns": -33.155,
-        "failing_endpoints": 505,
-        "whs_ns": 0.003,
+        "post_synth_wns_ns": -3.254,
+        "post_synth_tns_ns": -3461.238,
+        "routed_wns_ns": -1.169,
+        "routed_tns_ns": -2893.26,
+        "final_wns_ns": -0.921,
+        "final_tns_ns": -2270.284,
+        "failing_endpoints": 5630,
+        "whs_ns": 0.068,
         "ths_ns": 0.0,
-        "estimated_timing_limited_fmax_mhz": 145.76,
-        "worst_path": "DCache data-bank BRAM through load-completion operand bypass and the address-generation adder to exec_mem_addr_q"
-      },
-      "comparison_to_v2_1_150mhz": {
-        "baseline_final_wns_ns": -2.089,
-        "baseline_final_tns_ns": -6181.937,
-        "baseline_failing_endpoints": 7796,
-        "wns_improvement_ns": 1.895,
-        "tns_violation_reduction_percent": 99.46,
-        "failing_endpoint_reduction_percent": 93.52
+        "estimated_timing_limited_fmax_mhz": 146.99,
+        "worst_path": "DCache BRAM through load-completion bypass and AGU into exec_mem_addr_q[29]"
       },
       "coremark": {
         "iterations": 10,
-        "exact_ticks": 3951771,
-        "performance_window_cycles": 3951832,
+        "performance_window_cycles": 3951849,
         "commits": 2998684,
-        "ipc": 0.758808573,
-        "time_seconds_at_150mhz": 0.026345547,
-        "iterations_per_second": 379.570791471,
-        "cycle_delta_vs_v2_1": 61920,
-        "cycle_penalty_percent": 1.59,
-        "crc": "PASS"
+        "ipc": 0.758805309,
+        "predicted_coremark_10000_seconds_at_170mhz": 23.246171,
+        "reported_clock_hz": 170000000,
+        "crc_uart_shell": "PASS"
       },
       "verification": [
-        "RTL lint PASS",
-        "150 MHz WSL smoke PASS: 236760 cycles",
-        "WSL final ISA gate PASS: 76/76 RV32UI/RV32MI/RV32UM/RV32UF",
-        "WSL FP-single gate PASS: 11/11 RV32UF",
+        "True-170 MHz WSL smoke PASS: 267901 cycles",
         "RT-Thread CoreMark 10 CRC PASS",
-        "RT-Thread ps/help follow-up commands and shell prompt recovery PASS",
-        "Vivado DRC: 0 errors",
-        "Manual bitstream export from final post-route physopt checkpoint PASS",
-        "Physical board validation PASS at 150 MHz; CoreMark 10000 measured approximately 26.3 seconds"
+        "RT-Thread ps/help follow-up commands and four shell prompts PASS",
+        "UART framing error check PASS",
+        "Vivado DRC: 0 errors / 58 warnings",
+        "Bitstream export PASS"
       ]
     },
     {
       "version": "v3.2",
       "summary": "Removed the DCache load-completion bypass from the next memory operation's AGU base while retaining it for ordinary consumers, then increased the direct-mapped BTB from 128 to 512 entries to recover the dependent-memory stall cost without changing prediction policy, history or update semantics.",
-      "status": "archived_150mhz_candidate_pending_170mhz_comparison",
+      "status": "selected_release",
+      "git_commit": "947814ed42e4aca6b4584499dab018306421b729",
+      "archive": "D:/jichuang_database/improve_v3/v3.2_170MHz",
       "timing": {
         "status": "post_route_physopt_recovered_from_routed_checkpoint",
-        "post_synth_wns_ns": -2.469,
-        "post_synth_tns_ns": -421.103,
-        "routed_wns_ns": -0.548,
-        "routed_tns_ns": -267.836,
-        "final_wns_ns": -0.309,
-        "final_tns_ns": -145.213,
-        "failing_endpoints": 1312,
-        "whs_ns": 0.071,
+        "post_synth_wns_ns": -3.254,
+        "post_synth_tns_ns": -2720.091,
+        "routed_wns_ns": -1.131,
+        "routed_tns_ns": -2464.566,
+        "final_wns_ns": -0.826,
+        "final_tns_ns": -1947.764,
+        "failing_endpoints": 5469,
+        "whs_ns": 0.061,
         "ths_ns": 0.0,
-        "estimated_timing_limited_fmax_mhz": 143.35,
-        "targeted_path": "DCache data-bank BRAM through load-completion operand bypass and address generation to exec_mem_addr_q",
-        "final_worst_path": "integer branch-result and issue-fire control cone into scoreboard fp_flags reset; 73 percent route delay",
-        "targeted_path_result": "The DCache BRAM-to-AGU path no longer appears among the tightest setup/hold endpoints."
+        "estimated_timing_limited_fmax_mhz": 149.07,
+        "final_worst_path": "exec operand/address-control cone into DCache data-bank BRAM ADDRBWRADDR[4]; 6.325 ns data path, 71.575 percent route delay",
+        "targeted_path_result": "The original DCache load-completion bypass through the next memory AGU is no longer the final worst path."
       },
       "coremark": {
         "iterations": 10,
-        "exact_ticks": 3952514,
-        "performance_window_cycles": 3952569,
+        "performance_window_cycles": 3952563,
         "commits": 2998684,
-        "ipc": 0.758667085,
-        "time_seconds_at_150mhz": 0.026350093,
-        "predicted_coremark_10000_seconds_at_150mhz": 26.350093,
-        "cycle_delta_vs_v3_1": 743,
-        "cycle_penalty_percent_vs_v3_1": 0.0188,
-        "cycle_limit_margin": 47486,
-        "crc": "PASS"
+        "ipc": 0.758668236,
+        "predicted_coremark_10000_seconds_at_170mhz": 23.250371,
+        "cycle_delta_vs_v3_1": 714,
+        "cycle_penalty_percent_vs_v3_1": 0.0181,
+        "cycle_limit_margin": 47437,
+        "reported_clock_hz": 170000000,
+        "crc_uart_shell": "PASS"
       },
-      "exploration": [
-        {
-          "variant": "memory_AGU_load_completion_bypass_cut_only",
-          "exact_ticks": 4039737,
-          "result": "rejected_cycle_limit"
-        },
-        {
-          "variant": "memory_AGU_bypass_cut_plus_BTB256",
-          "exact_ticks": 3973668,
-          "result": "pass_but_low_margin"
-        },
-        {
-          "variant": "memory_AGU_bypass_cut_plus_BTB512",
-          "exact_ticks": 3952514,
-          "result": "selected_for_implementation"
-        }
-      ],
+      "comparison_to_v3_1": {
+        "final_wns_improvement_ns": 0.095,
+        "final_tns_violation_reduction_ns": 322.52,
+        "final_tns_violation_reduction_percent": 14.21,
+        "failing_endpoint_reduction": 161,
+        "estimated_fmax_improvement_mhz": 2.08,
+        "predicted_coremark_10000_time_penalty_seconds": 0.0042
+      },
       "verification": [
-        "RTL lint PASS with only existing FPnew/vendor warnings",
-        "150 MHz WSL smoke PASS: 236760 cycles",
-        "WSL final ISA gate PASS: 76/76 RV32UI/RV32MI/RV32UM/RV32UF",
-        "WSL FP-single gate PASS: 11/11 RV32UF",
+        "True-170 MHz WSL smoke PASS: 267901 cycles",
         "RT-Thread CoreMark 10 CRC PASS",
         "RT-Thread ps/help follow-up commands and four shell prompts PASS",
         "UART framing error check PASS",
         "Vivado DRC: 0 errors / 54 warnings",
-        "Automatic post-route physopt crashed before checkpoint export; clean recovery from fpga_top_routed.dcp with phys_opt_design -directive Explore PASS",
-        "Recovered checkpoint, timing reports and bitstream export PASS"
+        "Automatic optional post-route physopt crashed before checkpoint export",
+        "Clean standalone recovery from fpga_top_routed.dcp with phys_opt_design -directive Explore PASS",
+        "Recovered checkpoint, reports and bitstream export PASS"
       ]
     }
   ],
+  "historical_150mhz": {
+    "v3_1": {
+      "board_verified": true,
+      "measured_coremark_10000_seconds": 26.3,
+      "note": "This is the previously validated 150 MHz reference."
+    },
+    "v3_2": {
+      "archive": "D:/jichuang_database/improve_v3/v3.2_150MHz",
+      "performance_window_cycles": 3952569,
+      "predicted_coremark_10000_seconds": 26.350093,
+      "final_wns_ns": -0.309,
+      "final_tns_ns": -145.213
+    },
+    "invalid_mixed_170_archive": "D:/jichuang_database/improve_v3/v3.1_170MHz_invalid_mixed_contract_20260809"
+  },
   "board_safety": {
-    "request_slice_policy": "Requests already accepted by the frontend are never flushed in the slice; stale responses return normally and are discarded by the frontend epoch mechanism. Flushing an accepted request would strand its pending metadata and can cause the historical no-response or repeated-trap board failure.",
-    "clock_contract": "MMCM, RTL/board metadata, SoC and timer frequency, UART cycles per bit, CoreMark timebase and embedded firmware all remain one generated 150 MHz set.",
-    "uart_simulation_fix": "The Verilator launcher now applies the generated UART cycles-per-bit contract to every simulation, including receive-less smoke tests.",
-    "branch_prediction": "v3.1 did not change the branch predictor. v3.2 preserves the predictor policy, GShare history, counters and update rules while increasing only direct-mapped BTB capacity from 128 to 512 entries to reduce alias conflicts.",
-    "physical_board_status": "PASS: v3.1 was physically validated at 150 MHz; user-reported CoreMark 10000 runtime is approximately 26.3 seconds.",
-    "board_coremark_10000": {
-      "iterations": 10000,
-      "frequency_mhz": 150,
-      "measured_seconds": 26.3,
-      "predicted_seconds_from_wsl_cycles": 26.345547,
-      "result": "PASS"
-    }
+    "request_slice_policy": "Requests already accepted by the frontend are never flushed; stale responses return normally and are discarded by the frontend epoch mechanism. Flushing an accepted request can strand pending metadata and reproduce the historical no-response or repeated-trap board failure.",
+    "clock_contract": "MMCM, RTL SoC/UART constant, board metadata, timer, CoreMark timebase, software, ELF and BRAM images are one generated 170 MHz set.",
+    "branch_prediction": "v3.2 changes only direct-mapped BTB capacity from 128 to 512. GShare policy, history, counters and update semantics are unchanged.",
+    "true_170mhz_physical_board_status": "pending; simulation and bitstream generation passed"
   },
   "decision": {
-    "selected": "pending_true_170mhz_v3_1_v3_2_comparison",
-    "reason": "v3.2 retains a 47486-cycle margin and structurally removes the DCache-to-AGU tight endpoint, but its recovered 150 MHz placement has worse aggregate WNS/TNS than v3.1. Final selection therefore uses fresh, frequency-consistent 170 MHz builds of both versions.",
-    "v3_1_board_reference_seconds": 26.3,
-    "v3_2_predicted_coremark_10000_seconds_at_150mhz": 26.350093
+    "selected": "v3.2_170MHz",
+    "reason": "At the same true 170 MHz contract, v3.2 costs only 714 cycles (0.0042 s per CoreMark 10000) while improving final WNS by 0.095 ns, reducing TNS violation by 322.520 ns, reducing failing endpoints by 161 and raising estimated timing-limited Fmax by 2.08 MHz. No v3.3 iteration is planned.",
+    "v3_1_predicted_coremark_10000_seconds_at_170mhz": 23.246171,
+    "v3_2_predicted_coremark_10000_seconds_at_170mhz": 23.250371,
+    "physical_board_validation_required": true
   }
 }
