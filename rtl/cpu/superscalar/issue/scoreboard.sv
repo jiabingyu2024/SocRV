@@ -47,7 +47,6 @@ module scoreboard #(
     logic [31:0] producer_valid_q;
     logic [TRANS_ID_W-1:0] producer_tid_q [0:31];
     logic [TRANS_ID_W-1:0] allocate_ptr_q, commit_ptr_q;
-    integer i;
 
     assign allocate_trans_id_o = allocate_ptr_q;
     assign commit_trans_id_o = commit_ptr_q;
@@ -74,6 +73,116 @@ module scoreboard #(
         load_complete_accepted_o = load_complete_i && entries_q[load_trans_id_i].occupied;
     end
 
+    // Keep each scoreboard slot as an independent write domain.  The dynamic
+    // array writes previously made allocation/completion control span the
+    // complete eight-entry payload after synthesis.  Slot-local selects let
+    // Vivado replicate those controls next to their consumers without adding
+    // a pipeline stage or changing any same-cycle priority.
+    for (genvar slot = 0; slot < DEPTH; slot = slot + 1) begin : g_entry
+        (* max_fanout = 12 *) logic allocate_slot_c;
+        logic fixed_complete_slot_c;
+        logic load_complete_slot_c;
+        logic slow_complete_slot_c;
+        logic fp_complete_slot_c;
+        logic commit_slot_c;
+
+        assign allocate_slot_c = allocate_i &&
+            allocate_ptr_q == TRANS_ID_W'(slot);
+        assign fixed_complete_slot_c = fixed_complete_i &&
+            fixed_completion_i.trans_id == TRANS_ID_W'(slot) &&
+            entries_q[slot].occupied;
+        assign load_complete_slot_c = load_complete_accepted_o &&
+            load_trans_id_i == TRANS_ID_W'(slot);
+        assign slow_complete_slot_c = slow_complete_i &&
+            slow_trans_id_i == TRANS_ID_W'(slot) && entries_q[slot].occupied;
+        assign fp_complete_slot_c = fp_completion_i.valid &&
+            fp_completion_i.trans_id == TRANS_ID_W'(slot) &&
+            entries_q[slot].occupied;
+        assign commit_slot_c = commit_i && commit_ptr_q == TRANS_ID_W'(slot);
+
+        always_ff @(posedge clk) begin
+            if (rst) begin
+                entries_q[slot].occupied <= 1'b0;
+            end else if (flush_i) begin
+                entries_q[slot].occupied <= 1'b0;
+            end else begin
+                if (fixed_complete_slot_c) begin
+                    entries_q[slot].done <= 1'b1;
+                    entries_q[slot].result <= fixed_completion_i.result;
+                    entries_q[slot].exception_valid <=
+                        fixed_completion_i.exception_valid;
+                    entries_q[slot].exception_cause <=
+                        fixed_completion_i.exception_cause;
+                    entries_q[slot].exception_tval <=
+                        fixed_completion_i.exception_tval;
+                    entries_q[slot].store_slot_valid <=
+                        fixed_completion_i.store_slot_valid;
+                    entries_q[slot].store_slot <= fixed_completion_i.store_slot;
+                end
+                if (load_complete_slot_c) begin
+                    entries_q[slot].done <= 1'b1;
+                    entries_q[slot].result <= load_result_i;
+                end
+                if (slow_complete_slot_c) begin
+                    entries_q[slot].done <= 1'b1;
+                    entries_q[slot].result <= slow_result_i;
+                end
+                if (fp_complete_slot_c) begin
+                    entries_q[slot].done <= 1'b1;
+                    entries_q[slot].result <= fp_completion_i.int_result;
+                    entries_q[slot].fp_result <= fp_completion_i.fp_result;
+                    entries_q[slot].fp_flags <= fp_completion_i.fp_flags;
+                    entries_q[slot].exception_valid <=
+                        fp_completion_i.exception_valid;
+                    entries_q[slot].exception_cause <=
+                        fp_completion_i.exception_cause;
+                    entries_q[slot].exception_tval <=
+                        fp_completion_i.exception_tval;
+                end
+                if (commit_slot_c)
+                    entries_q[slot].occupied <= 1'b0;
+
+                // Allocation remains last so a same-cycle reused slot keeps
+                // the original younger-allocation-wins behavior.
+                if (allocate_slot_c) begin
+                    entries_q[slot].occupied <= 1'b1;
+                    entries_q[slot].done <= allocate_uop_i.exception_valid ||
+                                            allocate_uop_i.fu == FU_SYSTEM;
+                    entries_q[slot].pc <= allocate_uop_i.pc;
+                    entries_q[slot].instr <= allocate_uop_i.instr;
+                    entries_q[slot].rd <= allocate_uop_i.rd;
+                    entries_q[slot].writes_rd <= allocate_uop_i.writes_rd;
+                    entries_q[slot].frd <= allocate_uop_i.frd;
+                    entries_q[slot].writes_frd <= allocate_uop_i.writes_frd;
+                    entries_q[slot].fp_result <= '0;
+                    entries_q[slot].fp_flags <= '0;
+                    entries_q[slot].fp_dirty <=
+                        allocate_uop_i.fu == FU_FP || allocate_uop_i.fu == FU_FP_MEM;
+                    entries_q[slot].fp_op <= allocate_uop_i.fp_op;
+                    entries_q[slot].fu <= allocate_uop_i.fu;
+                    entries_q[slot].serialize <= allocate_uop_i.serialize;
+                    entries_q[slot].sys_op <= allocate_uop_i.sys_op;
+                    entries_q[slot].csr_op <= allocate_uop_i.csr_op;
+                    entries_q[slot].csr_addr <= allocate_uop_i.csr_addr;
+                    if (allocate_uop_i.sys_op == SYS_CSR)
+                        entries_q[slot].csr_src <= allocate_uop_i.csr_imm ?
+                            {27'd0, allocate_uop_i.rs1} : allocate_csr_src_i;
+                    entries_q[slot].exception_valid <= allocate_uop_i.exception_valid;
+                    entries_q[slot].exception_cause <= allocate_uop_i.exception_cause;
+                    entries_q[slot].exception_tval <= allocate_uop_i.exception_tval;
+                    entries_q[slot].store_slot_valid <= 1'b0;
+                    entries_q[slot].is_call <=
+                        (allocate_uop_i.is_jal || allocate_uop_i.is_jalr) &&
+                        (allocate_uop_i.rd == 5'd1 || allocate_uop_i.rd == 5'd5);
+                    entries_q[slot].is_return <= allocate_uop_i.is_jalr &&
+                        (allocate_uop_i.rs1 == 5'd1 || allocate_uop_i.rs1 == 5'd5) &&
+                        allocate_uop_i.rd == 0;
+                    entries_q[slot].link_addr <= allocate_uop_i.pc + 32'd4;
+                end
+            end
+        end
+    end
+
     always_ff @(posedge clk) begin
         if (rst) begin
             allocate_ptr_q <= '0;
@@ -81,99 +190,24 @@ module scoreboard #(
             count_o <= '0;
             producer_valid_q <= '0;
             serial_pending_o <= 1'b0;
-            for (i = 0; i < DEPTH; i = i + 1)
-                entries_q[i].occupied <= 1'b0;
         end else if (flush_i) begin
             allocate_ptr_q <= '0;
             commit_ptr_q <= '0;
             count_o <= '0;
             producer_valid_q <= '0;
             serial_pending_o <= 1'b0;
-            for (i = 0; i < DEPTH; i = i + 1)
-                entries_q[i].occupied <= 1'b0;
         end else begin
-            // Preserve the original same-cycle priority: a new allocation is
-            // younger than completion and commit updates to the reused slot.
-            if (fixed_complete_i && entries_q[fixed_completion_i.trans_id].occupied) begin
-                entries_q[fixed_completion_i.trans_id].done <= 1'b1;
-                entries_q[fixed_completion_i.trans_id].result <= fixed_completion_i.result;
-                entries_q[fixed_completion_i.trans_id].exception_valid <=
-                    fixed_completion_i.exception_valid;
-                entries_q[fixed_completion_i.trans_id].exception_cause <=
-                    fixed_completion_i.exception_cause;
-                entries_q[fixed_completion_i.trans_id].exception_tval <=
-                    fixed_completion_i.exception_tval;
-                entries_q[fixed_completion_i.trans_id].store_slot_valid <=
-                    fixed_completion_i.store_slot_valid;
-                entries_q[fixed_completion_i.trans_id].store_slot <=
-                    fixed_completion_i.store_slot;
-            end
-            if (load_complete_accepted_o) begin
-                entries_q[load_trans_id_i].done <= 1'b1;
-                entries_q[load_trans_id_i].result <= load_result_i;
-            end
-            if (slow_complete_i && entries_q[slow_trans_id_i].occupied) begin
-                entries_q[slow_trans_id_i].done <= 1'b1;
-                entries_q[slow_trans_id_i].result <= slow_result_i;
-            end
-            if (fp_completion_i.valid && entries_q[fp_completion_i.trans_id].occupied) begin
-                entries_q[fp_completion_i.trans_id].done <= 1'b1;
-                entries_q[fp_completion_i.trans_id].result <= fp_completion_i.int_result;
-                entries_q[fp_completion_i.trans_id].fp_result <= fp_completion_i.fp_result;
-                entries_q[fp_completion_i.trans_id].fp_flags <= fp_completion_i.fp_flags;
-                entries_q[fp_completion_i.trans_id].exception_valid <=
-                    fp_completion_i.exception_valid;
-                entries_q[fp_completion_i.trans_id].exception_cause <=
-                    fp_completion_i.exception_cause;
-                entries_q[fp_completion_i.trans_id].exception_tval <=
-                    fp_completion_i.exception_tval;
-            end
-
             if (commit_i) begin
                 if (commit_entry_o.writes_rd && commit_entry_o.rd != 0 &&
                     producer_valid_q[commit_entry_o.rd] &&
                     producer_tid_q[commit_entry_o.rd] == commit_ptr_q)
                     producer_valid_q[commit_entry_o.rd] <= 1'b0;
-                entries_q[commit_ptr_q].occupied <= 1'b0;
                 commit_ptr_q <= commit_ptr_q + 1'b1;
                 if (commit_entry_o.serialize || commit_entry_o.exception_valid)
                     serial_pending_o <= 1'b0;
             end
 
             if (allocate_i) begin
-                entries_q[allocate_ptr_q].occupied <= 1'b1;
-                entries_q[allocate_ptr_q].done <= allocate_uop_i.exception_valid ||
-                                                  allocate_uop_i.fu == FU_SYSTEM;
-                entries_q[allocate_ptr_q].pc <= allocate_uop_i.pc;
-                entries_q[allocate_ptr_q].instr <= allocate_uop_i.instr;
-                entries_q[allocate_ptr_q].rd <= allocate_uop_i.rd;
-                entries_q[allocate_ptr_q].writes_rd <= allocate_uop_i.writes_rd;
-                entries_q[allocate_ptr_q].frd <= allocate_uop_i.frd;
-                entries_q[allocate_ptr_q].writes_frd <= allocate_uop_i.writes_frd;
-                entries_q[allocate_ptr_q].fp_result <= '0;
-                entries_q[allocate_ptr_q].fp_flags <= '0;
-                entries_q[allocate_ptr_q].fp_dirty <=
-                    allocate_uop_i.fu == FU_FP || allocate_uop_i.fu == FU_FP_MEM;
-                entries_q[allocate_ptr_q].fp_op <= allocate_uop_i.fp_op;
-                entries_q[allocate_ptr_q].fu <= allocate_uop_i.fu;
-                entries_q[allocate_ptr_q].serialize <= allocate_uop_i.serialize;
-                entries_q[allocate_ptr_q].sys_op <= allocate_uop_i.sys_op;
-                entries_q[allocate_ptr_q].csr_op <= allocate_uop_i.csr_op;
-                entries_q[allocate_ptr_q].csr_addr <= allocate_uop_i.csr_addr;
-                if (allocate_uop_i.sys_op == SYS_CSR)
-                    entries_q[allocate_ptr_q].csr_src <= allocate_uop_i.csr_imm ?
-                        {27'd0, allocate_uop_i.rs1} : allocate_csr_src_i;
-                entries_q[allocate_ptr_q].exception_valid <= allocate_uop_i.exception_valid;
-                entries_q[allocate_ptr_q].exception_cause <= allocate_uop_i.exception_cause;
-                entries_q[allocate_ptr_q].exception_tval <= allocate_uop_i.exception_tval;
-                entries_q[allocate_ptr_q].store_slot_valid <= 1'b0;
-                entries_q[allocate_ptr_q].is_call <=
-                    (allocate_uop_i.is_jal || allocate_uop_i.is_jalr) &&
-                    (allocate_uop_i.rd == 5'd1 || allocate_uop_i.rd == 5'd5);
-                entries_q[allocate_ptr_q].is_return <= allocate_uop_i.is_jalr &&
-                    (allocate_uop_i.rs1 == 5'd1 || allocate_uop_i.rs1 == 5'd5) &&
-                    allocate_uop_i.rd == 0;
-                entries_q[allocate_ptr_q].link_addr <= allocate_uop_i.pc + 32'd4;
                 if (allocate_uop_i.writes_rd && allocate_uop_i.rd != 0) begin
                     producer_valid_q[allocate_uop_i.rd] <= 1'b1;
                     producer_tid_q[allocate_uop_i.rd] <= allocate_ptr_q;
