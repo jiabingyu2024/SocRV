@@ -50,7 +50,8 @@
         "RT-Thread CoreMark 10 CRC PASS",
         "RT-Thread ps/help follow-up commands and shell prompt recovery PASS",
         "Vivado DRC: 0 errors",
-        "Manual bitstream export from final post-route physopt checkpoint PASS"
+        "Manual bitstream export from final post-route physopt checkpoint PASS",
+        "Physical board validation PASS at 150 MHz; CoreMark 10000 measured approximately 26.3 seconds"
       ]
     }
   ],
@@ -59,7 +60,14 @@
     "clock_contract": "MMCM, RTL/board metadata, SoC and timer frequency, UART cycles per bit, CoreMark timebase and embedded firmware all remain one generated 150 MHz set.",
     "uart_simulation_fix": "The Verilator launcher now applies the generated UART cycles-per-bit contract to every simulation, including receive-less smoke tests.",
     "branch_prediction": "No branch predictor table, policy, history or update logic was changed.",
-    "physical_board_status": "Not yet physically programmed; v2.1 remains the last board-verified baseline."
+    "physical_board_status": "PASS: v3.1 was physically validated at 150 MHz; user-reported CoreMark 10000 runtime is approximately 26.3 seconds.",
+    "board_coremark_10000": {
+      "iterations": 10000,
+      "frequency_mhz": 150,
+      "measured_seconds": 26.3,
+      "predicted_seconds_from_wsl_cycles": 26.345547,
+      "result": "PASS"
+    }
   },
   "decision": {
     "selected": "v3.1",
