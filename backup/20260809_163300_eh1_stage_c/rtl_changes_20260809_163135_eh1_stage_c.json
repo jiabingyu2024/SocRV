@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-08-09T16:31:35+08:00",
+  "mode": "full_generation",
+  "architecture_source": "../learn/01-yjb/documents/20_veer_eh1_tcm_soc_fpga_rtthread_coremark_migration.md",
+  "current_stage": "stage_c_cacheless_noecc_tcm",
+  "base_snapshot": "backup/20260809_162200_eh1_stage_b",
+  "isa_advertised": "RV32IM_Zicsr (intermediate; F remains gated off)",
+  "files_deleted": [
+    "rtl/core/eh1f/ifu/ifu_ic_mem.sv",
+    "rtl/core/eh1f/lsu/lsu_ecc.sv"
+  ],
+  "files_created": [
+    "rtl/filelist_stage_c.f",
+    "doc/rtl_stage_c_review.md",
+    "doc/rtl_changes_20260809_163135_eh1_stage_c.json"
+  ],
+  "memory_architecture": {
+    "iccm": {
+      "capacity_bytes": 131072,
+      "organization": "4 x 8192 x 32-bit lanes",
+      "read_width_bits": 128,
+      "write_width_bits": 64,
+      "read_latency": "one synchronous BRAM read",
+      "ecc_bits": 0,
+      "parity_bits": 0
+    },
+    "dccm": {
+      "capacity_bytes": 65536,
+      "organization": "8 x 2048 x 32-bit banks",
+      "read_width_bits": 32,
+      "write_width_bits": 32,
+      "read_latency": "one synchronous BRAM read plus existing DC3 alignment register",
+      "ecc_bits": 0,
+      "parity_bits": 0
+    }
+  },
+  "active_features_removed": [
+    "instruction cache tag/data/refill path",
+    "ICCM ECC encode/decode/correction/scrub",
+    "DCCM ECC encode/decode/correction/repair",
+    "aligner data parity checks",
+    "cache and TCM error counters",
+    "I-cache diagnostic CSR state"
+  ],
+  "static_checks": {
+    "active_rtl_entries": 41,
+    "missing_paths": 0,
+    "duplicate_active_sources": 0,
+    "active_icache_memory_file": false,
+    "active_lsu_ecc_file": false,
+    "dccm_fdata_width_bits": 32,
+    "iccm_read_width_bits": 128
+  },
+  "verification_status": "static structural checks passed; compile, simulation and BRAM inference pending external verification stage",
+  "next_stage": "remove_dma_pic_external_bus_and_add_local_soc_boundary"
+}

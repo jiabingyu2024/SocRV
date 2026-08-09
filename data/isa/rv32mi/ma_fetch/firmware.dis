@@ -9,145 +9,148 @@ Disassembly of section .text:
    4:	00000297          	auipc	t0,0x0
    8:	01028293          	addi	t0,t0,16 # 14 <trap_vector>
    c:	30529073          	csrw	mtvec,t0
-  10:	0300006f          	j	40 <unexpected_trap+0x1c>
+  10:	0340006f          	j	44 <unexpected_trap+0x20>
 
 00000014 <trap_vector>:
   14:	00000f17          	auipc	t5,0x0
-  18:	194f0f13          	addi	t5,t5,404 # 1a8 <mtvec_handler>
+  18:	1a0f0f13          	addi	t5,t5,416 # 1b4 <mtvec_handler>
   1c:	000f0463          	beqz	t5,24 <unexpected_trap>
   20:	000f0067          	jr	t5
 
 00000024 <unexpected_trap>:
-  24:	300022b7          	lui	t0,0x30002
-  28:	34202373          	csrr	t1,mcause
-  2c:	0062a223          	sw	t1,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
-  30:	46415337          	lui	t1,0x46415
-  34:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_DATA_ORIGIN+0x3641494c>
-  38:	0062a023          	sw	t1,0(t0)
-  3c:	0000006f          	j	3c <unexpected_trap+0x18>
-  40:	00200193          	li	gp,2
-  44:	00000313          	li	t1,0
-  48:	00000297          	auipc	t0,0x0
-  4c:	00c28293          	addi	t0,t0,12 # 54 <unexpected_trap+0x30>
-  50:	00228367          	jalr	t1,2(t0)
-  54:	a011                	j	58 <unexpected_trap+0x34>
-  56:	a019                	j	5c <unexpected_trap+0x38>
-  58:	1200006f          	j	178 <fail>
-  5c:	00300193          	li	gp,3
-  60:	00000297          	auipc	t0,0x0
-  64:	00c28293          	addi	t0,t0,12 # 6c <unexpected_trap+0x48>
-  68:	00128367          	jalr	t1,1(t0)
-  6c:	0080006f          	j	74 <unexpected_trap+0x50>
-  70:	1080006f          	j	178 <fail>
-  74:	00400193          	li	gp,4
-  78:	00000313          	li	t1,0
-  7c:	00000297          	auipc	t0,0x0
-  80:	00c28293          	addi	t0,t0,12 # 88 <unexpected_trap+0x64>
-  84:	00328367          	jalr	t1,3(t0)
-  88:	a011                	j	8c <unexpected_trap+0x68>
-  8a:	a019                	j	90 <unexpected_trap+0x6c>
-  8c:	0ec0006f          	j	178 <fail>
-  90:	00500193          	li	gp,5
-  94:	00000313          	li	t1,0
-  98:	00000297          	auipc	t0,0x0
-  9c:	00c28293          	addi	t0,t0,12 # a4 <unexpected_trap+0x80>
-  a0:	0060036f          	jal	t1,a6 <unexpected_trap+0x82>
-  a4:	a011                	j	a8 <unexpected_trap+0x84>
-  a6:	a019                	j	ac <unexpected_trap+0x88>
-  a8:	0d00006f          	j	178 <fail>
-  ac:	00600193          	li	gp,6
-  b0:	00000313          	li	t1,0
-  b4:	00000297          	auipc	t0,0x0
-  b8:	00c28293          	addi	t0,t0,12 # c0 <unexpected_trap+0x9c>
-  bc:	00000363          	beqz	zero,c2 <unexpected_trap+0x9e>
-  c0:	a011                	j	c4 <unexpected_trap+0xa0>
-  c2:	a019                	j	c8 <unexpected_trap+0xa4>
-  c4:	0b40006f          	j	178 <fail>
-  c8:	00700193          	li	gp,7
-  cc:	00001563          	bnez	zero,d6 <unexpected_trap+0xb2>
-  d0:	00c0006f          	j	dc <unexpected_trap+0xb8>
-  d4:	a009                	j	d6 <unexpected_trap+0xb2>
-  d6:	a009                	j	d8 <unexpected_trap+0xb4>
-  d8:	0a00006f          	j	178 <fail>
-  dc:	30126073          	csrsi	misa,4
-  e0:	301023f3          	csrr	t2,misa
-  e4:	0043f393          	andi	t2,t2,4
-  e8:	0a038463          	beqz	t2,190 <pass>
-  ec:	30127073          	csrci	misa,4
-  f0:	301023f3          	csrr	t2,misa
-  f4:	0043f393          	andi	t2,t2,4
-  f8:	08039c63          	bnez	t2,190 <pass>
-  fc:	305022f3          	csrr	t0,mtvec
- 100:	00000317          	auipc	t1,0x0
- 104:	01630313          	addi	t1,t1,22 # 116 <unexpected_trap+0xf2>
- 108:	00230313          	addi	t1,t1,2
- 10c:	30531073          	csrw	mtvec,t1
- 110:	0060006f          	j	116 <unexpected_trap+0xf2>
- 114:	0001                	nop
- 116:	a8ad                	j	190 <pass>
- 118:	30529073          	csrw	mtvec,t0
- 11c:	30126073          	csrsi	misa,4
- 120:	00800193          	li	gp,8
- 124:	301023f3          	csrr	t2,misa
- 128:	0043f393          	andi	t2,t2,4
- 12c:	06038263          	beqz	t2,190 <pass>
- 130:	0001                	nop
- 132:	30127073          	csrci	misa,4
- 136:	0001                	nop
- 138:	301023f3          	csrr	t2,misa
- 13c:	0043f393          	andi	t2,t2,4
- 140:	02038c63          	beqz	t2,178 <fail>
- 144:	00000297          	auipc	t0,0x0
- 148:	02828293          	addi	t0,t0,40 # 16c <unexpected_trap+0x148>
- 14c:	ffe28293          	addi	t0,t0,-2
- 150:	34129073          	csrw	mepc,t0
- 154:	30127073          	csrci	misa,4
- 158:	000023b7          	lui	t2,0x2
- 15c:	80038393          	addi	t2,t2,-2048 # 1800 <__code_end+0x15fc>
- 160:	3003a073          	csrs	mstatus,t2
- 164:	30200073          	mret
- 168:	00000263          	beqz	zero,16c <unexpected_trap+0x148>
- 16c:	30126073          	csrsi	misa,4
- 170:	0200006f          	j	190 <pass>
- 174:	00301e63          	bne	zero,gp,190 <pass>
+  24:	100032b7          	lui	t0,0x10003
+  28:	01428293          	addi	t0,t0,20 # 10003014 <SOCRV_CODE_LENGTH+0xffe3014>
+  2c:	34202373          	csrr	t1,mcause
+  30:	0062a223          	sw	t1,4(t0)
+  34:	46415337          	lui	t1,0x46415
+  38:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_CODE_LENGTH+0x463f494c>
+  3c:	0062a023          	sw	t1,0(t0)
+  40:	0000006f          	j	40 <unexpected_trap+0x1c>
+  44:	00200193          	li	gp,2
+  48:	00000313          	li	t1,0
+  4c:	00000297          	auipc	t0,0x0
+  50:	00c28293          	addi	t0,t0,12 # 58 <unexpected_trap+0x34>
+  54:	00228367          	jalr	t1,2(t0)
+  58:	a011                	j	5c <unexpected_trap+0x38>
+  5a:	a019                	j	60 <unexpected_trap+0x3c>
+  5c:	1200006f          	j	17c <fail>
+  60:	00300193          	li	gp,3
+  64:	00000297          	auipc	t0,0x0
+  68:	00c28293          	addi	t0,t0,12 # 70 <unexpected_trap+0x4c>
+  6c:	00128367          	jalr	t1,1(t0)
+  70:	0080006f          	j	78 <unexpected_trap+0x54>
+  74:	1080006f          	j	17c <fail>
+  78:	00400193          	li	gp,4
+  7c:	00000313          	li	t1,0
+  80:	00000297          	auipc	t0,0x0
+  84:	00c28293          	addi	t0,t0,12 # 8c <unexpected_trap+0x68>
+  88:	00328367          	jalr	t1,3(t0)
+  8c:	a011                	j	90 <unexpected_trap+0x6c>
+  8e:	a019                	j	94 <unexpected_trap+0x70>
+  90:	0ec0006f          	j	17c <fail>
+  94:	00500193          	li	gp,5
+  98:	00000313          	li	t1,0
+  9c:	00000297          	auipc	t0,0x0
+  a0:	00c28293          	addi	t0,t0,12 # a8 <unexpected_trap+0x84>
+  a4:	0060036f          	jal	t1,aa <unexpected_trap+0x86>
+  a8:	a011                	j	ac <unexpected_trap+0x88>
+  aa:	a019                	j	b0 <unexpected_trap+0x8c>
+  ac:	0d00006f          	j	17c <fail>
+  b0:	00600193          	li	gp,6
+  b4:	00000313          	li	t1,0
+  b8:	00000297          	auipc	t0,0x0
+  bc:	00c28293          	addi	t0,t0,12 # c4 <unexpected_trap+0xa0>
+  c0:	00000363          	beqz	zero,c6 <unexpected_trap+0xa2>
+  c4:	a011                	j	c8 <unexpected_trap+0xa4>
+  c6:	a019                	j	cc <unexpected_trap+0xa8>
+  c8:	0b40006f          	j	17c <fail>
+  cc:	00700193          	li	gp,7
+  d0:	00001563          	bnez	zero,da <unexpected_trap+0xb6>
+  d4:	00c0006f          	j	e0 <unexpected_trap+0xbc>
+  d8:	a009                	j	da <unexpected_trap+0xb6>
+  da:	a009                	j	dc <unexpected_trap+0xb8>
+  dc:	0a00006f          	j	17c <fail>
+  e0:	30126073          	csrsi	misa,4
+  e4:	301023f3          	csrr	t2,misa
+  e8:	0043f393          	andi	t2,t2,4
+  ec:	0a038663          	beqz	t2,198 <pass>
+  f0:	30127073          	csrci	misa,4
+  f4:	301023f3          	csrr	t2,misa
+  f8:	0043f393          	andi	t2,t2,4
+  fc:	08039e63          	bnez	t2,198 <pass>
+ 100:	305022f3          	csrr	t0,mtvec
+ 104:	00000317          	auipc	t1,0x0
+ 108:	01630313          	addi	t1,t1,22 # 11a <unexpected_trap+0xf6>
+ 10c:	00230313          	addi	t1,t1,2
+ 110:	30531073          	csrw	mtvec,t1
+ 114:	0060006f          	j	11a <unexpected_trap+0xf6>
+ 118:	0001                	nop
+ 11a:	a8bd                	j	198 <pass>
+ 11c:	30529073          	csrw	mtvec,t0
+ 120:	30126073          	csrsi	misa,4
+ 124:	00800193          	li	gp,8
+ 128:	301023f3          	csrr	t2,misa
+ 12c:	0043f393          	andi	t2,t2,4
+ 130:	06038463          	beqz	t2,198 <pass>
+ 134:	0001                	nop
+ 136:	30127073          	csrci	misa,4
+ 13a:	0001                	nop
+ 13c:	301023f3          	csrr	t2,misa
+ 140:	0043f393          	andi	t2,t2,4
+ 144:	02038c63          	beqz	t2,17c <fail>
+ 148:	00000297          	auipc	t0,0x0
+ 14c:	02828293          	addi	t0,t0,40 # 170 <unexpected_trap+0x14c>
+ 150:	ffe28293          	addi	t0,t0,-2
+ 154:	34129073          	csrw	mepc,t0
+ 158:	30127073          	csrci	misa,4
+ 15c:	000023b7          	lui	t2,0x2
+ 160:	80038393          	addi	t2,t2,-2048 # 1800 <__code_end+0x15f0>
+ 164:	3003a073          	csrs	mstatus,t2
+ 168:	30200073          	mret
+ 16c:	00000263          	beqz	zero,170 <unexpected_trap+0x14c>
+ 170:	30126073          	csrsi	misa,4
+ 174:	0240006f          	j	198 <pass>
+ 178:	02301063          	bne	zero,gp,198 <pass>
 
-00000178 <fail>:
- 178:	300022b7          	lui	t0,0x30002
- 17c:	0032a223          	sw	gp,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
- 180:	46415337          	lui	t1,0x46415
- 184:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_DATA_ORIGIN+0x3641494c>
- 188:	0062a023          	sw	t1,0(t0)
- 18c:	0000006f          	j	18c <fail+0x14>
+0000017c <fail>:
+ 17c:	100032b7          	lui	t0,0x10003
+ 180:	01428293          	addi	t0,t0,20 # 10003014 <SOCRV_CODE_LENGTH+0xffe3014>
+ 184:	0032a223          	sw	gp,4(t0)
+ 188:	46415337          	lui	t1,0x46415
+ 18c:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_CODE_LENGTH+0x463f494c>
+ 190:	0062a023          	sw	t1,0(t0)
+ 194:	0000006f          	j	194 <fail+0x18>
 
-00000190 <pass>:
- 190:	300022b7          	lui	t0,0x30002
- 194:	0002a223          	sw	zero,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
- 198:	50415337          	lui	t1,0x50415
- 19c:	35330313          	addi	t1,t1,851 # 50415353 <SOCRV_DATA_ORIGIN+0x40415353>
- 1a0:	0062a023          	sw	t1,0(t0)
- 1a4:	0000006f          	j	1a4 <pass+0x14>
+00000198 <pass>:
+ 198:	100032b7          	lui	t0,0x10003
+ 19c:	01428293          	addi	t0,t0,20 # 10003014 <SOCRV_CODE_LENGTH+0xffe3014>
+ 1a0:	0002a223          	sw	zero,4(t0)
+ 1a4:	50415337          	lui	t1,0x50415
+ 1a8:	35330313          	addi	t1,t1,851 # 50415353 <SOCRV_CODE_LENGTH+0x503f5353>
+ 1ac:	0062a023          	sw	t1,0(t0)
+ 1b0:	0000006f          	j	1b0 <pass+0x18>
 
-000001a8 <mtvec_handler>:
- 1a8:	00200513          	li	a0,2
- 1ac:	02a18063          	beq	gp,a0,1cc <mtvec_handler+0x24>
- 1b0:	00400513          	li	a0,4
- 1b4:	00a18c63          	beq	gp,a0,1cc <mtvec_handler+0x24>
- 1b8:	00500513          	li	a0,5
- 1bc:	00a18863          	beq	gp,a0,1cc <mtvec_handler+0x24>
- 1c0:	00600513          	li	a0,6
- 1c4:	00a18463          	beq	gp,a0,1cc <mtvec_handler+0x24>
- 1c8:	fb1ff06f          	j	178 <fail>
- 1cc:	fa0316e3          	bnez	t1,178 <fail>
- 1d0:	00000593          	li	a1,0
- 1d4:	34202573          	csrr	a0,mcause
- 1d8:	fab510e3          	bne	a0,a1,178 <fail>
- 1dc:	341025f3          	csrr	a1,mepc
- 1e0:	00458593          	addi	a1,a1,4
- 1e4:	f8b29ae3          	bne	t0,a1,178 <fail>
- 1e8:	34302573          	csrr	a0,mtval
- 1ec:	00050663          	beqz	a0,1f8 <mtvec_handler+0x50>
- 1f0:	ffe50513          	addi	a0,a0,-2
- 1f4:	f85512e3          	bne	a0,t0,178 <fail>
- 1f8:	00858593          	addi	a1,a1,8
- 1fc:	34159073          	csrw	mepc,a1
- 200:	30200073          	mret
+000001b4 <mtvec_handler>:
+ 1b4:	00200513          	li	a0,2
+ 1b8:	02a18063          	beq	gp,a0,1d8 <mtvec_handler+0x24>
+ 1bc:	00400513          	li	a0,4
+ 1c0:	00a18c63          	beq	gp,a0,1d8 <mtvec_handler+0x24>
+ 1c4:	00500513          	li	a0,5
+ 1c8:	00a18863          	beq	gp,a0,1d8 <mtvec_handler+0x24>
+ 1cc:	00600513          	li	a0,6
+ 1d0:	00a18463          	beq	gp,a0,1d8 <mtvec_handler+0x24>
+ 1d4:	fa9ff06f          	j	17c <fail>
+ 1d8:	fa0312e3          	bnez	t1,17c <fail>
+ 1dc:	00000593          	li	a1,0
+ 1e0:	34202573          	csrr	a0,mcause
+ 1e4:	f8b51ce3          	bne	a0,a1,17c <fail>
+ 1e8:	341025f3          	csrr	a1,mepc
+ 1ec:	00458593          	addi	a1,a1,4
+ 1f0:	f8b296e3          	bne	t0,a1,17c <fail>
+ 1f4:	34302573          	csrr	a0,mtval
+ 1f8:	00050663          	beqz	a0,204 <mtvec_handler+0x50>
+ 1fc:	ffe50513          	addi	a0,a0,-2
+ 200:	f6551ee3          	bne	a0,t0,17c <fail>
+ 204:	00858593          	addi	a1,a1,8
+ 208:	34159073          	csrw	mepc,a1
+ 20c:	30200073          	mret

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "change": "Recheck IALIGN=32 at the E4 commit boundary",
+  "diagnostic": {
+    "test": "rv32mi/ma_fetch",
+    "pc": "0x00000054",
+    "target": "0x0000005a",
+    "sampled_flags": "0x09",
+    "finding": "target bit 1 and E4 valid were high while the pipelined EXU misalignment indication was low"
+  },
+  "files": [
+    "rtl/core/eh1f/exu/exu.sv"
+  ],
+  "backup": "backup/20260809_200100/rtl/core/eh1f/exu/exu.sv",
+  "verification_required": [
+    "rv32mi/ma_fetch",
+    "final-base ISA gate",
+    "lint and synthesis"
+  ]
+}

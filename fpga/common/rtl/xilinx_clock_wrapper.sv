@@ -1,18 +1,16 @@
 module xilinx_clock_wrapper #(
-  parameter real CORE_CLKOUT_DIVIDE_F = 10.0
+  parameter real CORE_CLKOUT_DIVIDE_F = 4.0
 ) (
   input logic clk_200mhz_p_i,
   input logic clk_200mhz_n_i,
   input logic reset_i,
   output logic clk_core_o,
-  output logic clk_periph_o,
   output logic locked_o
 );
   logic clk_input;
   logic clk_feedback;
   logic clk_feedback_buffered;
   logic clk_core_unbuffered;
-  logic clk_periph_unbuffered;
 
   IBUFDS u_input_buffer (
     .I(clk_200mhz_p_i),
@@ -26,7 +24,6 @@ module xilinx_clock_wrapper #(
     .DIVCLK_DIVIDE(1),
     .CLKFBOUT_MULT_F(5.000),
     .CLKOUT0_DIVIDE_F(CORE_CLKOUT_DIVIDE_F),
-    .CLKOUT1_DIVIDE(20),
     .STARTUP_WAIT("FALSE")
   ) u_mmcm (
     .CLKIN1(clk_input),
@@ -38,7 +35,7 @@ module xilinx_clock_wrapper #(
     .CLKOUT0(clk_core_unbuffered),
     .LOCKED(locked_o),
     .CLKOUT0B(),
-    .CLKOUT1(clk_periph_unbuffered),
+    .CLKOUT1(),
     .CLKOUT1B(),
     .CLKOUT2(),
     .CLKOUT2B(),
@@ -57,10 +54,5 @@ module xilinx_clock_wrapper #(
   BUFG u_core_clock_buffer (
     .I(clk_core_unbuffered),
     .O(clk_core_o)
-  );
-
-  BUFG u_periph_clock_buffer (
-    .I(clk_periph_unbuffered),
-    .O(clk_periph_o)
   );
 endmodule

@@ -1,0 +1,20 @@
+{
+  "stage": "D",
+  "profile": "RV32IM_Zicsr temporary integer baseline, TCM-only local MMIO",
+  "active_filelist": "rtl/filelist_stage_d.f",
+  "memory": {"iccm_kib":128,"dccm_kib":64,"ecc":false,"cache":false,"external_memory":false},
+  "mmio": {
+    "timer":"0x10000000","uart":"0x10001000","gpio":"0x10002000","sysctrl":"0x10003000",
+    "max_outstanding":1,"stores_visible_after_commit":true
+  },
+  "removed_sources": [
+    "rtl/core/eh1f/pic_ctrl.sv",
+    "rtl/core/eh1f/dma_ctrl.sv",
+    "rtl/core/eh1f/lsu/lsu_bus_buffer.sv"
+  ],
+  "new_sources": [
+    "rtl/soc/machine_timer.sv","rtl/soc/uart.sv","rtl/soc/gpio.sv",
+    "rtl/soc/sysctrl.sv","rtl/soc/local_peripheral_subsystem.sv","rtl/soc/soc_top.sv"
+  ],
+  "verification": {"static_filelist_entries":41,"missing_paths":0,"duplicate_paths":0,"compile_run":false,"simulation_run":false}
+}

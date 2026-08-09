@@ -36,7 +36,7 @@ def main() -> int:
             "--difftest-mode",
             "soc-mmio",
             "--difftest-isa",
-            "rv32im_zicsr_zicntr_zifencei",
+            "rv32imf_zicsr",
             "--difftest-fault",
             f"{fault}@8",
         ]

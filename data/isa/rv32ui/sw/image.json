@@ -1,17 +1,103 @@
 {
+  "banks": [
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/iccm_lane0.mem",
+      "name": "ICCM_LANE0",
+      "sha256": "3f4a54ba8568ee15983da1228cd90bb99135e570374ecd6491d061722ba3cf87",
+      "size": 32768,
+      "stored_words": 8192
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/iccm_lane1.mem",
+      "name": "ICCM_LANE1",
+      "sha256": "14963503960518c12cf84adaeb22448a679435c56e5449da5c82bcd3e55d1629",
+      "size": 32768,
+      "stored_words": 8192
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/iccm_lane2.mem",
+      "name": "ICCM_LANE2",
+      "sha256": "9231c7314c69c7b9ab4ebe669f3f876fb9092d5047b3bc9605cd1f4844c65ee6",
+      "size": 32768,
+      "stored_words": 8192
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/iccm_lane3.mem",
+      "name": "ICCM_LANE3",
+      "sha256": "2c25af0ce6fb7e0fa9a50311db79a90c2ce99658f0291a062af04d71c9628249",
+      "size": 32768,
+      "stored_words": 8192
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/dccm_bank0.mem",
+      "name": "DCCM_BANK0",
+      "sha256": "0c947a09a8332ff24075a50d322ce7d305b78090d3eef1125aedd0d854575156",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/dccm_bank1.mem",
+      "name": "DCCM_BANK1",
+      "sha256": "0c947a09a8332ff24075a50d322ce7d305b78090d3eef1125aedd0d854575156",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/dccm_bank2.mem",
+      "name": "DCCM_BANK2",
+      "sha256": "a9735a198e0f30ff85acb158eac8f2931d5df1b8f6f201428231d4d443c7f172",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/dccm_bank3.mem",
+      "name": "DCCM_BANK3",
+      "sha256": "a9735a198e0f30ff85acb158eac8f2931d5df1b8f6f201428231d4d443c7f172",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/dccm_bank4.mem",
+      "name": "DCCM_BANK4",
+      "sha256": "a9735a198e0f30ff85acb158eac8f2931d5df1b8f6f201428231d4d443c7f172",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/dccm_bank5.mem",
+      "name": "DCCM_BANK5",
+      "sha256": "a9735a198e0f30ff85acb158eac8f2931d5df1b8f6f201428231d4d443c7f172",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/dccm_bank6.mem",
+      "name": "DCCM_BANK6",
+      "sha256": "a9735a198e0f30ff85acb158eac8f2931d5df1b8f6f201428231d4d443c7f172",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32ui/sw/dccm_bank7.mem",
+      "name": "DCCM_BANK7",
+      "sha256": "a9735a198e0f30ff85acb158eac8f2931d5df1b8f6f201428231d4d443c7f172",
+      "size": 8192,
+      "stored_words": 2048
+    }
+  ],
   "elf": {
     "path": "data/isa/rv32ui/sw/firmware.elf",
-    "sha256": "047f942ecd29d550ba05ecd0caa62e04083d39aaeea1ffb99514427f1f987674"
+    "sha256": "a8bf29ebb9e992996760d1044f93699585b9537c7a36059a9c2b98b5d6293049"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32i_zicsr_zifencei",
+    "march": "rv32i_zicsr",
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "0102549045d68c6abb251d1b67d3217ec7f14f6465c75b4b93f670cc5cf709b4",
   "profile": "riscv-tests/rv32ui/sw",
   "regions": [
     {
@@ -19,13 +105,13 @@
       "file": "data/isa/rv32ui/sw/code.mem",
       "fill": "0x00000000",
       "name": "CODE",
-      "sha256": "48de8ffbf34c8e937418cca7135a1d1e779ad7383e1a49d2a8179801091d70a4",
-      "size": 65536,
-      "stored_words": 348,
-      "used": 1392
+      "sha256": "e192750cee8f51faa0b314532154580b2381e252bf00cab7dc8c3751610963ba",
+      "size": 131072,
+      "stored_words": 351,
+      "used": 1404
     },
     {
-      "base": "0x10000000",
+      "base": "0x00020000",
       "file": "data/isa/rv32ui/sw/data.mem",
       "fill": "0x00000000",
       "name": "DATA",
@@ -39,13 +125,13 @@
   "segments": [
     {
       "address": "0x00000000",
-      "file_size": 1392,
+      "file_size": 1404,
       "flags": 5,
-      "memory_size": 1392,
+      "memory_size": 1404,
       "region": "CODE"
     },
     {
-      "address": "0x10000000",
+      "address": "0x00020000",
       "file_size": 48,
       "flags": 6,
       "memory_size": 48,
@@ -53,7 +139,7 @@
     }
   ],
   "test_status": {
-    "base": "0x30002000",
+    "base": "0x10003014",
     "fail_magic": "0x4641494c",
     "pass_magic": "0x50415353"
   },

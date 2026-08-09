@@ -2,6 +2,7 @@
 
 #include "coremark.h"
 #include "core_portme.h"
+#include "drv_irq.h"
 #include "drv_timer.h"
 #include "drv_uart.h"
 #include "soc.h"
@@ -31,9 +32,13 @@ ee_u32 default_num_contexts = 1;
 static CORE_TICKS start_ticks;
 static CORE_TICKS stop_ticks;
 static int data_error_seen;
+static uint32_t saved_mstatus;
 
 void start_time(void)
 {
+    saved_mstatus = irq_save();
+    irq_clear_software();
+    timer_start(0);
     test_status_set_code(SOCRV_TEST_PERF_START_MAGIC);
     start_ticks = (CORE_TICKS)timer_read();
 }
@@ -97,4 +102,11 @@ void coremark_set_iterations(ee_u32 iterations)
 CORE_TICKS coremark_last_ticks(void)
 {
     return get_time();
+}
+
+void coremark_resume_interrupts(void)
+{
+    if ((saved_mstatus & (1u << 3)) != 0u) {
+        __asm volatile("csrsi mstatus, 8" : : : "memory");
+    }
 }

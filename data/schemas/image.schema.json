@@ -105,7 +105,10 @@
         "additionalProperties": false,
         "required": ["name", "file", "size", "stored_words", "sha256"],
         "properties": {
-          "name": {"enum": ["CODE_LO", "CODE_HI"]},
+          "name": {
+            "type": "string",
+            "pattern": "^(CODE_(LO|HI)|ICCM_LANE[0-3]|DCCM_BANK[0-7])$"
+          },
           "file": {"type": "string"},
           "size": {"type": "integer", "minimum": 1},
           "stored_words": {"type": "integer", "minimum": 1},

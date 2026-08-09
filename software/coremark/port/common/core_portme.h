@@ -43,7 +43,7 @@ typedef uint64_t CORETIMETYPE;
 #define MAIN_HAS_NORETURN 0
 
 #ifndef COREMARK_TICKS_PER_SEC
-#define COREMARK_TICKS_PER_SEC 50000000u
+#define COREMARK_TICKS_PER_SEC 250000000u
 #endif
 
 typedef struct CORE_PORTABLE_S {
@@ -57,6 +57,7 @@ void portable_fini(core_portable *portable);
 int coremark_result_code(void);
 void coremark_set_iterations(ee_u32 iterations);
 CORE_TICKS coremark_last_ticks(void);
+void coremark_resume_interrupts(void);
 int ee_printf(const char *format, ...);
 
 #endif

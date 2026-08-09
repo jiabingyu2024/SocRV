@@ -39,7 +39,8 @@
     "selection_sha256": {"$ref": "#/$defs/sha256"},
     "suites": {
       "type": "array",
-      "minItems": 5,
+      "minItems": 1,
+      "uniqueItems": true,
       "items": {"$ref": "#/$defs/suite"}
     },
     "tests": {

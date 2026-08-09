@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-08-09T18:16:32+08:00",
+  "trigger": "Verilator compile: unsupported EH1 SVA delay range ##[1:2] under ASSERT_ON",
+  "files_modified": [
+    {
+      "path": "rtl/core/eh1f/config/eh1_stage_a/common_defines.vh",
+      "lines_changed": "46-48",
+      "change_type": "compile_configuration_fix"
+    }
+  ],
+  "cascade_scope": "compile_only",
+  "backup": [
+    "backup/20260809_181632/common_defines.vh",
+    "backup/20260809_181708/common_defines.vh"
+  ],
+  "notes": "Match the upstream EH1 simulator flow by leaving ASSERT_ON undefined. The explanatory comment avoids a simulator-directive keyword at the beginning of a line. Synthesizable behavior and module interfaces are unchanged."
+}

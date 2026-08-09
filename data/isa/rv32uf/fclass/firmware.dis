@@ -12,7 +12,7 @@ Disassembly of section .text:
   10:	000062b7          	lui	t0,0x6
   14:	3002a073          	csrs	mstatus,t0
   18:	00305073          	csrwi	fcsr,0
-  1c:	02c0006f          	j	48 <test_2>
+  1c:	0300006f          	j	4c <test_2>
 
 00000020 <trap_vector>:
   20:	00000f13          	li	t5,0
@@ -20,110 +20,113 @@ Disassembly of section .text:
   28:	000f0067          	jr	t5
 
 0000002c <unexpected_trap>:
-  2c:	300022b7          	lui	t0,0x30002
-  30:	34202373          	csrr	t1,mcause
-  34:	0062a223          	sw	t1,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
-  38:	46415337          	lui	t1,0x46415
-  3c:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_DATA_ORIGIN+0x3641494c>
-  40:	0062a023          	sw	t1,0(t0)
-  44:	0000006f          	j	44 <unexpected_trap+0x18>
+  2c:	100032b7          	lui	t0,0x10003
+  30:	01428293          	addi	t0,t0,20 # 10003014 <SOCRV_CODE_LENGTH+0xffe3014>
+  34:	34202373          	csrr	t1,mcause
+  38:	0062a223          	sw	t1,4(t0)
+  3c:	46415337          	lui	t1,0x46415
+  40:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_CODE_LENGTH+0x463f494c>
+  44:	0062a023          	sw	t1,0(t0)
+  48:	0000006f          	j	48 <unexpected_trap+0x1c>
 
-00000048 <test_2>:
-  48:	00200193          	li	gp,2
-  4c:	ff800537          	lui	a0,0xff800
-  50:	f0050553          	fmv.w.x	fa0,a0
-  54:	e0051553          	fclass.s	a0,fa0
-  58:	00100393          	li	t2,1
-  5c:	0e751663          	bne	a0,t2,148 <fail>
+0000004c <test_2>:
+  4c:	00200193          	li	gp,2
+  50:	ff800537          	lui	a0,0xff800
+  54:	f0050553          	fmv.w.x	fa0,a0
+  58:	e0051553          	fclass.s	a0,fa0
+  5c:	00100393          	li	t2,1
+  60:	0e751663          	bne	a0,t2,14c <fail>
 
-00000060 <test_3>:
-  60:	00300193          	li	gp,3
-  64:	bf800537          	lui	a0,0xbf800
-  68:	f0050553          	fmv.w.x	fa0,a0
-  6c:	e0051553          	fclass.s	a0,fa0
-  70:	00200393          	li	t2,2
-  74:	0c751a63          	bne	a0,t2,148 <fail>
+00000064 <test_3>:
+  64:	00300193          	li	gp,3
+  68:	bf800537          	lui	a0,0xbf800
+  6c:	f0050553          	fmv.w.x	fa0,a0
+  70:	e0051553          	fclass.s	a0,fa0
+  74:	00200393          	li	t2,2
+  78:	0c751a63          	bne	a0,t2,14c <fail>
 
-00000078 <test_4>:
-  78:	00400193          	li	gp,4
-  7c:	80800537          	lui	a0,0x80800
-  80:	fff50513          	addi	a0,a0,-1 # 807fffff <SOCRV_DATA_ORIGIN+0x707fffff>
-  84:	f0050553          	fmv.w.x	fa0,a0
-  88:	e0051553          	fclass.s	a0,fa0
-  8c:	00400393          	li	t2,4
-  90:	0a751c63          	bne	a0,t2,148 <fail>
+0000007c <test_4>:
+  7c:	00400193          	li	gp,4
+  80:	80800537          	lui	a0,0x80800
+  84:	fff50513          	addi	a0,a0,-1 # 807fffff <SOCRV_CODE_LENGTH+0x807dffff>
+  88:	f0050553          	fmv.w.x	fa0,a0
+  8c:	e0051553          	fclass.s	a0,fa0
+  90:	00400393          	li	t2,4
+  94:	0a751c63          	bne	a0,t2,14c <fail>
 
-00000094 <test_5>:
-  94:	00500193          	li	gp,5
-  98:	80000537          	lui	a0,0x80000
-  9c:	f0050553          	fmv.w.x	fa0,a0
-  a0:	e0051553          	fclass.s	a0,fa0
-  a4:	00800393          	li	t2,8
-  a8:	0a751063          	bne	a0,t2,148 <fail>
+00000098 <test_5>:
+  98:	00500193          	li	gp,5
+  9c:	80000537          	lui	a0,0x80000
+  a0:	f0050553          	fmv.w.x	fa0,a0
+  a4:	e0051553          	fclass.s	a0,fa0
+  a8:	00800393          	li	t2,8
+  ac:	0a751063          	bne	a0,t2,14c <fail>
 
-000000ac <test_6>:
-  ac:	00600193          	li	gp,6
-  b0:	00000513          	li	a0,0
-  b4:	f0050553          	fmv.w.x	fa0,a0
-  b8:	e0051553          	fclass.s	a0,fa0
-  bc:	01000393          	li	t2,16
-  c0:	08751463          	bne	a0,t2,148 <fail>
+000000b0 <test_6>:
+  b0:	00600193          	li	gp,6
+  b4:	00000513          	li	a0,0
+  b8:	f0050553          	fmv.w.x	fa0,a0
+  bc:	e0051553          	fclass.s	a0,fa0
+  c0:	01000393          	li	t2,16
+  c4:	08751463          	bne	a0,t2,14c <fail>
 
-000000c4 <test_7>:
-  c4:	00700193          	li	gp,7
-  c8:	00800537          	lui	a0,0x800
-  cc:	fff50513          	addi	a0,a0,-1 # 7fffff <SOCRV_CODE_LENGTH+0x7effff>
-  d0:	f0050553          	fmv.w.x	fa0,a0
-  d4:	e0051553          	fclass.s	a0,fa0
-  d8:	02000393          	li	t2,32
-  dc:	06751663          	bne	a0,t2,148 <fail>
+000000c8 <test_7>:
+  c8:	00700193          	li	gp,7
+  cc:	00800537          	lui	a0,0x800
+  d0:	fff50513          	addi	a0,a0,-1 # 7fffff <SOCRV_CODE_LENGTH+0x7dffff>
+  d4:	f0050553          	fmv.w.x	fa0,a0
+  d8:	e0051553          	fclass.s	a0,fa0
+  dc:	02000393          	li	t2,32
+  e0:	06751663          	bne	a0,t2,14c <fail>
 
-000000e0 <test_8>:
-  e0:	00800193          	li	gp,8
-  e4:	3f800537          	lui	a0,0x3f800
-  e8:	f0050553          	fmv.w.x	fa0,a0
-  ec:	e0051553          	fclass.s	a0,fa0
-  f0:	04000393          	li	t2,64
-  f4:	04751a63          	bne	a0,t2,148 <fail>
+000000e4 <test_8>:
+  e4:	00800193          	li	gp,8
+  e8:	3f800537          	lui	a0,0x3f800
+  ec:	f0050553          	fmv.w.x	fa0,a0
+  f0:	e0051553          	fclass.s	a0,fa0
+  f4:	04000393          	li	t2,64
+  f8:	04751a63          	bne	a0,t2,14c <fail>
 
-000000f8 <test_9>:
-  f8:	00900193          	li	gp,9
-  fc:	7f800537          	lui	a0,0x7f800
- 100:	f0050553          	fmv.w.x	fa0,a0
- 104:	e0051553          	fclass.s	a0,fa0
- 108:	08000393          	li	t2,128
- 10c:	02751e63          	bne	a0,t2,148 <fail>
+000000fc <test_9>:
+  fc:	00900193          	li	gp,9
+ 100:	7f800537          	lui	a0,0x7f800
+ 104:	f0050553          	fmv.w.x	fa0,a0
+ 108:	e0051553          	fclass.s	a0,fa0
+ 10c:	08000393          	li	t2,128
+ 110:	02751e63          	bne	a0,t2,14c <fail>
 
-00000110 <test_10>:
- 110:	00a00193          	li	gp,10
- 114:	7f800537          	lui	a0,0x7f800
- 118:	00150513          	addi	a0,a0,1 # 7f800001 <SOCRV_DATA_ORIGIN+0x6f800001>
- 11c:	f0050553          	fmv.w.x	fa0,a0
- 120:	e0051553          	fclass.s	a0,fa0
- 124:	10000393          	li	t2,256
- 128:	02751063          	bne	a0,t2,148 <fail>
+00000114 <test_10>:
+ 114:	00a00193          	li	gp,10
+ 118:	7f800537          	lui	a0,0x7f800
+ 11c:	00150513          	addi	a0,a0,1 # 7f800001 <SOCRV_CODE_LENGTH+0x7f7e0001>
+ 120:	f0050553          	fmv.w.x	fa0,a0
+ 124:	e0051553          	fclass.s	a0,fa0
+ 128:	10000393          	li	t2,256
+ 12c:	02751063          	bne	a0,t2,14c <fail>
 
-0000012c <test_11>:
- 12c:	00b00193          	li	gp,11
- 130:	7fc00537          	lui	a0,0x7fc00
- 134:	f0050553          	fmv.w.x	fa0,a0
- 138:	e0051553          	fclass.s	a0,fa0
- 13c:	20000393          	li	t2,512
- 140:	00751463          	bne	a0,t2,148 <fail>
- 144:	00301e63          	bne	zero,gp,160 <pass>
+00000130 <test_11>:
+ 130:	00b00193          	li	gp,11
+ 134:	7fc00537          	lui	a0,0x7fc00
+ 138:	f0050553          	fmv.w.x	fa0,a0
+ 13c:	e0051553          	fclass.s	a0,fa0
+ 140:	20000393          	li	t2,512
+ 144:	00751463          	bne	a0,t2,14c <fail>
+ 148:	02301063          	bne	zero,gp,168 <pass>
 
-00000148 <fail>:
- 148:	300022b7          	lui	t0,0x30002
- 14c:	0032a223          	sw	gp,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
- 150:	46415337          	lui	t1,0x46415
- 154:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_DATA_ORIGIN+0x3641494c>
- 158:	0062a023          	sw	t1,0(t0)
- 15c:	0000006f          	j	15c <fail+0x14>
+0000014c <fail>:
+ 14c:	100032b7          	lui	t0,0x10003
+ 150:	01428293          	addi	t0,t0,20 # 10003014 <SOCRV_CODE_LENGTH+0xffe3014>
+ 154:	0032a223          	sw	gp,4(t0)
+ 158:	46415337          	lui	t1,0x46415
+ 15c:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_CODE_LENGTH+0x463f494c>
+ 160:	0062a023          	sw	t1,0(t0)
+ 164:	0000006f          	j	164 <fail+0x18>
 
-00000160 <pass>:
- 160:	300022b7          	lui	t0,0x30002
- 164:	0002a223          	sw	zero,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
- 168:	50415337          	lui	t1,0x50415
- 16c:	35330313          	addi	t1,t1,851 # 50415353 <SOCRV_DATA_ORIGIN+0x40415353>
- 170:	0062a023          	sw	t1,0(t0)
- 174:	0000006f          	j	174 <pass+0x14>
+00000168 <pass>:
+ 168:	100032b7          	lui	t0,0x10003
+ 16c:	01428293          	addi	t0,t0,20 # 10003014 <SOCRV_CODE_LENGTH+0xffe3014>
+ 170:	0002a223          	sw	zero,4(t0)
+ 174:	50415337          	lui	t1,0x50415
+ 178:	35330313          	addi	t1,t1,851 # 50415353 <SOCRV_CODE_LENGTH+0x503f5353>
+ 17c:	0062a023          	sw	t1,0(t0)
+ 180:	0000006f          	j	180 <pass+0x18>

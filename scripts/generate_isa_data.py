@@ -120,11 +120,17 @@ def build_test(
         profile=f"riscv-tests/{suite}/{name}",
         contract=contract,
         memory_map_hash=memory_map_hash,
-        test_status_base=int(
-            memory_map["regions"]["TEST_STATUS"]["base"],
-            0,
+        test_status_base=(
+            int(memory_map["regions"]["SYSCTRL"]["base"], 0)
+            + int(
+                contract["peripherals"]["SYSCTRL"]["registers"]
+                ["STATUS"]["offset"],
+                0,
+            )
         ),
         trim=True,
+        iccm_lanes=[output / f"iccm_lane{lane}.mem" for lane in range(4)],
+        dccm_banks=[output / f"dccm_bank{bank}.mem" for bank in range(8)],
     )
     image_document = read_json(image_manifest)
     image_document["isa"]["march"] = march
@@ -247,10 +253,16 @@ def gate_manifest(
         "single": [fp_suites["single"]],
         "double": [fp_suites["single"], fp_suites["double"]],
     }
+    fp_suite_names = set(fp_suites.values())
+    base_suites = [suite for suite in mandatory if suite not in fp_suite_names]
     final_suites = list(mandatory)
     ready = fp_selection in fp_suites
     if ready:
         final_suites.extend(selected_fp_suites[fp_selection])
+    final_suites = list(dict.fromkeys(final_suites))
+    double_ready = (
+        floating_point["candidates"]["double"]["march"] != "unsupported"
+    )
     return {
         "current": {
             "ready": True,
@@ -261,7 +273,7 @@ def gate_manifest(
         },
         "final-base": {
             "ready": True,
-            "suites": list(mandatory),
+            "suites": base_suites,
             "excluded_tests": [],
             "description": "Mandatory RV32UI, RV32MI and RV32UM CPU target",
             "blocked_reason": None,
@@ -274,11 +286,15 @@ def gate_manifest(
             "blocked_reason": None,
         },
         "fp-double": {
-            "ready": True,
+            "ready": double_ready,
             "suites": selected_fp_suites["double"],
             "excluded_tests": [],
             "description": "Candidate double-precision floating-point gate",
-            "blocked_reason": None,
+            "blocked_reason": (
+                None
+                if double_ready
+                else "The frozen CPU contract does not implement D"
+            ),
         },
         "final": {
             "ready": ready,

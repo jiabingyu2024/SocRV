@@ -14,6 +14,38 @@ def check_manifest(path: Path) -> None:
     document = json.loads(path.read_text(encoding="utf-8"))
     schema = json.loads(repo_path("data", "schemas", "image.schema.json").read_text(encoding="utf-8"))
     Draft202012Validator(schema).validate(document)
+    memory_map_path = repo_path("data", "soc", "memory_map.json")
+    memory_map = json.loads(memory_map_path.read_text(encoding="utf-8"))
+    contract = json.loads(
+        repo_path("data", "soc", "software_contract.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    expected_map_hash = sha256_file(memory_map_path)
+    if document["memory_map_sha256"] != expected_map_hash:
+        raise ValueError(
+            f"image uses a stale memory map: {path}; rebuild the profile"
+        )
+    expected_regions = memory_map["regions"]
+    for region in document["regions"]:
+        expected = expected_regions.get(region["name"])
+        if expected is None:
+            raise ValueError(f"image contains unknown region: {region['name']}")
+        if int(region["base"], 0) != int(expected["base"], 0) or (
+            region["size"] != int(expected["size"], 0)
+        ):
+            raise ValueError(
+                f"image region {region['name']} does not match the current map"
+            )
+    status_offset = contract["peripherals"]["SYSCTRL"]["registers"]
+    status_offset = int(status_offset["STATUS"]["offset"], 0)
+    expected_status = (
+        int(expected_regions["SYSCTRL"]["base"], 0) + status_offset
+    )
+    if int(document["test_status"]["base"], 0) != expected_status:
+        raise ValueError(
+            f"image test-status address is stale: {path}; rebuild the profile"
+        )
     elf = Path(document["elf"]["path"])
     if not elf.is_absolute():
         elf = repo_path(elf.as_posix())

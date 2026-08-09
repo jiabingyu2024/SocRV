@@ -20,9 +20,9 @@
       "properties": {
         "mandatory_suites": {
           "type": "array",
-          "minItems": 3,
+          "minItems": 4,
           "uniqueItems": true,
-          "items": {"enum": ["rv32ui", "rv32mi", "rv32um"]}
+          "items": {"enum": ["rv32ui", "rv32mi", "rv32um", "rv32uf"]}
         },
         "floating_point_selection": {
           "enum": ["pending", "single", "double"]

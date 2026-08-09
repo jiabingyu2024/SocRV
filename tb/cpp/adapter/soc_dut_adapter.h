@@ -29,6 +29,15 @@ public:
     bool commit_valid() const;
     std::uint32_t retired_count() const;
     std::uint32_t commit_pc() const;
+    std::uint32_t debug_mepc() const;
+    std::uint32_t debug_mcause() const;
+    std::uint32_t debug_mtval() const;
+    std::uint32_t debug_lsu_start() const;
+    std::uint32_t debug_lsu_end() const;
+    std::uint32_t debug_lsu_flags() const;
+    std::uint32_t debug_inst_flags() const;
+    std::uint32_t debug_inst_pc() const;
+    std::uint32_t debug_inst_target() const;
     std::vector<ArchEvent> arch_events() const;
     std::vector<IrqEvent> irq_events() const;
     bool cpu_fault() const;
@@ -39,7 +48,9 @@ public:
 private:
     std::unique_ptr<VerilatedContext> context_;
     std::unique_ptr<Vsoc_sim_top> dut_;
+#if VM_TRACE
     std::unique_ptr<VerilatedVcdC> trace_;
+#endif
     bool finished_ = false;
 };
 

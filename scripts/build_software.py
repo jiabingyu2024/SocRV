@@ -249,11 +249,15 @@ def build_profile(
         f"{image_dir / 'data.mem'}",
         "--manifest",
         str(image_dir / "image.json"),
-        "--code-bank-low",
-        str(image_dir / "code_lo.mem"),
-        "--code-bank-high",
-        str(image_dir / "code_hi.mem"),
     ]
+    for lane in range(4):
+        command.extend(
+            ["--iccm-lane", str(image_dir / f"iccm_lane{lane}.mem")]
+        )
+    for bank in range(8):
+        command.extend(
+            ["--dccm-bank", str(image_dir / f"dccm_bank{bank}.mem")]
+        )
     subprocess.run(command, cwd=repo_path(), check=True)
     return elf, image_dir
 

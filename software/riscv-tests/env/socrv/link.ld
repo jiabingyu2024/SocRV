@@ -15,10 +15,16 @@ SECTIONS
   {
     KEEP(*(.text.init))
     *(.text .text.*)
-    *(.rodata .rodata.*)
     . = ALIGN(4);
     __code_end = .;
   } > CODE
+
+  /* ICCM is fetch-only; constants read by load instructions reside in DCCM. */
+  .rodata : ALIGN(16)
+  {
+    *(.rodata .rodata.*)
+    *(.srodata .srodata.*)
+  } > DATA
 
   .data : ALIGN(16)
   {

@@ -16,7 +16,19 @@ SECTIONS
     KEEP(*(.text.start))
     KEEP(*(.text.trap))
     *(.text .text.*)
+    . = ALIGN(4);
+    __code_end = .;
+  } > CODE
+
+  /*
+   * ICCM is connected only to the instruction-fetch path.  Every object that
+   * C code reads through the LSU, including string literals and RT-Thread
+   * linker tables, therefore belongs in DCCM even when it is read-only.
+   */
+  .rodata : ALIGN(4)
+  {
     *(.rodata .rodata.*)
+    *(.srodata .srodata.*)
     . = ALIGN(4);
     __rt_init_start = .;
     KEEP(*(SORT(.rti_fn.*)))
@@ -25,14 +37,14 @@ SECTIONS
     __fsymtab_start = .;
     KEEP(*(FSymTab))
     __fsymtab_end = .;
-    . = ALIGN(4);
-    __code_end = .;
-  } > CODE
+  } > DATA
 
   .data : ALIGN(4)
   {
     __data_start = .;
     *(.data .data.*)
+    . = ALIGN(4);
+    __global_pointer$ = . + 0x800;
     *(.sdata .sdata.*)
     . = ALIGN(4);
     __data_end = .;
@@ -55,8 +67,6 @@ SECTIONS
   __stack_top = ORIGIN(DATA) + LENGTH(DATA);
   __stack_bottom = __stack_top - 8K;
   __heap_end = __stack_bottom;
-  __global_pointer$ = __data_start + 0x800;
-
   PROVIDE(_data_start = __data_start);
   PROVIDE(_data_end = __data_end);
   PROVIDE(_bss_start = __bss_start);

@@ -31,8 +31,8 @@ def main() -> int:
     )
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument(
-        "--core-mhz", type=int, choices=(100, 150, 200), default=100,
-        help="core clock target; periph_clk remains 50 MHz",
+        "--core-mhz", type=int, choices=(100, 250), default=250,
+        help="EH1 TCM SoC target clock (100 MHz board bring-up or 250 MHz performance target)",
     )
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
@@ -64,14 +64,13 @@ def main() -> int:
         str(repo_path("fpga", "boards", "kintex7_competition", "tcl", "build_bitstream.tcl")),
         "-tclargs",
         str(project_dir),
-        str(image_dir / "code_lo.mem"),
-        str(image_dir / "code_hi.mem"),
-        str(image_dir / "data.mem"),
+        str(image_dir),
         str(args.jobs),
     ]
-    divide = {100: "10.0", 150: "6.6666666667", 200: "5.0"}[args.core_mhz]
+    divide = {100: "10.0", 250: "4.0"}[args.core_mhz]
     env = dict(os.environ)
     env["SOCRV_CORE_DIVIDE"] = divide
+    env["SOCRV_CORE_HZ"] = str(args.core_mhz * 1_000_000)
     completed = subprocess.run(command, cwd=build_root, check=False, env=env)
     if completed.returncode != 0:
         parser.error(f"Vivado failed with exit code {completed.returncode}")

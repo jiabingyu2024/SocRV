@@ -1,8 +1,18 @@
 module fpga_top #(
-  parameter real CORE_CLKOUT_DIVIDE_F = 10.0,
-  parameter string CODE_MEM_LO_FILE = "",
-  parameter string CODE_MEM_HI_FILE = "",
-  parameter string DATA_MEM_FILE = ""
+  parameter real CORE_CLKOUT_DIVIDE_F = 4.0,
+  parameter int unsigned CORE_CLOCK_HZ = 250_000_000,
+  parameter string ICCM_LANE0_INIT_FILE = "",
+  parameter string ICCM_LANE1_INIT_FILE = "",
+  parameter string ICCM_LANE2_INIT_FILE = "",
+  parameter string ICCM_LANE3_INIT_FILE = "",
+  parameter string DCCM_BANK0_INIT_FILE = "",
+  parameter string DCCM_BANK1_INIT_FILE = "",
+  parameter string DCCM_BANK2_INIT_FILE = "",
+  parameter string DCCM_BANK3_INIT_FILE = "",
+  parameter string DCCM_BANK4_INIT_FILE = "",
+  parameter string DCCM_BANK5_INIT_FILE = "",
+  parameter string DCCM_BANK6_INIT_FILE = "",
+  parameter string DCCM_BANK7_INIT_FILE = ""
 ) (
   input  logic i_sys_clk_p,
   input  logic i_sys_clk_n,
@@ -12,23 +22,22 @@ module fpga_top #(
   output logic [39:0] virtual_seg
 );
   logic core_clk;
-  logic periph_clk;
   logic core_rst_n;
-  logic periph_rst_n;
   logic clock_locked;
   logic [15:0] gpio_i;
   logic [15:0] gpio_o;
   logic [15:0] gpio_oe;
-  logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] ext_irq;
   logic test_done;
   logic test_pass;
   logic [31:0] test_code;
-  cpu_types_pkg::commit_trace_t commit;
-  logic [1:0] retire_count;
   logic cpu_fault;
+  logic [31:0] test_status;
 
   assign gpio_i = '0;
-  assign ext_irq = '0;
+  assign test_done = (test_status == 32'h5041_5353) ||
+                     (test_status == 32'h4641_494c);
+  assign test_pass = test_status == 32'h5041_5353;
+  assign cpu_fault = test_status == 32'h4641_494c;
 
   board_clock_reset #(
     .CORE_CLKOUT_DIVIDE_F(CORE_CLKOUT_DIVIDE_F)
@@ -36,33 +45,34 @@ module fpga_top #(
     .sys_clk_p_i(i_sys_clk_p),
     .sys_clk_n_i(i_sys_clk_n),
     .core_clk_o(core_clk),
-    .periph_clk_o(periph_clk),
     .core_rst_no(core_rst_n),
-    .periph_rst_no(periph_rst_n),
     .clock_locked_o(clock_locked)
   );
 
-  soc_core #(
-    .CODE_MEM_LO_FILE(CODE_MEM_LO_FILE),
-    .CODE_MEM_HI_FILE(CODE_MEM_HI_FILE),
-    .DATA_MEM_FILE(DATA_MEM_FILE)
+  soc_top #(
+    .CLOCK_HZ(CORE_CLOCK_HZ),
+    .ICCM_LANE0_INIT_FILE(ICCM_LANE0_INIT_FILE),
+    .ICCM_LANE1_INIT_FILE(ICCM_LANE1_INIT_FILE),
+    .ICCM_LANE2_INIT_FILE(ICCM_LANE2_INIT_FILE),
+    .ICCM_LANE3_INIT_FILE(ICCM_LANE3_INIT_FILE),
+    .DCCM_BANK0_INIT_FILE(DCCM_BANK0_INIT_FILE),
+    .DCCM_BANK1_INIT_FILE(DCCM_BANK1_INIT_FILE),
+    .DCCM_BANK2_INIT_FILE(DCCM_BANK2_INIT_FILE),
+    .DCCM_BANK3_INIT_FILE(DCCM_BANK3_INIT_FILE),
+    .DCCM_BANK4_INIT_FILE(DCCM_BANK4_INIT_FILE),
+    .DCCM_BANK5_INIT_FILE(DCCM_BANK5_INIT_FILE),
+    .DCCM_BANK6_INIT_FILE(DCCM_BANK6_INIT_FILE),
+    .DCCM_BANK7_INIT_FILE(DCCM_BANK7_INIT_FILE)
   ) u_soc (
-    .core_clk_i(core_clk),
-    .core_rst_ni(core_rst_n),
-    .periph_clk_i(periph_clk),
-    .periph_rst_ni(periph_rst_n),
-    .uart_rx_i(i_uart_rx),
-    .uart_tx_o(o_uart_tx),
-    .gpio_i,
-    .gpio_o,
-    .gpio_oe_o(gpio_oe),
-    .ext_irq_i(ext_irq),
-    .test_done_o(test_done),
-    .test_pass_o(test_pass),
-    .test_code_o(test_code),
-    .commit_o(commit),
-    .retire_count_o(retire_count),
-    .cpu_fault_o(cpu_fault)
+    .core_clk(core_clk),
+    .rst_n(core_rst_n),
+    .uart_rx(i_uart_rx),
+    .uart_tx(o_uart_tx),
+    .gpio_in(gpio_i),
+    .gpio_out(gpio_o),
+    .gpio_oe(gpio_oe),
+    .test_status(test_status),
+    .test_code(test_code)
   );
 
   board_io_wrapper u_board_io (
@@ -73,11 +83,8 @@ module fpga_top #(
     .cpu_fault_i(cpu_fault),
     .clock_locked_i(clock_locked),
     .test_code_i(test_code),
-    .commit_pc_i(commit.pc),
+    .commit_pc_i(32'b0),
     .virtual_led_o(virtual_led),
     .virtual_seg_o(virtual_seg)
   );
-
-  logic unused;
-  assign unused = ^retire_count;
 endmodule

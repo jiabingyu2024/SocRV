@@ -2,7 +2,6 @@
 --exe
 --build
 --timing
---trace
 -Wall
 -Wno-fatal
 -Wno-DECLFILENAME

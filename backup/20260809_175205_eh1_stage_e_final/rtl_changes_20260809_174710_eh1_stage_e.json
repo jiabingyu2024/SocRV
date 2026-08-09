@@ -1,0 +1,56 @@
+{
+  "stage": "E",
+  "profile": "RV32IMF_Zicsr ilp32f TCM-only FPGA SoC",
+  "active_filelist": "rtl/filelist_stage_e.f",
+  "final_backup": "backup/20260809_175205_eh1_stage_e_final",
+  "source_entries": 67,
+  "memory": {
+    "iccm_kib": 128,
+    "iccm_organization": "4x8192x32",
+    "dccm_kib": 64,
+    "dccm_organization": "8x2048x32",
+    "synchronous_read_cycles": 1,
+    "ecc": false,
+    "cache": false,
+    "external_memory": false
+  },
+  "cpu": {
+    "march": "rv32imf_zicsr",
+    "mabi": "ilp32f",
+    "compressed": false,
+    "floating_point": "single"
+  },
+  "mmio": {
+    "timer": "0x10000000",
+    "uart": "0x10001000",
+    "gpio": "0x10002000",
+    "sysctrl": "0x10003000",
+    "test_status": "0x10003014",
+    "max_outstanding": 1,
+    "stores_visible_after_commit": true
+  },
+  "fpga": {
+    "part": "xc7k325tffg900-2",
+    "target_hz": 250000000,
+    "iccm_init_lanes": 4,
+    "dccm_init_banks": 8
+  },
+  "removed_sources": [
+    "rtl/core/eh1f/lib/ahb_to_axi4.sv",
+    "rtl/core/eh1f/lib/axi4_to_ahb.sv",
+    "rtl/core/eh1f/lib/svci_to_axi4.sv",
+    "fpga/common/rtl/xilinx_code_mem_backend.sv",
+    "fpga/common/rtl/xilinx_data_mem_backend.sv"
+  ],
+  "verification": {
+    "contract_check": true,
+    "schema_check": true,
+    "memory_map_check": true,
+    "filelist_check": true,
+    "python_ast_check": true,
+    "compile_run": false,
+    "simulation_run": false,
+    "synthesis_run": false,
+    "board_run": false
+  }
+}

@@ -3,6 +3,8 @@
 #include <verilated.h>
 #include <verilated_vcd_c.h>
 
+#include <stdexcept>
+
 #include "Vsoc_sim_top.h"
 
 SocDutAdapter::SocDutAdapter(
@@ -18,9 +20,14 @@ SocDutAdapter::SocDutAdapter(
     dut_->rst_ni = 0;
     dut_->uart_rx_i = 1;
     if (!trace_path.empty()) {
+#if VM_TRACE
         trace_ = std::make_unique<VerilatedVcdC>();
         dut_->trace(trace_.get(), 5);
         trace_->open(trace_path.c_str());
+#else
+        throw std::runtime_error(
+            "this Verilator model was built without trace support");
+#endif
     }
 }
 
@@ -40,9 +47,11 @@ void SocDutAdapter::step_cycle() {
     for (int phase = 0; phase < 2; ++phase) {
         dut_->clk_i = phase;
         dut_->eval();
+#if VM_TRACE
         if (trace_) {
             trace_->dump(context_->time());
         }
+#endif
         context_->timeInc(1);
     }
 }
@@ -52,9 +61,11 @@ void SocDutAdapter::finish() {
         return;
     }
     dut_->final();
+#if VM_TRACE
     if (trace_) {
         trace_->close();
     }
+#endif
     finished_ = true;
 }
 
@@ -63,72 +74,88 @@ bool SocDutAdapter::uart_tx() const {
 }
 
 bool SocDutAdapter::commit_valid() const {
-    return dut_->commit_valid_o;
+    return (dut_->trace_valid_o & 0x3u) != 0;
 }
 
 std::uint32_t SocDutAdapter::retired_count() const {
-    return dut_->retire_count_o;
+    const std::uint32_t valid = dut_->trace_valid_o;
+    return (valid & 1u) + ((valid >> 1u) & 1u);
 }
 
 std::uint32_t SocDutAdapter::commit_pc() const {
-    return dut_->commit_pc_o;
+    if ((dut_->trace_valid_o & 0x2u) != 0) {
+        return static_cast<std::uint32_t>(dut_->trace_address_o >> 32u);
+    }
+    return static_cast<std::uint32_t>(dut_->trace_address_o);
+}
+
+std::uint32_t SocDutAdapter::debug_mepc() const {
+    return dut_->debug_mepc_o;
+}
+
+std::uint32_t SocDutAdapter::debug_mcause() const {
+    return dut_->debug_mcause_o;
+}
+
+std::uint32_t SocDutAdapter::debug_mtval() const {
+    return dut_->debug_mtval_o;
+}
+
+std::uint32_t SocDutAdapter::debug_lsu_start() const {
+    return dut_->debug_lsu_start_o;
+}
+
+std::uint32_t SocDutAdapter::debug_lsu_end() const {
+    return dut_->debug_lsu_end_o;
+}
+
+std::uint32_t SocDutAdapter::debug_lsu_flags() const {
+    return dut_->debug_lsu_flags_o;
+}
+
+std::uint32_t SocDutAdapter::debug_inst_flags() const {
+    return dut_->debug_inst_flags_o;
+}
+
+std::uint32_t SocDutAdapter::debug_inst_pc() const {
+    return dut_->debug_inst_pc_o;
+}
+
+std::uint32_t SocDutAdapter::debug_inst_target() const {
+    return dut_->debug_inst_target_o;
 }
 
 std::vector<ArchEvent> SocDutAdapter::arch_events() const {
-    if (!dut_->commit_valid_o) {
-        return {};
+    std::vector<ArchEvent> events;
+    const std::uint32_t valid = dut_->trace_valid_o;
+    if ((valid & 0x1u) != 0) {
+        ArchEvent event;
+        event.valid = true;
+        event.retired = true;
+        event.pc_rdata = static_cast<std::uint32_t>(dut_->trace_address_o);
+        event.instruction =
+            static_cast<std::uint32_t>(dut_->trace_instruction_o);
+        events.push_back(event);
     }
-    ArchEvent event;
-    event.valid = true;
-    event.retired = dut_->commit_retired_o;
-    event.order = dut_->commit_order_o;
-    event.pc_rdata = dut_->commit_pc_o;
-    event.pc_wdata = dut_->commit_next_pc_o;
-    event.instruction = dut_->commit_instruction_o;
-    event.rs1_addr = dut_->commit_rs1_addr_o;
-    event.rs1_rdata = dut_->commit_rs1_rdata_o;
-    event.rs2_addr = dut_->commit_rs2_addr_o;
-    event.rs2_rdata = dut_->commit_rs2_rdata_o;
-    event.rd_wen = dut_->commit_rd_wen_o;
-    event.rd_addr = dut_->commit_rd_addr_o;
-    event.rd_wdata = dut_->commit_rd_wdata_o;
-    event.sync_trap = dut_->commit_sync_trap_o;
-    event.cause = dut_->commit_cause_o;
-    event.tval = dut_->commit_tval_o;
-    event.mode = dut_->commit_mode_o;
-    event.mem_valid = dut_->commit_mem_valid_o;
-    event.mem_addr = dut_->commit_mem_addr_o;
-    event.mem_rmask = dut_->commit_mem_rmask_o;
-    event.mem_wmask = dut_->commit_mem_wmask_o;
-    event.mem_rdata = dut_->commit_mem_rdata_o;
-    event.mem_wdata = dut_->commit_mem_wdata_o;
-    event.csr_mstatus = dut_->commit_csr_mstatus_o;
-    event.csr_mie = dut_->commit_csr_mie_o;
-    event.csr_mip = dut_->commit_csr_mip_o;
-    event.csr_mtvec = dut_->commit_csr_mtvec_o;
-    event.csr_mscratch = dut_->commit_csr_mscratch_o;
-    event.csr_mepc = dut_->commit_csr_mepc_o;
-    event.csr_mcause = dut_->commit_csr_mcause_o;
-    event.csr_mtval = dut_->commit_csr_mtval_o;
-    event.csr_mcycle = dut_->commit_csr_mcycle_o;
-    event.csr_minstret = dut_->commit_csr_minstret_o;
-    return {event};
+    if ((valid & 0x2u) != 0) {
+        ArchEvent event;
+        event.valid = true;
+        event.retired = true;
+        event.pc_rdata =
+            static_cast<std::uint32_t>(dut_->trace_address_o >> 32u);
+        event.instruction =
+            static_cast<std::uint32_t>(dut_->trace_instruction_o >> 32u);
+        events.push_back(event);
+    }
+    return events;
 }
 
 std::vector<IrqEvent> SocDutAdapter::irq_events() const {
-    if (!dut_->irq_event_valid_o) {
-        return {};
-    }
-    IrqEvent event;
-    event.valid = true;
-    event.next_order = dut_->irq_event_next_order_o;
-    event.mip_pre = dut_->irq_event_mip_pre_o;
-    event.mip_post = dut_->irq_event_mip_post_o;
-    return {event};
+    return {};
 }
 
 bool SocDutAdapter::cpu_fault() const {
-    return dut_->cpu_fault_o;
+    return false;
 }
 
 bool SocDutAdapter::test_done() const {

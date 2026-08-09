@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-08-09T18:18:01+08:00",
+  "trigger": "Verilator compile: lsu_bus_intf implicit connection could not find addr_external_dc1 in lsu scope",
+  "files_modified": [
+    {
+      "path": "rtl/core/eh1f/lsu/lsu_lsc_ctl.sv",
+      "lines_changed": "121,159",
+      "change_type": "port_wiring_fix"
+    },
+    {
+      "path": "rtl/core/eh1f/lsu/lsu.sv",
+      "lines_changed": "232",
+      "change_type": "integration_signal_fix"
+    }
+  ],
+  "cascade_scope": "compile_and_lint",
+  "backup": "backup/20260809_181801",
+  "notes": "Expose the DC1 MMIO classification from lsu_lsc_ctl to the parent LSU so the local bus interface can track every in-flight stage. No top-level or memory-map interface changed."
+}

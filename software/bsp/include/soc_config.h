@@ -3,15 +3,15 @@
 #define SOCRV_SOC_CONFIG_H
 
 #define SOCRV_XLEN 32u
-#define SOCRV_MARCH "rv32im_zicsr_zicntr_zifencei"
-#define SOCRV_MABI "ilp32"
-#define SOCRV_CPU_IMPLEMENTATION "biriscv_cpu_core"
-#define SOCRV_TARGET_INTEGER_MARCH "rv32im_zicsr_zicntr_zifencei"
-#define SOCRV_TARGET_FP_SELECTION "pending"
-#define SOCRV_TARGET_SINGLE_MARCH "rv32imf_zicsr_zicntr_zifencei"
-#define SOCRV_TARGET_DOUBLE_MARCH "rv32imfd_zicsr_zicntr_zifencei"
-#define SOCRV_SOC_CLOCK_HZ 50000000u
-#define SOCRV_TIMER_CLOCK_HZ 50000000u
+#define SOCRV_MARCH "rv32imf_zicsr"
+#define SOCRV_MABI "ilp32f"
+#define SOCRV_CPU_IMPLEMENTATION "veer_eh1_rv32imf_tcm"
+#define SOCRV_TARGET_INTEGER_MARCH "rv32im_zicsr"
+#define SOCRV_TARGET_FP_SELECTION "single"
+#define SOCRV_TARGET_SINGLE_MARCH "rv32imf_zicsr"
+#define SOCRV_TARGET_DOUBLE_MARCH "unsupported"
+#define SOCRV_SOC_CLOCK_HZ 250000000u
+#define SOCRV_TIMER_CLOCK_HZ 250000000u
 #define SOCRV_UART_BAUD 115200u
 #define SOCRV_UART_DIVISOR (SOCRV_SOC_CLOCK_HZ / SOCRV_UART_BAUD)
 

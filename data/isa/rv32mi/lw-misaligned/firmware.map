@@ -1,58 +1,61 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccLuoTm6.o
- .bss           0x00000000        0x0 /tmp/ccLuoTm6.o
+ .text          0x00000000        0x0 /tmp/ccfxQk61.o
+ .bss           0x00000000        0x0 /tmp/ccfxQk61.o
 
 Memory Configuration
 
 Name             Origin             Length             Attributes
-CODE             0x00000000         0x00010000         xr
-DATA             0x10000000         0x00010000         xrw
+CODE             0x00000000         0x00020000         xr
+DATA             0x00020000         0x00010000         xrw
 *default*        0x00000000         0xffffffff
 
 Linker script and memory map
 
-LOAD /tmp/ccLuoTm6.o
+LOAD /tmp/ccfxQk61.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
-                0x00010000                        SOCRV_CODE_LENGTH = 0x10000
-                0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
+                0x00020000                        SOCRV_CODE_LENGTH = 0x20000
+                0x00020000                        SOCRV_DATA_ORIGIN = 0x20000
                 0x00010000                        SOCRV_DATA_LENGTH = 0x10000
 
-.text           0x00000000      0x124
+.text           0x00000000      0x130
  *(.text.init)
- .text.init     0x00000000      0x124 /tmp/ccLuoTm6.o
+ .text.init     0x00000000      0x130 /tmp/ccfxQk61.o
                 0x00000000                _start
-                0x00000104                mtvec_handler
+                0x00000110                mtvec_handler
  *(.text .text.*)
- *(.rodata .rodata.*)
-                0x00000124                        . = ALIGN (0x4)
-                0x00000124                        __code_end = .
+                0x00000130                        . = ALIGN (0x4)
+                0x00000130                        __code_end = .
 
-.rela.dyn       0x00000124        0x0
+.rela.dyn       0x00000130        0x0
  .rela.text.init
-                0x00000124        0x0 /tmp/ccLuoTm6.o
+                0x00000130        0x0 /tmp/ccfxQk61.o
 
-.data           0x10000000       0x10
+.rodata
+ *(.rodata .rodata.*)
+ *(.srodata .srodata.*)
+
+.data           0x00020000       0x10
  *(.data .data.*)
- .data          0x10000000       0x10 /tmp/ccLuoTm6.o
-                0x10000000                begin_signature
-                0x10000010                end_signature
+ .data          0x00020000       0x10 /tmp/ccfxQk61.o
+                0x00020000                begin_signature
+                0x00020010                end_signature
  *(.sdata .sdata.*)
-                0x10000010                        . = ALIGN (0x10)
-                0x10000010                        __data_end = .
+                0x00020010                        . = ALIGN (0x10)
+                0x00020010                        __data_end = .
 
-.bss            0x10000010        0x0
+.bss            0x00020010        0x0
  *(.sbss .sbss.*)
  *(.bss .bss.*)
  *(COMMON)
-                0x10000010                        . = ALIGN (0x10)
-                0x10000010                        __bss_end = .
+                0x00020010                        . = ALIGN (0x10)
+                0x00020010                        __bss_end = .
                 0x00000001                        ASSERT ((__code_end <= (ORIGIN (CODE) + LENGTH (CODE))), CODE region overflow)
                 0x00000001                        ASSERT ((__bss_end <= (ORIGIN (DATA) + LENGTH (DATA))), DATA region overflow)
 OUTPUT(build/isa-data/generated/rv32mi/lw-misaligned/firmware.elf elf32-littleriscv)
 
 .riscv.attributes
-                0x00000000       0x55
+                0x00000000       0x3a
  .riscv.attributes
-                0x00000000       0x55 /tmp/ccLuoTm6.o
+                0x00000000       0x3a /tmp/ccfxQk61.o

@@ -13,15 +13,16 @@ static void timer_irq(int vector, void *parameter)
 {
     RT_UNUSED(vector);
     RT_UNUSED(parameter);
+    /* EH1 has no direct MSIP input.  SYSCTRL software requests share cause 7
+     * with mtime; clearing this request is enough because the common trap
+     * epilogue observes rt_thread_switch_interrupt_flag and switches stacks.
+     */
+    if (irq_pending() != 0u) {
+        irq_clear_software();
+        return;
+    }
     timer_schedule_next_tick();
     rt_tick_increase();
-}
-
-static void software_irq(int vector, void *parameter)
-{
-    RT_UNUSED(vector);
-    RT_UNUSED(parameter);
-    irq_clear_software();
 }
 
 void rt_trigger_software_interrupt(void)
@@ -56,12 +57,6 @@ void rt_hw_board_init(void)
     rt_system_heap_init(&__heap_start, &__heap_end);
     rt_hw_interrupt_init();
     rt_hw_interrupt_install(
-        SOCRV_MCAUSE_SOFTWARE,
-        software_irq,
-        RT_NULL,
-        "soft"
-    );
-    rt_hw_interrupt_install(
         SOCRV_MCAUSE_TIMER,
         timer_irq,
         RT_NULL,
@@ -71,7 +66,7 @@ void rt_hw_board_init(void)
     __asm volatile(
         "csrs mie, %0"
         :
-        : "r"(SOCRV_MIE_SOFTWARE_MASK | SOCRV_MIE_TIMER_MASK)
+        : "r"(SOCRV_MIE_TIMER_MASK)
         : "memory"
     );
 }

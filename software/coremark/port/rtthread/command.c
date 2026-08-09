@@ -69,12 +69,22 @@ static int cmd_coremark(int argc, char **argv)
     result = coremark_result_code();
     ticks = coremark_last_ticks();
 
+    if (ticks == 0u) {
+        rt_kprintf("SocRV CoreMark timer did not advance\n");
+        (void)timer_init_tick(RT_TICK_PER_SECOND);
+        coremark_resume_interrupts();
+        test_status_report_fail(0xffffffffu);
+        return -RT_ERROR;
+    }
+
     uart_puts("SocRV exact total ticks: ");
     print_u64(ticks);
     uart_puts("\nSocRV total time (ms): ");
     print_u64((ticks * 1000u) / COREMARK_TICKS_PER_SEC);
     uart_puts("\nSocRV ticks/iteration: ");
     print_u64(ticks / iterations);
+    uart_puts("\nSocRV CoreMark/MHz (x1000): ");
+    print_u64(((uint64_t)iterations * 1000000000ull) / ticks);
     uart_putc('\n');
 
     if (ticks < (uint64_t)COREMARK_TICKS_PER_SEC * 10u) {
@@ -97,6 +107,7 @@ static int cmd_coremark(int argc, char **argv)
      * cause an interrupt storm.
      */
     RT_ASSERT(timer_init_tick(RT_TICK_PER_SECOND) != 0u);
+    coremark_resume_interrupts();
     if (result == 0) {
         test_status_report_pass(0u);
     } else {

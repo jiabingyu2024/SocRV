@@ -138,11 +138,12 @@ def render_registers(contract: dict[str, object]) -> str:
             "",
             "#define SOCRV_TIMER_CONTROL_MTIME_ENABLE (1u << 0)",
             "#define SOCRV_TIMER_CONTROL_IRQ_ENABLE   (1u << 1)",
-            "#define SOCRV_UART_STATUS_TX_READY       (1u << 8)",
-            "#define SOCRV_UART_STATUS_TX_EMPTY       (1u << 9)",
-            "#define SOCRV_UART_STATUS_RX_VALID       (1u << 16)",
-            "#define SOCRV_UART_STATUS_RX_FRAME_ERROR (1u << 17)",
-            "#define SOCRV_UART_CONTROL_RX_IRQ_ENABLE (1u << 0)",
+            "#define SOCRV_UART_STATUS_RX_VALID       (1u << 0)",
+            "#define SOCRV_UART_STATUS_TX_READY       (1u << 1)",
+            "#define SOCRV_UART_STATUS_TX_EMPTY       (1u << 2)",
+            "#define SOCRV_UART_STATUS_RX_FULL        (1u << 3)",
+            "#define SOCRV_UART_CONTROL_TX_ENABLE     (1u << 0)",
+            "#define SOCRV_UART_CONTROL_RX_ENABLE     (1u << 1)",
         ]
     )
     return header_guard("SOCRV_SOC_REGISTERS_H", body)

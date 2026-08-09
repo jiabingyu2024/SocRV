@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-08-09T18:15:48+08:00",
+  "trigger": "Verilator compile: EH1 RV_* and TEC_RV_ICG macros undefined before veer_types.sv",
+  "files_modified": [
+    {
+      "path": "rtl/filelist_stage_e.f",
+      "lines_changed": "10-13",
+      "change_type": "compile_order_fix"
+    },
+    {
+      "path": "rtl/core/eh1f/config/eh1_stage_a/build.h",
+      "lines_changed": "new file",
+      "change_type": "compatibility_include"
+    }
+  ],
+  "cascade_scope": "compile_only",
+  "backup": "backup/20260809_181548/filelist_stage_e.f",
+  "notes": "Load the generated EH1 configuration as the first global source and provide the inherited build.h include name. No module interface or behavior changed."
+}

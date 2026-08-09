@@ -1,17 +1,103 @@
 {
+  "banks": [
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/iccm_lane0.mem",
+      "name": "ICCM_LANE0",
+      "sha256": "29a9dfb8027f0182511ba4a024be55a96ae05d9aeb8a6ab7ab968cb3d0db4a55",
+      "size": 32768,
+      "stored_words": 8192
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/iccm_lane1.mem",
+      "name": "ICCM_LANE1",
+      "sha256": "c356798f5cb6662b814ab73876a296f69118ee45b3d9394d208227604b27dd0d",
+      "size": 32768,
+      "stored_words": 8192
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/iccm_lane2.mem",
+      "name": "ICCM_LANE2",
+      "sha256": "a798cd6c3e52ac68295f732ffbdd1a95dc314789f1b580657bb5a5125fa88bec",
+      "size": 32768,
+      "stored_words": 8192
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/iccm_lane3.mem",
+      "name": "ICCM_LANE3",
+      "sha256": "0009f714a5aa6a1a1c269c3ccf99009f9c1e72c3249c5b7a525d632686270a98",
+      "size": 32768,
+      "stored_words": 8192
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/dccm_bank0.mem",
+      "name": "DCCM_BANK0",
+      "sha256": "8af93580bc463850293a5f0dc49f31d023a2f09003ea8838ebeab6b0daa0c52c",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/dccm_bank1.mem",
+      "name": "DCCM_BANK1",
+      "sha256": "0a211a3d2ab8a4392311a3cf73395f4f776b2940fbaf886b4ee9d4a7d571f637",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/dccm_bank2.mem",
+      "name": "DCCM_BANK2",
+      "sha256": "0a211a3d2ab8a4392311a3cf73395f4f776b2940fbaf886b4ee9d4a7d571f637",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/dccm_bank3.mem",
+      "name": "DCCM_BANK3",
+      "sha256": "0a211a3d2ab8a4392311a3cf73395f4f776b2940fbaf886b4ee9d4a7d571f637",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/dccm_bank4.mem",
+      "name": "DCCM_BANK4",
+      "sha256": "0a211a3d2ab8a4392311a3cf73395f4f776b2940fbaf886b4ee9d4a7d571f637",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/dccm_bank5.mem",
+      "name": "DCCM_BANK5",
+      "sha256": "0a211a3d2ab8a4392311a3cf73395f4f776b2940fbaf886b4ee9d4a7d571f637",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/dccm_bank6.mem",
+      "name": "DCCM_BANK6",
+      "sha256": "0a211a3d2ab8a4392311a3cf73395f4f776b2940fbaf886b4ee9d4a7d571f637",
+      "size": 8192,
+      "stored_words": 2048
+    },
+    {
+      "file": "build/isa-data/generated/rv32mi/lh-misaligned/dccm_bank7.mem",
+      "name": "DCCM_BANK7",
+      "sha256": "0a211a3d2ab8a4392311a3cf73395f4f776b2940fbaf886b4ee9d4a7d571f637",
+      "size": 8192,
+      "stored_words": 2048
+    }
+  ],
   "elf": {
     "path": "data/isa/rv32mi/lh-misaligned/firmware.elf",
-    "sha256": "9fa2ac2de2a1aa7bcd699f735342e08ed8528f2d4a7245a04b451ad65a60a589"
+    "sha256": "f1b39afdf78b14d52a696cb28b77446bb3fa0d3ebd826a5260667e7984e6310d"
   },
   "endianness": "little",
   "entry": "0x00000000",
   "isa": {
     "mabi": "ilp32",
-    "march": "rv32imfd_zicsr_zicntr_zifencei",
+    "march": "rv32imf_zicsr",
     "xlen": 32
   },
   "kind": "software_image",
-  "memory_map_sha256": "bc390074e0cbee766378852ab0dfaeec8d03cd3c0e443c47f6f415ca121d531d",
+  "memory_map_sha256": "0102549045d68c6abb251d1b67d3217ec7f14f6465c75b4b93f670cc5cf709b4",
   "profile": "riscv-tests/rv32mi/lh-misaligned",
   "regions": [
     {
@@ -19,13 +105,13 @@
       "file": "data/isa/rv32mi/lh-misaligned/code.mem",
       "fill": "0x00000000",
       "name": "CODE",
-      "sha256": "2228e9a4e25fe0f2c3056da2a0b713c53eaa7985eb742054274257bcb8c97c1d",
-      "size": 65536,
-      "stored_words": 51,
-      "used": 204
+      "sha256": "f545104354424431a641212ed6d2f92526d08faf5d69dcef665e1a3c6f334814",
+      "size": 131072,
+      "stored_words": 54,
+      "used": 216
     },
     {
-      "base": "0x10000000",
+      "base": "0x00020000",
       "file": "data/isa/rv32mi/lh-misaligned/data.mem",
       "fill": "0x00000000",
       "name": "DATA",
@@ -39,13 +125,13 @@
   "segments": [
     {
       "address": "0x00000000",
-      "file_size": 204,
+      "file_size": 216,
       "flags": 5,
-      "memory_size": 204,
+      "memory_size": 216,
       "region": "CODE"
     },
     {
-      "address": "0x10000000",
+      "address": "0x00020000",
       "file_size": 16,
       "flags": 6,
       "memory_size": 16,
@@ -53,7 +139,7 @@
     }
   ],
   "test_status": {
-    "base": "0x30002000",
+    "base": "0x10003014",
     "fail_magic": "0x4641494c",
     "pass_magic": "0x50415353"
   },

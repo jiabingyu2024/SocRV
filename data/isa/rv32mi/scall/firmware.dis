@@ -9,72 +9,75 @@ Disassembly of section .text:
    4:	00000297          	auipc	t0,0x0
    8:	01028293          	addi	t0,t0,16 # 14 <trap_vector>
    c:	30529073          	csrw	mtvec,t0
-  10:	0300006f          	j	40 <unexpected_trap+0x1c>
+  10:	0340006f          	j	44 <unexpected_trap+0x20>
 
 00000014 <trap_vector>:
   14:	00000f17          	auipc	t5,0x0
-  18:	0acf0f13          	addi	t5,t5,172 # c0 <mtvec_handler>
+  18:	0b8f0f13          	addi	t5,t5,184 # cc <mtvec_handler>
   1c:	000f0463          	beqz	t5,24 <unexpected_trap>
   20:	000f0067          	jr	t5
 
 00000024 <unexpected_trap>:
-  24:	300022b7          	lui	t0,0x30002
-  28:	34202373          	csrr	t1,mcause
-  2c:	0062a223          	sw	t1,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
-  30:	46415337          	lui	t1,0x46415
-  34:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_DATA_ORIGIN+0x3641494c>
-  38:	0062a023          	sw	t1,0(t0)
-  3c:	0000006f          	j	3c <unexpected_trap+0x18>
-  40:	00200193          	li	gp,2
-  44:	00800313          	li	t1,8
-  48:	000022b7          	lui	t0,0x2
-  4c:	80028293          	addi	t0,t0,-2048 # 1800 <__code_end+0x1714>
-  50:	3002b073          	csrc	mstatus,t0
-  54:	300023f3          	csrr	t2,mstatus
-  58:	0072f2b3          	and	t0,t0,t2
-  5c:	00028463          	beqz	t0,64 <unexpected_trap+0x40>
-  60:	00b00313          	li	t1,11
-  64:	000022b7          	lui	t0,0x2
-  68:	80028293          	addi	t0,t0,-2048 # 1800 <__code_end+0x1714>
-  6c:	3002b073          	csrc	mstatus,t0
-  70:	00000297          	auipc	t0,0x0
-  74:	01028293          	addi	t0,t0,16 # 80 <unexpected_trap+0x5c>
-  78:	34129073          	csrw	mepc,t0
-  7c:	30200073          	mret
-  80:	00100193          	li	gp,1
+  24:	100032b7          	lui	t0,0x10003
+  28:	01428293          	addi	t0,t0,20 # 10003014 <SOCRV_CODE_LENGTH+0xffe3014>
+  2c:	34202373          	csrr	t1,mcause
+  30:	0062a223          	sw	t1,4(t0)
+  34:	46415337          	lui	t1,0x46415
+  38:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_CODE_LENGTH+0x463f494c>
+  3c:	0062a023          	sw	t1,0(t0)
+  40:	0000006f          	j	40 <unexpected_trap+0x1c>
+  44:	00200193          	li	gp,2
+  48:	00800313          	li	t1,8
+  4c:	000022b7          	lui	t0,0x2
+  50:	80028293          	addi	t0,t0,-2048 # 1800 <__code_end+0x1708>
+  54:	3002b073          	csrc	mstatus,t0
+  58:	300023f3          	csrr	t2,mstatus
+  5c:	0072f2b3          	and	t0,t0,t2
+  60:	00028463          	beqz	t0,68 <unexpected_trap+0x44>
+  64:	00b00313          	li	t1,11
+  68:	000022b7          	lui	t0,0x2
+  6c:	80028293          	addi	t0,t0,-2048 # 1800 <__code_end+0x1708>
+  70:	3002b073          	csrc	mstatus,t0
+  74:	00000297          	auipc	t0,0x0
+  78:	01028293          	addi	t0,t0,16 # 84 <unexpected_trap+0x60>
+  7c:	34129073          	csrw	mepc,t0
+  80:	30200073          	mret
+  84:	00100193          	li	gp,1
 
-00000084 <do_scall>:
-  84:	00000073          	ecall
-  88:	0080006f          	j	90 <fail>
-  8c:	00301e63          	bne	zero,gp,a8 <pass>
+00000088 <do_scall>:
+  88:	00000073          	ecall
+  8c:	0080006f          	j	94 <fail>
+  90:	02301063          	bne	zero,gp,b0 <pass>
 
-00000090 <fail>:
-  90:	300022b7          	lui	t0,0x30002
-  94:	0032a223          	sw	gp,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
-  98:	46415337          	lui	t1,0x46415
-  9c:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_DATA_ORIGIN+0x3641494c>
-  a0:	0062a023          	sw	t1,0(t0)
-  a4:	0000006f          	j	a4 <fail+0x14>
+00000094 <fail>:
+  94:	100032b7          	lui	t0,0x10003
+  98:	01428293          	addi	t0,t0,20 # 10003014 <SOCRV_CODE_LENGTH+0xffe3014>
+  9c:	0032a223          	sw	gp,4(t0)
+  a0:	46415337          	lui	t1,0x46415
+  a4:	94c30313          	addi	t1,t1,-1716 # 4641494c <SOCRV_CODE_LENGTH+0x463f494c>
+  a8:	0062a023          	sw	t1,0(t0)
+  ac:	0000006f          	j	ac <fail+0x18>
 
-000000a8 <pass>:
-  a8:	300022b7          	lui	t0,0x30002
-  ac:	0002a223          	sw	zero,4(t0) # 30002004 <SOCRV_DATA_ORIGIN+0x20002004>
-  b0:	50415337          	lui	t1,0x50415
-  b4:	35330313          	addi	t1,t1,851 # 50415353 <SOCRV_DATA_ORIGIN+0x40415353>
-  b8:	0062a023          	sw	t1,0(t0)
-  bc:	0000006f          	j	bc <pass+0x14>
+000000b0 <pass>:
+  b0:	100032b7          	lui	t0,0x10003
+  b4:	01428293          	addi	t0,t0,20 # 10003014 <SOCRV_CODE_LENGTH+0xffe3014>
+  b8:	0002a223          	sw	zero,4(t0)
+  bc:	50415337          	lui	t1,0x50415
+  c0:	35330313          	addi	t1,t1,851 # 50415353 <SOCRV_CODE_LENGTH+0x503f5353>
+  c4:	0062a023          	sw	t1,0(t0)
+  c8:	0000006f          	j	c8 <pass+0x18>
 
-000000c0 <mtvec_handler>:
-  c0:	342022f3          	csrr	t0,mcause
-  c4:	305023f3          	csrr	t2,mtvec
-  c8:	0023f393          	andi	t2,t2,2
-  cc:	00038463          	beqz	t2,d4 <skip_mask>
-  d0:	0ff2f293          	zext.b	t0,t0
+000000cc <mtvec_handler>:
+  cc:	342022f3          	csrr	t0,mcause
+  d0:	305023f3          	csrr	t2,mtvec
+  d4:	0023f393          	andi	t2,t2,2
+  d8:	00038463          	beqz	t2,e0 <skip_mask>
+  dc:	0ff2f293          	zext.b	t0,t0
 
-000000d4 <skip_mask>:
-  d4:	fa629ee3          	bne	t0,t1,90 <fail>
-  d8:	00000397          	auipc	t2,0x0
-  dc:	fac38393          	addi	t2,t2,-84 # 84 <do_scall>
-  e0:	341022f3          	csrr	t0,mepc
-  e4:	fa7296e3          	bne	t0,t2,90 <fail>
-  e8:	fc1ff06f          	j	a8 <pass>
+000000e0 <skip_mask>:
+  e0:	fa629ae3          	bne	t0,t1,94 <fail>
+  e4:	00000397          	auipc	t2,0x0
+  e8:	fa438393          	addi	t2,t2,-92 # 88 <do_scall>
+  ec:	341022f3          	csrr	t0,mepc
+  f0:	fa7292e3          	bne	t0,t2,94 <fail>
+  f4:	fbdff06f          	j	b0 <pass>

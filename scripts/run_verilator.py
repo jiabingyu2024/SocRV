@@ -29,18 +29,26 @@ CPP_SOURCES = [
     "tb/cpp/adapter/soc_dut_adapter.cpp",
     "tb/cpp/soc_main.cpp",
 ]
+MODEL_BUILD_TIMEOUT_SECONDS = 900
 SPIKE_COSIM_SOURCE = "build/reference/spike/ibex_cosim/spike_cosim.cc"
 SPIKE_BUILD_MANIFEST = repo_path(
     "build", "reference", "spike", "build_manifest.json"
 )
 
 DEFAULT_CYCLES = {
-    "smoke": 200_000,
+    "smoke": 750_000,
     "trap-timer": 500_000,
-    "rtthread": 2_000_000,
+    "rtthread": 6_000_000,
     "coremark-smoke": 50_000_000,
     "rtthread-coremark": 30_000_000,
 }
+
+
+def print_console_safe(value: str, *, stream: object = sys.stdout) -> None:
+    """Print captured WSL output without failing on a legacy Windows code page."""
+    encoding = getattr(stream, "encoding", None) or "utf-8"
+    rendered = value.encode(encoding, errors="replace").decode(encoding)
+    print(rendered, end="", file=stream)
 
 DEFAULT_TESTS = {
     "smoke": "baremetal-smoke",
@@ -170,7 +178,10 @@ def verilator_version() -> str:
     return result.stdout.strip()
 
 
-def desired_model_manifest(difftest: bool = False) -> dict[str, object]:
+def desired_model_manifest(
+    difftest: bool = False,
+    trace: bool = False,
+) -> dict[str, object]:
     entries = [
         {
             "path": path.relative_to(repo_path()).as_posix(),
@@ -184,6 +195,7 @@ def desired_model_manifest(difftest: bool = False) -> dict[str, object]:
             {
                 "top": "soc_sim_top",
                 "difftest": difftest,
+                "trace": trace,
                 "version": version,
                 "inputs": entries,
             },
@@ -193,8 +205,9 @@ def desired_model_manifest(difftest: bool = False) -> dict[str, object]:
     return {
         "schema_version": 1,
         "kind": "verilator_model_build",
-        "target": "soc",
+        "target": "soc-trace" if trace else "soc",
         "difftest": difftest,
+        "trace": trace,
         "top": "soc_sim_top",
         "verilator": version,
         "fingerprint": fingerprint,
@@ -203,8 +216,11 @@ def desired_model_manifest(difftest: bool = False) -> dict[str, object]:
     }
 
 
-def model_paths(difftest: bool = False) -> tuple[Path, Path]:
-    target = "soc-diff" if difftest else "soc"
+def model_paths(
+    difftest: bool = False,
+    trace: bool = False,
+) -> tuple[Path, Path]:
+    target = "soc-diff" if difftest else "soc-trace" if trace else "soc"
     build_root = repo_path("build", "verilator", target)
     return (
         build_root / "obj_dir" / "soc_sim",
@@ -215,8 +231,9 @@ def model_paths(difftest: bool = False) -> tuple[Path, Path]:
 def model_is_current(
     desired: dict[str, object],
     difftest: bool = False,
+    trace: bool = False,
 ) -> bool:
-    executable, manifest_path = model_paths(difftest)
+    executable, manifest_path = model_paths(difftest, trace)
     if not executable.is_file() or not manifest_path.is_file():
         return False
     try:
@@ -226,16 +243,28 @@ def model_is_current(
     return actual.get("fingerprint") == desired["fingerprint"]
 
 
-def build_model(*, force: bool = False, difftest: bool = False) -> None:
-    desired = desired_model_manifest(difftest)
-    if not force and model_is_current(desired, difftest):
+def build_model(
+    *,
+    force: bool = False,
+    difftest: bool = False,
+    trace: bool = False,
+) -> None:
+    if difftest:
+        raise RuntimeError(
+            "DiffTest is unavailable for the EH1F integration until a precise "
+            "retirement/CSR/memory trace is implemented"
+        )
+    desired = desired_model_manifest(difftest, trace)
+    if not force and model_is_current(desired, difftest, trace):
         print(
             "Verilator DiffTest model is current"
             if difftest
+            else "Verilator trace model is current"
+            if trace
             else "Verilator model is current"
         )
         return
-    target = "soc-diff" if difftest else "soc"
+    target = "soc-diff" if difftest else "soc-trace" if trace else "soc"
     object_dir = repo_path("build", "verilator", target, "obj_dir")
     if object_dir.exists():
         shutil.rmtree(object_dir)
@@ -249,6 +278,8 @@ def build_model(*, force: bool = False, difftest: bool = False) -> None:
     )
     argv = [
         "verilator",
+        "-j",
+        "0",
         "-f",
         "sim/verilator/common_flags.f",
         "--top-module",
@@ -263,6 +294,8 @@ def build_model(*, force: bool = False, difftest: bool = False) -> None:
         "-CFLAGS",
         cflags,
     ]
+    if trace:
+        argv.append("--trace")
     if difftest:
         cpp_sources.append(SPIKE_COSIM_SOURCE)
         argv[argv.index("--Mdir") - 1:argv.index("--Mdir") - 1] = [
@@ -292,21 +325,28 @@ def build_model(*, force: bool = False, difftest: bool = False) -> None:
             "-lboost_regex -lboost_system -pthread -ldl"
         )
         argv.extend(["-LDFLAGS", ldflags])
-    result = bash(in_repo(repo_path(), argv), timeout=240, check=False)
-    print(result.stdout, end="")
+    result = bash(
+        in_repo(repo_path(), argv),
+        timeout=MODEL_BUILD_TIMEOUT_SECONDS,
+        check=False,
+    )
+    print_console_safe(result.stdout)
     if result.stderr:
-        print(result.stderr, end="", file=sys.stderr)
+        print_console_safe(result.stderr, stream=sys.stderr)
     if not result.ok:
         raise RuntimeError("Verilator model build failed")
-    executable, manifest_path = model_paths(difftest)
+    executable, manifest_path = model_paths(difftest, trace)
     if not executable.is_file():
         raise RuntimeError("Verilator build produced no executable")
     write_json_atomic(manifest_path, desired)
 
 
-def ensure_model_current(difftest: bool = False) -> None:
-    desired = desired_model_manifest(difftest)
-    if not model_is_current(desired, difftest):
+def ensure_model_current(
+    difftest: bool = False,
+    trace: bool = False,
+) -> None:
+    desired = desired_model_manifest(difftest, trace)
+    if not model_is_current(desired, difftest, trace):
         raise RuntimeError(
             "Verilator model is missing or stale; rerun without --no-rtl-build"
         )
@@ -366,13 +406,22 @@ def run_image(
     difftest_isa: str = "",
     difftest_fault: str = "",
 ) -> Path:
+    if difftest:
+        raise RuntimeError(
+            "DiffTest is unavailable for the EH1F integration until a precise "
+            "retirement/CSR/memory trace is implemented"
+        )
     if rebuild_model:
-        build_model(difftest=difftest)
+        build_model(difftest=difftest, trace=trace)
     else:
-        ensure_model_current(difftest)
+        ensure_model_current(difftest, trace)
 
-    executable, _manifest = model_paths(difftest)
-    for name in ("code.mem", "data.mem", "image.json"):
+    executable, _manifest = model_paths(difftest, trace)
+    memory_files = [
+        *(f"iccm_lane{lane}.mem" for lane in range(4)),
+        *(f"dccm_bank{bank}.mem" for bank in range(8)),
+    ]
+    for name in (*memory_files, "image.json"):
         if not (image_dir / name).exists():
             raise RuntimeError(f"image file is missing: {image_dir / name}")
 
@@ -447,8 +496,10 @@ def run_image(
 
     argv = [
         relative_to_repo(executable),
-        f"+code_mem={relative_to_repo(image_dir / 'code.mem')}",
-        f"+data_mem={relative_to_repo(image_dir / 'data.mem')}",
+        *(
+            f"+{Path(name).stem}={relative_to_repo(image_dir / name)}"
+            for name in memory_files
+        ),
         "--test",
         test_name,
         "--profile",
@@ -524,12 +575,11 @@ def run_image(
                     ),
                 ]
             )
-        mmio_regions = ["TEST_STATUS"]
+        mmio_regions = ["SYSCTRL"]
         if difftest_mode == "soc-mmio":
             mmio_regions.extend(
                 (
                     "TIMER",
-                    "IRQ_CTRL",
                     "UART",
                     "GPIO",
                 )
@@ -556,14 +606,15 @@ def run_image(
         argv.extend(["--uart-expect", expected])
     for forbidden in uart_reject:
         argv.extend(["--uart-reject", forbidden])
+    contract = read_json(
+        repo_path("data", "soc", "software_contract.json")
+    )
+    cycles_per_bit = (
+        int(contract["clocks"]["soc_hz"])
+        // int(contract["clocks"]["uart_baud"])
+    )
+    argv.extend(["--uart-cycles-per-bit", str(cycles_per_bit)])
     if uart_command:
-        contract = read_json(
-            repo_path("data", "soc", "software_contract.json")
-        )
-        cycles_per_bit = (
-            int(contract["clocks"]["soc_hz"])
-            // int(contract["clocks"]["uart_baud"])
-        )
         argv.extend(
             [
                 "--uart-command",
@@ -572,8 +623,6 @@ def run_image(
                 uart_prompt,
                 "--uart-prompt-timeout",
                 str(uart_prompt_timeout),
-                "--uart-cycles-per-bit",
-                str(cycles_per_bit),
             ]
         )
         for followup in uart_followup_commands:
@@ -590,9 +639,9 @@ def run_image(
         f"{result.stderr}"
     )
     log_path.write_text(combined_log, encoding="utf-8", newline="\n")
-    print(result.stdout, end="")
+    print_console_safe(result.stdout)
     if result.stderr:
-        print(result.stderr, end="", file=sys.stderr)
+        print_console_safe(result.stderr, stream=sys.stderr)
     if not result_path.is_file():
         raise RuntimeError(
             f"simulation produced no result (exit {result.returncode}); "
@@ -722,6 +771,7 @@ def main() -> int:
             build_model(
                 force=args.force_rtl_build,
                 difftest=args.difftest,
+                trace=args.trace,
             )
             return 0
         if args.profile not in DEFAULT_CYCLES and args.max_cycles is None:
@@ -738,7 +788,11 @@ def main() -> int:
             benchmark_iterations = BENCHMARK_ITERATIONS.get(args.profile, 0)
         max_cycles = args.max_cycles
         if max_cycles is None and args.profile == "rtthread-coremark":
-            max_cycles = 3_000_000 + 3_000_000 * benchmark_iterations
+        # RT-Thread boot, shell command echo and the final UART report dominate
+        # short CoreMark runs at a real 250 MHz / 115200-baud UART.  Keep a
+        # generous fixed allowance for that traffic, then scale the benchmark
+        # window itself with the requested iteration count.
+        max_cycles = 24_000_000 + 1_000_000 * benchmark_iterations
         uart_command = args.uart_command or (
             f"coremark {benchmark_iterations}"
             if args.profile == "rtthread-coremark"

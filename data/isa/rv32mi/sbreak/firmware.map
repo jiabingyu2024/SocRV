@@ -1,56 +1,59 @@
 
 Discarded input sections
 
- .text          0x00000000        0x0 /tmp/ccJiRRtF.o
- .data          0x00000000        0x0 /tmp/ccJiRRtF.o
- .bss           0x00000000        0x0 /tmp/ccJiRRtF.o
+ .text          0x00000000        0x0 /tmp/ccTyTdNN.o
+ .data          0x00000000        0x0 /tmp/ccTyTdNN.o
+ .bss           0x00000000        0x0 /tmp/ccTyTdNN.o
 
 Memory Configuration
 
 Name             Origin             Length             Attributes
-CODE             0x00000000         0x00010000         xr
-DATA             0x10000000         0x00010000         xrw
+CODE             0x00000000         0x00020000         xr
+DATA             0x00020000         0x00010000         xrw
 *default*        0x00000000         0xffffffff
 
 Linker script and memory map
 
-LOAD /tmp/ccJiRRtF.o
+LOAD /tmp/ccTyTdNN.o
                 0x00000000                        SOCRV_CODE_ORIGIN = 0x0
-                0x00010000                        SOCRV_CODE_LENGTH = 0x10000
-                0x10000000                        SOCRV_DATA_ORIGIN = 0x10000000
+                0x00020000                        SOCRV_CODE_LENGTH = 0x20000
+                0x00020000                        SOCRV_DATA_ORIGIN = 0x20000
                 0x00010000                        SOCRV_DATA_LENGTH = 0x10000
 
-.text           0x00000000       0xb0
+.text           0x00000000       0xbc
  *(.text.init)
- .text.init     0x00000000       0xb0 /tmp/ccJiRRtF.o
+ .text.init     0x00000000       0xbc /tmp/ccTyTdNN.o
                 0x00000000                _start
-                0x00000080                mtvec_handler
+                0x0000008c                mtvec_handler
  *(.text .text.*)
- *(.rodata .rodata.*)
-                0x000000b0                        . = ALIGN (0x4)
-                0x000000b0                        __code_end = .
+                0x000000bc                        . = ALIGN (0x4)
+                0x000000bc                        __code_end = .
 
-.rela.dyn       0x000000b0        0x0
+.rela.dyn       0x000000bc        0x0
  .rela.text.init
-                0x000000b0        0x0 /tmp/ccJiRRtF.o
+                0x000000bc        0x0 /tmp/ccTyTdNN.o
 
-.data           0x10000000        0x0
+.rodata
+ *(.rodata .rodata.*)
+ *(.srodata .srodata.*)
+
+.data           0x00020000        0x0
  *(.data .data.*)
  *(.sdata .sdata.*)
-                0x10000000                        . = ALIGN (0x10)
-                0x10000000                        __data_end = .
+                0x00020000                        . = ALIGN (0x10)
+                0x00020000                        __data_end = .
 
-.bss            0x10000000        0x0
+.bss            0x00020000        0x0
  *(.sbss .sbss.*)
  *(.bss .bss.*)
  *(COMMON)
-                0x10000000                        . = ALIGN (0x10)
-                0x10000000                        __bss_end = .
+                0x00020000                        . = ALIGN (0x10)
+                0x00020000                        __bss_end = .
                 0x00000001                        ASSERT ((__code_end <= (ORIGIN (CODE) + LENGTH (CODE))), CODE region overflow)
                 0x00000001                        ASSERT ((__bss_end <= (ORIGIN (DATA) + LENGTH (DATA))), DATA region overflow)
 OUTPUT(build/isa-data/generated/rv32mi/sbreak/firmware.elf elf32-littleriscv)
 
 .riscv.attributes
-                0x00000000       0x55
+                0x00000000       0x3a
  .riscv.attributes
-                0x00000000       0x55 /tmp/ccJiRRtF.o
+                0x00000000       0x3a /tmp/ccTyTdNN.o

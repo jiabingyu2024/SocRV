@@ -1,48 +1,49 @@
-# Scripts
+# SocRV scripts
 
-根 `Makefile` 是稳定的人类入口，`scripts/` 负责参数解析、工具调用、内容指纹和
-结果 manifest。
+根目录 `Makefile` 是稳定的人类入口，`scripts/` 负责参数检查、工具调用、内存镜像生成以及结果 manifest。当前唯一目标配置是：
+
+- ISA：`RV32IMF_Zicsr`
+- ABI：`ilp32f`
+- ICCM：128 KiB
+- DCCM：64 KiB
+- 无 C、无 cache、无 ECC、无 AXI/AHB 外部存储
+- FPGA 目标频率：250 MHz
 
 主要链路：
 
 ```text
 fetch_dependencies.py
-  -> 固定 RT-Thread / riscv-tests / CoreMark
+  -> 固定 RT-Thread / riscv-tests / CoreMark 依赖
 
 generate_soc_contract.py
-  -> Memory Map / 软件合同
-  -> BSP 头文件和 linker 常量
+  -> 根据 data/soc/ 生成 BSP 头文件和 linker 常量
 
 generate_isa_data.py
-  -> 官方 riscv-tests + SocRV environment
-  -> data/isa/
+  -> 生成官方 riscv-tests 的 ICCM/DCCM 镜像与 manifest
 
 build_software.py
-  -> RV32 ELF
-  -> code.mem / data.mem / image.json
+  -> 编译 RV32 ELF
+  -> 生成 ICCM 四个 lane 与 DCCM 八个 bank 的初始化文件
 
 run_verilator.py
-  -> 内容指纹检查与模型构建
-  -> 可选 UART 命令注入
-  -> result/log/wave
+  -> 构建/运行 SoC 仿真模型并记录 UART、状态和结果
 
 run_regression.py
-  -> data/tests/soc.json
-  -> build/regression/<suite>/summary.json
+  -> 按 data/tests/soc.json 运行受控回归
 
 run_vivado.py
-  -> software image
-  -> synth / implementation / bitstream / report gate
+  -> 构建软件镜像、综合、实现、bitstream 与报告门禁
 ```
 
 推荐入口：
 
 ```text
+make doctor
+make check
 make sim-quick
 make sim-full
 make software-fpga
 make fpga-build
 ```
 
-详细说明见
-[`docs/cpu_iteration_sim_software_fpga_guide.md`](../docs/cpu_iteration_sim_software_fpga_guide.md)。
+注意：仓库中旧的 `data/isa/` 或 `build/images/` 只有在 `check_images.py` 同时确认内存映射哈希、CODE/DATA 范围和测试状态地址后才可使用。更改 `data/soc/` 后必须重新生成镜像，不能继续使用旧 `.mem` 文件。

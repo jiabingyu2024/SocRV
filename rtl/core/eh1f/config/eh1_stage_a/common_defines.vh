@@ -1,0 +1,192 @@
+`ifndef SOCRV_EH1F_COMMON_DEFINES_VH
+`define SOCRV_EH1F_COMMON_DEFINES_VH
+
+// NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+// Derived from the upstream high-performance EH1 configuration.
+// SocRv freezes the active target to 128 KiB ICCM, 64 KiB DCCM, no cache,
+// no ECC/parity, no PIC/DMA and no AHB/AXI external-memory transport.
+`define RV_TCM_ONLY
+`define TEC_RV_ICG clockhdr
+`define RV_RESET_VEC 0
+`define RV_NMI_VEC 'h11110000
+`define RV_SERIALIO 'hf0580000
+`define RV_UNUSED_REGION2 'h20000000
+`define RV_UNUSED_REGION4 'h40000000
+`define RV_UNUSED_REGION7 'h70000000
+`define RV_UNUSED_REGION8 'h80000000
+`define RV_UNUSED_REGION1 'h10000000
+`define RV_EXTERNAL_DATA 'he0580000
+`define RV_DEBUG_SB_MEM 'hd0580000
+`define RV_UNUSED_REGION10 'ha0000000
+`define RV_UNUSED_REGION5 'h50000000
+`define RV_UNUSED_REGION11 'hb0000000
+`define RV_EXTERNAL_PROG 'hd0000000
+`define RV_UNUSED_REGION6 'h60000000
+`define RV_EXTERNAL_DATA_1 'h00000000
+`define RV_UNUSED_REGION3 'h30000000
+`define RV_UNUSED_REGION9 'h90000000
+`define RV_RET_STACK_SIZE 4
+`define RV_DMA_BUS_TAG 1
+`define RV_LSU_BUS_TAG 4
+`define RV_IFU_BUS_TAG 3
+`define RV_SB_BUS_TAG 1
+`define RV_DMA_BUF_DEPTH 4
+`define RV_LSU_NUM_NBLOAD 8
+`define RV_LSU_NUM_NBLOAD_WIDTH 3
+`define RV_DEC_INSTBUF_DEPTH 4
+`define RV_LSU_STBUF_DEPTH 8
+`define RV_FPGA_OPTIMIZE 1
+`define RV_NUMIREGS 32
+`define RV_EXT_ADDRWIDTH 32
+// RV_BUILD_AHB_LITE/RV_BUILD_AXI4 intentionally undefined: all instruction
+// fetches use ICCM and all data accesses use DCCM or the local MMIO port.
+`define SDVT_AHB 1
+`define DATAWIDTH 64
+`define CPU_TOP `RV_TOP.veer
+// ASSERT_ON intentionally remains undefined in the FPGA/Verilator target.
+// The inherited EH1 SVA set includes delay-range syntax unsupported by the
+// selected simulator and is not part of the synthesizable functional design.
+`define RV_EXT_DATAWIDTH 64
+`define RV_LDERR_ROLLBACK 1
+`define RV_TOP `TOP.rvtop
+`define TOP tb_top
+`define CLOCK_PERIOD 100
+`define RV_STERR_ROLLBACK 0
+`define RV_DCCM_SADR 32'h20000
+`define RV_DCCM_OFFSET 28'h00020000
+`define RV_DCCM_RESERVED 'h1000
+`define RV_DCCM_FDATA_WIDTH 32
+`define RV_DCCM_DATA_WIDTH 32
+`define RV_DCCM_BANK_BITS 3
+`define RV_DCCM_BITS 16
+`define RV_DCCM_ROWS 2048
+`define RV_DCCM_ECC_WIDTH 7
+`define RV_DCCM_WIDTH_BITS 2
+`define RV_DCCM_REGION 4'h0
+`define RV_DCCM_NUM_BANKS 8
+`define RV_DCCM_DATA_CELL ram_2048x32
+`define RV_DCCM_SIZE 64
+`define RV_DCCM_INDEX_BITS 11
+`define RV_DCCM_EADR 32'h2ffff
+`define RV_DCCM_SIZE_64 
+`define RV_DCCM_ENABLE 1
+`define RV_DCCM_NUM_BANKS_8 
+`define RV_DCCM_BYTE_WIDTH 4
+`define RV_LSU_SB_BITS 16
+`define RV_BTB_ADDR_LO 4
+`define RV_BTB_SIZE 512
+`define RV_BTB_INDEX2_LO 10
+`define RV_BTB_INDEX3_LO 16
+`define RV_BTB_ADDR_HI 9
+`define RV_BTB_INDEX1_HI 9
+`define RV_BTB_INDEX3_HI 21
+`define RV_BTB_INDEX1_LO 4
+`define RV_BTB_BTAG_SIZE 5
+`define RV_BTB_ARRAY_DEPTH 64
+`define RV_BTB_INDEX2_HI 15
+`define RV_BHT_ADDR_HI 11
+`define RV_BHT_ADDR_LO 4
+`define RV_BHT_GHR_PAD2 fghr[8:3],2'b0
+`define RV_BHT_SIZE 2048
+`define RV_BHT_GHR_RANGE 8:0
+`define RV_BHT_GHR_PAD fghr[8:4],3'b0
+`define RV_BHT_GHR_SIZE 9
+`define RV_BHT_HASH_STRING {ghr[7:6] ^ {ghr[7+1], {8-1-6{1'b0} } },hashin[9:4]^ghr[6-1:0]}
+`define RV_BHT_ARRAY_DEPTH 256
+`define RV_INST_ACCESS_MASK6 'hffffffff
+`define RV_INST_ACCESS_ADDR3 'h00000000
+`define RV_INST_ACCESS_ENABLE0 1'h0
+`define RV_DATA_ACCESS_ENABLE5 1'h0
+`define RV_DATA_ACCESS_MASK7 'hffffffff
+`define RV_DATA_ACCESS_MASK2 'hffffffff
+`define RV_DATA_ACCESS_ENABLE7 1'h0
+`define RV_INST_ACCESS_ADDR2 'h00000000
+`define RV_INST_ACCESS_ADDR7 'h00000000
+`define RV_INST_ACCESS_ENABLE4 1'h0
+`define RV_DATA_ACCESS_MASK3 'hffffffff
+`define RV_INST_ACCESS_ENABLE2 1'h0
+`define RV_DATA_ACCESS_ADDR6 'h00000000
+`define RV_DATA_ACCESS_ADDR1 'h00000000
+`define RV_DATA_ACCESS_ENABLE3 1'h0
+`define RV_INST_ACCESS_ENABLE6 1'h0
+`define RV_DATA_ACCESS_MASK4 'hffffffff
+`define RV_INST_ACCESS_MASK0 'hffffffff
+`define RV_DATA_ACCESS_ADDR5 'h00000000
+`define RV_DATA_ACCESS_ENABLE1 1'h0
+`define RV_INST_ACCESS_MASK5 'hffffffff
+`define RV_DATA_ACCESS_ADDR0 'h00000000
+`define RV_INST_ACCESS_ADDR4 'h00000000
+`define RV_INST_ACCESS_MASK1 'hffffffff
+`define RV_INST_ACCESS_ENABLE1 1'h0
+`define RV_DATA_ACCESS_MASK5 'hffffffff
+`define RV_DATA_ACCESS_ADDR4 'h00000000
+`define RV_INST_ACCESS_ADDR0 'h00000000
+`define RV_DATA_ACCESS_MASK1 'hffffffff
+`define RV_INST_ACCESS_ADDR1 'h00000000
+`define RV_INST_ACCESS_ENABLE3 1'h0
+`define RV_DATA_ACCESS_ENABLE6 1'h0
+`define RV_INST_ACCESS_MASK4 'hffffffff
+`define RV_DATA_ACCESS_MASK0 'hffffffff
+`define RV_INST_ACCESS_ADDR5 'h00000000
+`define RV_DATA_ACCESS_ADDR2 'h00000000
+`define RV_DATA_ACCESS_ADDR7 'h00000000
+`define RV_DATA_ACCESS_ENABLE4 1'h0
+`define RV_INST_ACCESS_MASK3 'hffffffff
+`define RV_DATA_ACCESS_ENABLE2 1'h0
+`define RV_INST_ACCESS_ADDR6 'h00000000
+`define RV_DATA_ACCESS_MASK6 'hffffffff
+`define RV_DATA_ACCESS_ENABLE0 1'h0
+`define RV_DATA_ACCESS_ADDR3 'h00000000
+`define RV_INST_ACCESS_ENABLE5 1'h0
+`define RV_INST_ACCESS_MASK7 'hffffffff
+`define RV_INST_ACCESS_MASK2 'hffffffff
+`define RV_INST_ACCESS_ENABLE7 1'h0
+`define RV_PIC_MEIGWCTRL_MASK 'h3
+`define RV_PIC_TOTAL_INT_PLUS1 9
+`define RV_PIC_MEIPT_OFFSET 'h3004
+`define RV_PIC_MEIPL_MASK 'hf
+`define RV_PIC_MEIPL_COUNT 8
+`define RV_PIC_MPICCFG_MASK 'h1
+`define RV_PIC_MEIE_COUNT 8
+`define RV_PIC_MEIP_COUNT 4
+`define RV_PIC_INT_WORDS 1
+`define RV_PIC_OFFSET 10'h00030000
+`define RV_PIC_MEIPT_COUNT 8
+`define RV_PIC_BITS 15
+`define RV_PIC_MPICCFG_OFFSET 'h3000
+`define RV_PIC_MEIGWCTRL_OFFSET 'h4000
+`define RV_PIC_MEIE_OFFSET 'h2000
+`define RV_PIC_TOTAL_INT 8
+`define RV_PIC_MEIGWCTRL_COUNT 8
+`define RV_PIC_MEIP_MASK 'h0
+`define RV_PIC_MEIGWCLR_COUNT 8
+`define RV_PIC_MEIPL_OFFSET 'h0000
+`define RV_PIC_MPICCFG_COUNT 1
+`define RV_PIC_MEIE_MASK 'h1
+`define RV_PIC_BASE_ADDR 32'h30000
+`define RV_PIC_SIZE 32
+`define RV_PIC_MEIPT_MASK 'h0
+`define RV_PIC_REGION 4'h0
+`define RV_PIC_MEIGWCLR_MASK 'h0
+`define RV_PIC_MEIGWCLR_OFFSET 'h5000
+`define RV_PIC_MEIP_OFFSET 'h1000
+`define RV_XLEN 32
+`define RV_ICCM_BITS 17
+`define RV_ICCM_ROWS 4096
+`define RV_ICCM_BANK_BITS 3
+`define RV_ICCM_RESERVED 'h1000
+`define RV_ICCM_OFFSET 10'h00000000
+`define RV_ICCM_SADR 32'h00000000
+`define RV_ICCM_SIZE_128 
+`define RV_ICCM_ENABLE 1
+`define RV_ICCM_NUM_BANKS_8 
+`define RV_ICCM_DATA_CELL ram_4096x32
+`define RV_ICCM_SIZE 128
+`define RV_ICCM_EADR 32'h0001ffff
+`define RV_ICCM_INDEX_BITS 12
+`define RV_ICCM_NUM_BANKS 8
+`define RV_ICCM_REGION 4'h0
+`define RV_TARGET high_perf
+`define REGWIDTH 32
+
+`endif // SOCRV_EH1F_COMMON_DEFINES_VH

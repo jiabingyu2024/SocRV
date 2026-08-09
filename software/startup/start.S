@@ -5,7 +5,8 @@ _start:
     csrci mstatus, 8
     csrw mie, zero
     csrw mscratch, zero
-    li t0, 0x6000
+    /* mstatus.FS=Initial before any hard-float C code executes. */
+    li t0, 0x2000
     csrs mstatus, t0
     .option push
     .option norelax

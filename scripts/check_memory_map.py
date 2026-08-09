@@ -33,7 +33,7 @@ def main() -> int:
         expected[f"{name}_SIZE"] = int(region["size"], 0)
 
     sv_values = parse_constants(
-        repo_path("rtl", "common", "pkg", "memory_map_pkg.sv").read_text(encoding="utf-8"),
+        repo_path("rtl", "soc", "soc_memory_map_pkg.sv").read_text(encoding="utf-8"),
         SV_PATTERN,
     )
     c_values = parse_constants(

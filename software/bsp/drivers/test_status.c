@@ -5,7 +5,7 @@ static void test_status_report(uint32_t status, uint32_t code)
 {
     test_status_set_code(code);
     mmio_write32(
-        SOCRV_TEST_STATUS_BASE + SOCRV_TEST_STATUS_STATUS_OFFSET,
+        SOCRV_SYSCTRL_BASE + SOCRV_SYSCTRL_STATUS_OFFSET,
         status
     );
 }
@@ -34,7 +34,7 @@ static void test_status_finish(uint32_t status, uint32_t code)
 void test_status_set_code(uint32_t code)
 {
     mmio_write32(
-        SOCRV_TEST_STATUS_BASE + SOCRV_TEST_STATUS_CODE_OFFSET,
+        SOCRV_SYSCTRL_BASE + SOCRV_SYSCTRL_CODE_OFFSET,
         code
     );
 }

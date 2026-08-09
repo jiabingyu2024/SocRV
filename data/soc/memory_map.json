@@ -2,13 +2,11 @@
   "schema_version": 1,
   "reset_vector": "0x00000000",
   "regions": {
-    "CODE": {"base": "0x00000000", "size": "0x00010000"},
-    "DATA": {"base": "0x10000000", "size": "0x00010000"},
-    "TIMER": {"base": "0x20000000", "size": "0x00001000"},
-    "IRQ_CTRL": {"base": "0x20001000", "size": "0x00001000"},
-    "APB": {"base": "0x30000000", "size": "0x00010000"},
-    "UART": {"base": "0x30000000", "size": "0x00001000"},
-    "GPIO": {"base": "0x30001000", "size": "0x00001000"},
-    "TEST_STATUS": {"base": "0x30002000", "size": "0x00001000"}
+    "CODE": {"base": "0x00000000", "size": "0x00020000"},
+    "DATA": {"base": "0x00020000", "size": "0x00010000"},
+    "TIMER": {"base": "0x10000000", "size": "0x00001000"},
+    "UART": {"base": "0x10001000", "size": "0x00001000"},
+    "GPIO": {"base": "0x10002000", "size": "0x00001000"},
+    "SYSCTRL": {"base": "0x10003000", "size": "0x00001000"}
   }
 }

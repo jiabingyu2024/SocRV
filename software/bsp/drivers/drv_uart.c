@@ -10,7 +10,7 @@ void uart_init(void)
     );
     mmio_write32(
         SOCRV_UART_BASE + SOCRV_UART_CONTROL_OFFSET,
-        0u
+        SOCRV_UART_CONTROL_TX_ENABLE | SOCRV_UART_CONTROL_RX_ENABLE
     );
 }
 
@@ -65,10 +65,7 @@ char uart_getc(void)
 
 void uart_enable_rx_irq(int enable)
 {
-    mmio_write32(
-        SOCRV_UART_BASE + SOCRV_UART_CONTROL_OFFSET,
-        enable ? SOCRV_UART_CONTROL_RX_IRQ_ENABLE : 0u
-    );
+    (void)enable;
 }
 
 void uart_flush(void)

@@ -1,114 +1,81 @@
 module soc_sim_top (
-  input logic clk_i,
-  input logic rst_ni,
-  input logic uart_rx_i,
-  output logic uart_tx_o,
-  output logic test_done_o,
-  output logic test_pass_o,
-  output logic [31:0] test_code_o,
-  output logic cpu_fault_o,
-  output logic [1:0] retire_count_o,
-  output logic commit_valid_o,
-  output logic commit_retired_o,
-  output logic [63:0] commit_order_o,
-  output logic [31:0] commit_pc_o,
-  output logic [31:0] commit_next_pc_o,
-  output logic [31:0] commit_instruction_o,
-  output logic [4:0] commit_rs1_addr_o,
-  output logic [31:0] commit_rs1_rdata_o,
-  output logic [4:0] commit_rs2_addr_o,
-  output logic [31:0] commit_rs2_rdata_o,
-  output logic commit_rd_wen_o,
-  output logic [4:0] commit_rd_addr_o,
-  output logic [31:0] commit_rd_wdata_o,
-  output logic commit_sync_trap_o,
-  output logic [31:0] commit_cause_o,
-  output logic [31:0] commit_tval_o,
-  output logic [1:0] commit_mode_o,
-  output logic commit_mem_valid_o,
-  output logic [31:0] commit_mem_addr_o,
-  output logic [3:0] commit_mem_rmask_o,
-  output logic [3:0] commit_mem_wmask_o,
-  output logic [31:0] commit_mem_rdata_o,
-  output logic [31:0] commit_mem_wdata_o,
-  output logic [31:0] commit_csr_mstatus_o,
-  output logic [31:0] commit_csr_mie_o,
-  output logic [31:0] commit_csr_mip_o,
-  output logic [31:0] commit_csr_mtvec_o,
-  output logic [31:0] commit_csr_mscratch_o,
-  output logic [31:0] commit_csr_mepc_o,
-  output logic [31:0] commit_csr_mcause_o,
-  output logic [31:0] commit_csr_mtval_o,
-  output logic [63:0] commit_csr_mcycle_o,
-  output logic [63:0] commit_csr_minstret_o,
-  output logic irq_event_valid_o,
-  output logic [63:0] irq_event_next_order_o,
-  output logic [31:0] irq_event_mip_pre_o,
-  output logic [31:0] irq_event_mip_post_o
+   input  logic        clk_i,
+   input  logic        rst_ni,
+   input  logic        uart_rx_i,
+   output logic        uart_tx_o,
+   output logic        test_done_o,
+   output logic        test_pass_o,
+   output logic [31:0] test_code_o,
+   output logic [2:0]  trace_valid_o,
+   output logic [63:0] trace_address_o,
+   output logic [63:0] trace_instruction_o,
+   output logic [31:0] debug_mepc_o,
+   output logic [31:0] debug_mcause_o,
+   output logic [31:0] debug_mtval_o,
+   output logic [31:0] debug_lsu_start_o,
+   output logic [31:0] debug_lsu_end_o,
+   output logic [3:0]  debug_lsu_flags_o,
+   output logic [7:0]  debug_inst_flags_o,
+   output logic [31:0] debug_inst_pc_o,
+   output logic [31:0] debug_inst_target_o
 );
-  logic [15:0] gpio_i;
-  logic [15:0] gpio_o;
-  logic [15:0] gpio_oe;
-  logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] ext_irq;
-  cpu_types_pkg::commit_trace_t commit;
+   localparam logic [31:0] TEST_PASS_MAGIC = 32'h5041_5353;
+   localparam logic [31:0] TEST_FAIL_MAGIC = 32'h4641_494c;
 
-  assign gpio_i = '0;
-  assign ext_irq = '0;
-  assign commit_valid_o = commit.valid;
-  assign commit_retired_o = commit.retired;
-  assign commit_order_o = commit.order;
-  assign commit_pc_o = commit.pc_rdata;
-  assign commit_next_pc_o = commit.pc_wdata;
-  assign commit_instruction_o = commit.instruction;
-  assign commit_rs1_addr_o = commit.rs1_addr;
-  assign commit_rs1_rdata_o = commit.rs1_rdata;
-  assign commit_rs2_addr_o = commit.rs2_addr;
-  assign commit_rs2_rdata_o = commit.rs2_rdata;
-  assign commit_rd_wen_o = commit.rd_wen;
-  assign commit_rd_addr_o = commit.rd_addr;
-  assign commit_rd_wdata_o = commit.rd_wdata;
-  assign commit_sync_trap_o = commit.sync_trap;
-  assign commit_cause_o = commit.cause;
-  assign commit_tval_o = commit.tval;
-  assign commit_mode_o = commit.mode;
-  assign commit_mem_valid_o = commit.mem_valid;
-  assign commit_mem_addr_o = commit.mem_addr;
-  assign commit_mem_rmask_o = commit.mem_rmask;
-  assign commit_mem_wmask_o = commit.mem_wmask;
-  assign commit_mem_rdata_o = commit.mem_rdata;
-  assign commit_mem_wdata_o = commit.mem_wdata;
-  assign commit_csr_mstatus_o = commit.csr_mstatus;
-  assign commit_csr_mie_o = commit.csr_mie;
-  assign commit_csr_mip_o = commit.csr_mip;
-  assign commit_csr_mtvec_o = commit.csr_mtvec;
-  assign commit_csr_mscratch_o = commit.csr_mscratch;
-  assign commit_csr_mepc_o = commit.csr_mepc;
-  assign commit_csr_mcause_o = commit.csr_mcause;
-  assign commit_csr_mtval_o = commit.csr_mtval;
-  assign commit_csr_mcycle_o = commit.csr_mcycle;
-  assign commit_csr_minstret_o = commit.csr_minstret;
-  assign irq_event_valid_o = commit.irq_valid;
-  assign irq_event_next_order_o = commit.irq_next_order;
-  assign irq_event_mip_pre_o = commit.irq_mip_pre;
-  assign irq_event_mip_post_o = commit.irq_mip_post;
+   logic [15:0] gpio_in;
+   logic [15:0] gpio_out;
+   logic [15:0] gpio_oe;
+   logic [31:0] test_status;
 
-  soc_top_generic u_dut (
-    .clk_i,
-    .rst_ni,
-    .uart_rx_i,
-    .uart_tx_o,
-    .gpio_i,
-    .gpio_o,
-    .gpio_oe_o(gpio_oe),
-    .ext_irq_i(ext_irq),
-    .test_done_o,
-    .test_pass_o,
-    .test_code_o,
-    .commit_o(commit),
-    .retire_count_o,
-    .cpu_fault_o
-  );
+   assign gpio_in     = '0;
+   assign test_done_o = (test_status == TEST_PASS_MAGIC) ||
+                        (test_status == TEST_FAIL_MAGIC);
+   assign test_pass_o = test_status == TEST_PASS_MAGIC;
+   assign trace_valid_o = dut.core.trace_rv_i_valid_ip;
+   assign trace_address_o = dut.core.trace_rv_i_address_ip;
+   assign trace_instruction_o = dut.core.trace_rv_i_insn_ip;
+   assign debug_mepc_o = {dut.core.veer.dec.tlu.mepc, 1'b0};
+   assign debug_mcause_o = dut.core.veer.dec.tlu.mcause;
+   assign debug_mtval_o = dut.core.veer.dec.tlu.mtval;
+   assign debug_lsu_start_o = dut.core.veer.lsu.lsu_lsc_ctl.full_addr_dc1;
+   assign debug_lsu_end_o = dut.core.veer.lsu.lsu_lsc_ctl.full_end_addr_dc1;
+   assign debug_lsu_flags_o = {
+      dut.core.veer.lsu.lsu_lsc_ctl.misaligned_fault_dc1,
+      dut.core.veer.lsu.lsu_lsc_ctl.access_fault_dc1,
+      dut.core.veer.lsu.lsu_lsc_ctl.addr_in_dccm_dc1,
+      dut.core.veer.lsu.lsu_lsc_ctl.lsu_pkt_dc1.valid
+   };
+   assign debug_inst_flags_o = {
+      dut.core.veer.dec.tlu.inst_acc_e4,
+      dut.core.veer.dec.tlu.exu_i0_br_mp_e4,
+      dut.core.veer.dec.tlu.dec_tlu_flush_lower_wb,
+      dut.core.veer.dec.tlu.rfpc_i0_e4,
+      dut.core.veer.dec.tlu.dec_tlu_i0_valid_e4,
+      dut.core.veer.dec.tlu.inst_misaligned_i0_e4,
+      dut.core.veer.dec.tlu.exu_i0_inst_misaligned_e4,
+      dut.core.veer.exu.i0_flush_path_e4_eff[1]
+   };
+   assign debug_inst_pc_o = {dut.core.veer.dec.tlu.dec_tlu_i0_pc_e4, 1'b0};
+   assign debug_inst_target_o = {
+      dut.core.veer.dec.tlu.exu_i0_inst_misaligned_addr_e4, 1'b0
+   };
 
-  logic unused;
-  assign unused = ^gpio_o ^ ^gpio_oe;
+   soc_top #(
+      .CLOCK_HZ(250_000_000),
+      .UART_BAUD(115_200),
+      .GPIO_WIDTH(16)
+   ) dut (
+      .core_clk(clk_i),
+      .rst_n(rst_ni),
+      .uart_rx(uart_rx_i),
+      .uart_tx(uart_tx_o),
+      .gpio_in(gpio_in),
+      .gpio_out(gpio_out),
+      .gpio_oe(gpio_oe),
+      .test_status(test_status),
+      .test_code(test_code_o)
+   );
+
+   logic unused;
+   assign unused = ^gpio_out ^ ^gpio_oe;
 endmodule

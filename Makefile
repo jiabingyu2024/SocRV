@@ -7,7 +7,7 @@ ISA_GATE ?= current
 COREMARK_ITERATIONS ?= 3
 DIFFTEST ?= 0
 DIFFTEST_MODE ?= ram-strict
-DIFFTEST_ISA ?= rv32im_zicsr_zicntr_zifencei
+DIFFTEST_ISA ?= rv32imf_zicsr
 
 .DEFAULT_GOAL := help
 
@@ -155,7 +155,7 @@ diff-rtthread: difftest-build
 		--uart-command socrv_info \
 		--uart-prompt "msh >" \
 		--checker uart-command-test-status-and-uart \
-		--uart-expect "SocRV march=rv32im_zicsr_zicntr_zifencei" --no-rtl-build
+		--uart-expect "SocRV march=rv32imf_zicsr" --no-rtl-build
 
 diff-replay:
 	@$(PYTHON) scripts/replay_difftest.py --result "$(RESULT)" \
@@ -168,7 +168,7 @@ sim-quick:
 	@$(MAKE) sim-rtthread
 	@$(MAKE) sim-coremark COREMARK_ITERATIONS=3
 
-# Milestone gate: full RV32UI/RV32MI/RV32UM target and a longer trend run.
+# Milestone gate: RV32UI/RV32MI/RV32UM/RV32UF and a longer trend run.
 sim-full:
 	@$(MAKE) sim-isa ISA_GATE=final-base
 	@$(MAKE) sim-rtthread

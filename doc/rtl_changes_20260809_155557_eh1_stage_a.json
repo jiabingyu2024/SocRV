@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-08-09T15:55:57+08:00",
+  "mode": "full_generation",
+  "architecture_source": "../learn/01-yjb/documents/20_veer_eh1_tcm_soc_fpga_rtthread_coremark_migration.md",
+  "current_stage": "stage_a_copied_eh1_baseline",
+  "upstream": {
+    "repository": "Cores-VeeR-EH1",
+    "revision": "d04b1c7ae675a63dc4307cacfd10547ec937b928",
+    "source_path": "Cores-VeeR-EH1/design",
+    "destination_path": "SocRv/rtl/core/eh1f"
+  },
+  "files_created": [
+    {
+      "path": "rtl/core/eh1f/**",
+      "subsystem": "cpu_core",
+      "description": "Mechanical copy of the complete upstream EH1 design and generated Stage-A configuration"
+    },
+    {
+      "path": "rtl/filelist_stage_a.f",
+      "subsystem": "build",
+      "description": "Explicit compilation inventory for the copied core baseline"
+    },
+    {
+      "path": "rtl/filelist.f",
+      "subsystem": "build",
+      "description": "Active-stage filelist selector"
+    },
+    {
+      "path": "rtl/README.md",
+      "subsystem": "documentation",
+      "description": "Implementation state and frozen target"
+    }
+  ],
+  "stage_a_configuration": {
+    "target": "high_perf",
+    "bus": "ahb_lite",
+    "reset_vector": "0x00000000",
+    "iccm": "128 KiB at 0x00000000",
+    "dccm": "64 KiB at 0x00020000",
+    "icache": "disabled",
+    "pic": "8 sources, 32 KiB at 0x00030000",
+    "fpga_optimize": true
+  },
+  "next_stage": "remove_compressed_extension",
+  "cascade_scope": "structural_review_then_external_compile_and_simulation"
+}

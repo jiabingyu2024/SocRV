@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "change": "Complete RV32F load writeback and exact low-numbered F CSR reads",
+  "diagnostics": [
+    {
+      "symptom": "FLW wrote the DCCM address into the FPR instead of loaded data",
+      "finding": "the inherited load-result mux qualified LSU data with i0v, which only represents an integer GPR destination and is correctly false for FLW",
+      "fix": "qualify the E3/E4 LSU data path with the pipeline-aligned fload_e3/fload_e4 indicators"
+    },
+    {
+      "symptom": "fsflags returned 0x40001120 (MISA) instead of fflags",
+      "finding": "EH1 legacy CSR selects are Boolean-minimized over the original CSR set, so new addresses 0x001-0x003 alias legacy selects",
+      "fix": "give exact-address fflags/frm/fcsr reads priority over the inherited OR mux"
+    }
+  ],
+  "files": [
+    "rtl/core/eh1f/dec/dec_decode_ctl.sv",
+    "rtl/core/eh1f/dec/dec_tlu_ctl.sv"
+  ],
+  "backups": [
+    "backup/20260809_212000/rtl/core/eh1f/dec/dec_decode_ctl.sv",
+    "backup/20260809_213600/rtl/core/eh1f/dec/dec_tlu_ctl.sv"
+  ],
+  "verification": {
+    "rv32uf/ldst": "PASS, 83 cycles",
+    "rv32uf/fadd": "PASS, 361 cycles",
+    "full_fp_single_gate": "PASS, 11/11 tests",
+    "summary": "build/regression/isa/fp-single/summary.json"
+  }
+}

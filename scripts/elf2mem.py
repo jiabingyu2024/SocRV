@@ -179,6 +179,39 @@ def write_instruction_banks(region: Region, low_output: Path, high_output: Path)
     ]
 
 
+def write_interleaved_banks(
+    region: Region,
+    outputs: list[Path],
+    *,
+    name_prefix: str,
+) -> list[dict[str, object]]:
+    """Split a flat little-endian word image across equal 32-bit TCM banks."""
+    bank_count = len(outputs)
+    if bank_count == 0 or region.size % (4 * bank_count):
+        raise ValueError(
+            f"{region.name} size must be a multiple of {bank_count} words"
+        )
+    depth = region.size // (4 * bank_count)
+    entries: list[dict[str, object]] = []
+    for bank, output in enumerate(outputs):
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with output.open("w", encoding="ascii", newline="\n") as stream:
+            for row in range(depth):
+                offset = (row * bank_count + bank) * 4
+                word = int.from_bytes(region.image[offset : offset + 4], "little")
+                stream.write(f"{word:08x}\n")
+        entries.append(
+            {
+                "name": f"{name_prefix}{bank}",
+                "file": manifest_path(output),
+                "size": region.size // bank_count,
+                "stored_words": depth,
+                "sha256": sha256_file(output),
+            }
+        )
+    return entries
+
+
 def convert(
     elf: Path,
     regions: list[Region],
@@ -191,6 +224,8 @@ def convert(
     trim: bool = False,
     code_bank_low: Path | None = None,
     code_bank_high: Path | None = None,
+    iccm_lanes: list[Path] | None = None,
+    dccm_banks: list[Path] | None = None,
 ) -> None:
     entry, segments = parse_elf32_little(elf)
     placement: list[dict[str, object]] = []
@@ -236,6 +271,28 @@ def convert(
         if code_region is None:
             raise ValueError("CODE region is required for instruction bank generation")
         banks = write_instruction_banks(code_region, code_bank_low, code_bank_high)
+    if iccm_lanes:
+        if len(iccm_lanes) != 4:
+            raise ValueError("exactly four --iccm-lane outputs are required")
+        code_region = next((region for region in regions if region.name == "CODE"), None)
+        if code_region is None:
+            raise ValueError("CODE region is required for ICCM lane generation")
+        banks.extend(
+            write_interleaved_banks(
+                code_region, iccm_lanes, name_prefix="ICCM_LANE"
+            )
+        )
+    if dccm_banks:
+        if len(dccm_banks) != 8:
+            raise ValueError("exactly eight --dccm-bank outputs are required")
+        data_region = next((region for region in regions if region.name == "DATA"), None)
+        if data_region is None:
+            raise ValueError("DATA region is required for DCCM bank generation")
+        banks.extend(
+            write_interleaved_banks(
+                data_region, dccm_banks, name_prefix="DCCM_BANK"
+            )
+        )
     manifest = {
         "schema_version": 2,
         "kind": "software_image",
@@ -299,6 +356,8 @@ def main() -> int:
     parser.add_argument("--trim", action="store_true")
     parser.add_argument("--code-bank-low", type=Path)
     parser.add_argument("--code-bank-high", type=Path)
+    parser.add_argument("--iccm-lane", type=Path, action="append")
+    parser.add_argument("--dccm-bank", type=Path, action="append")
     args = parser.parse_args()
     try:
         contract = json.loads(args.contract.read_text(encoding="utf-8"))
@@ -310,13 +369,23 @@ def main() -> int:
             profile=args.profile,
             contract=contract,
             memory_map_hash=sha256_file(args.memory_map),
-            test_status_base=int(
-                memory_map["regions"]["TEST_STATUS"]["base"],
-                0,
+            test_status_base=(
+                int(memory_map["regions"]["SYSCTRL"]["base"], 0)
+                + int(
+                    contract["peripherals"]["SYSCTRL"]["registers"]
+                    ["STATUS"]["offset"],
+                    0,
+                )
             ),
             trim=args.trim,
             code_bank_low=args.code_bank_low.resolve() if args.code_bank_low else None,
             code_bank_high=args.code_bank_high.resolve() if args.code_bank_high else None,
+            iccm_lanes=[path.resolve() for path in args.iccm_lane]
+            if args.iccm_lane
+            else None,
+            dccm_banks=[path.resolve() for path in args.dccm_bank]
+            if args.dccm_bank
+            else None,
         )
     except (OSError, ValueError) as error:
         parser.error(str(error))

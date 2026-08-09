@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "stage": "stage2_integration_review",
+  "timestamp": "2026-08-09T18:02:21+08:00",
+  "backup": "backup/20260809_180221_stage2_integration_review",
+  "rtl_changes": [
+    {
+      "path": "rtl/core/eh1f/dec/dec_tlu_ctl.sv",
+      "reason": "Make mstatus.SD reflect FS=Dirty only and document the F bit in MISA.",
+      "sha256": "37d0d26b993250906e7f8e5db9f9eacb332ccbb468e51c9e6e4fefc219aab1c0"
+    },
+    {
+      "path": "rtl/core/eh1f/lsu/lsu_addrcheck.sv",
+      "reason": "Enforce the frozen trap-on-misaligned data-access contract for DCCM and MMIO.",
+      "sha256": "f57a4af8466bf80ebb5a09cc0436b88ee5b5078f21b42922b5bd119e17a670f4"
+    },
+    {
+      "path": "rtl/core/eh1f/ifu/ifu_iccm_mem.sv",
+      "reason": "Allow per-image ICCM lane loading through simulation-only plusargs while preserving fixed synthesis parameters.",
+      "sha256": "75da83d2f1a3f59db54518f07c3719248916d6722564b3a75b29f50111d0480e"
+    },
+    {
+      "path": "rtl/core/eh1f/lsu/lsu_dccm_mem.sv",
+      "reason": "Allow per-image DCCM bank loading through simulation-only plusargs while preserving fixed synthesis parameters.",
+      "sha256": "1422ef77306aeb85bdaba6128458d70a27d7735fffdecd2c0978156ab4de14ef"
+    }
+  ],
+  "integration_changes": [
+    {
+      "path": "Makefile",
+      "reason": "Use the exact RV32IMF_Zicsr difftest and UART contract."
+    },
+    {
+      "path": "scripts/README.md",
+      "reason": "Replace stale mojibake documentation with the frozen target and image flow."
+    },
+    {
+      "path": "scripts/run_verilator.py",
+      "reason": "Require and pass the four ICCM lane and eight DCCM bank images to the runtime model.",
+      "sha256": "387260234e6572422b179894d9b87a385296d565cd619eeed82b4d87575f3409"
+    },
+    {
+      "path": "../learn/01-yjb/documents/20_veer_eh1_tcm_soc_fpga_rtthread_coremark_migration.md",
+      "reason": "Document precise DCCM/MMIO misalignment behavior."
+    }
+  ],
+  "checks": {
+    "soc_contract": "pass",
+    "schemas": "pass",
+    "memory_map": "pass",
+    "filelists": "pass_67_rtl_68_sim_72_fpga_paths",
+    "images": "expected_fail_stale_memory_map",
+    "compile": "not_run_stage_boundary",
+    "simulation": "not_run_stage_boundary"
+  },
+  "blockers": [
+    "stale tb/soc/soc_sim_top.sv and C++ commit-trace adapter",
+    "stale data/isa and build/images memory-map manifests",
+    "no dynamic architectural, performance, timing or board evidence"
+  ]
+}

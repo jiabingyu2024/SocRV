@@ -11,7 +11,7 @@
         "enabled": true,
         "backend": "spike",
         "mode": "soc-mmio",
-        "isa": "rv32im_zicsr_zicntr_zifencei"
+        "isa": "rv32imf_zicsr"
       },
       "uart_expect": ["SocRV smoke PASS"],
       "max_cycles": 200000,
@@ -27,7 +27,7 @@
         "enabled": true,
         "backend": "spike",
         "mode": "soc-mmio",
-        "isa": "rv32im_zicsr_zicntr_zifencei"
+        "isa": "rv32imf_zicsr"
       },
       "uart_command": "socrv_info",
       "uart_prompt": "msh >",
@@ -35,7 +35,7 @@
       "uart_expect": [
         "Thread Nano Operating System",
         "SocRV RT-Thread boot",
-        "SocRV march=rv32im_zicsr_zicntr_zifencei",
+        "SocRV march=rv32imf_zicsr",
         "msh >"
       ],
       "max_cycles": 2000000,
@@ -51,7 +51,7 @@
         "enabled": true,
         "backend": "spike",
         "mode": "soc-mmio",
-        "isa": "rv32im_zicsr_zicntr_zifencei"
+        "isa": "rv32imf_zicsr"
       },
       "max_cycles": 500000,
       "seed": 1
@@ -66,7 +66,7 @@
         "enabled": false,
         "backend": "spike",
         "mode": "soc-mmio",
-        "isa": "rv32im_zicsr_zicntr_zifencei"
+        "isa": "rv32imf_zicsr"
       },
       "uart_command": "help",
       "uart_prompt": "msh >",
@@ -92,7 +92,7 @@
         "enabled": false,
         "backend": "spike",
         "mode": "soc-mmio",
-        "isa": "rv32im_zicsr_zicntr_zifencei"
+        "isa": "rv32imf_zicsr"
       },
       "uart_command": "ps",
       "uart_prompt": "msh >",
@@ -116,7 +116,7 @@
         "enabled": false,
         "backend": "spike",
         "mode": "soc-mmio",
-        "isa": "rv32im_zicsr_zicntr_zifencei"
+        "isa": "rv32imf_zicsr"
       },
       "uart_command": "uptime",
       "uart_prompt": "msh >",
@@ -141,7 +141,7 @@
         "enabled": false,
         "backend": "spike",
         "mode": "soc-mmio",
-        "isa": "rv32im_zicsr_zicntr_zifencei"
+        "isa": "rv32imf_zicsr"
       },
       "uart_command": "coremark 3",
       "uart_prompt": "msh >",
@@ -171,7 +171,7 @@
         "enabled": false,
         "backend": "spike",
         "mode": "soc-mmio",
-        "isa": "rv32im_zicsr_zicntr_zifencei"
+        "isa": "rv32imf_zicsr"
       },
       "uart_command": "coremark 10",
       "uart_prompt": "msh >",

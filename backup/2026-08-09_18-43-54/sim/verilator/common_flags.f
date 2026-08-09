@@ -1,0 +1,11 @@
+--cc
+--exe
+--build
+--timing
+--trace
+-Wall
+-Wno-fatal
+-Wno-DECLFILENAME
+-Wno-UNUSEDPARAM
+-Wno-UNUSEDSIGNAL
+-Wno-SYNCASYNCNET

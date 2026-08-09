@@ -5,14 +5,15 @@
     "mandatory_suites": [
       "rv32ui",
       "rv32mi",
-      "rv32um"
+      "rv32um",
+      "rv32uf"
     ],
-    "floating_point_selection": "double"
+    "floating_point_selection": "single"
   },
   "suites": [
     {
       "name": "rv32ui",
-      "march": "rv32i_zicsr_zifencei",
+      "march": "rv32i_zicsr",
       "mabi": "ilp32",
       "generate": true,
       "tests": [
@@ -28,7 +29,6 @@
         "blt",
         "bltu",
         "bne",
-        "fence_i",
         "jal",
         "jalr",
         "lb",
@@ -67,28 +67,34 @@
     },
     {
       "name": "rv32mi",
-      "march": "rv32imfd_zicsr_zicntr_zifencei",
+      "march": "rv32imf_zicsr",
       "mabi": "ilp32",
       "generate": true,
       "tests": [
         "breakpoint",
         "csr",
         "illegal",
-        "instret_overflow",
         "lh-misaligned",
         "lw-misaligned",
         "ma_addr",
         "ma_fetch",
         "mcsr",
-        "pmpaddr",
         "sbreak",
         "scall",
         "sh-misaligned",
         "shamt",
-        "sw-misaligned",
-        "zicntr"
+        "sw-misaligned"
       ],
-      "excluded": []
+      "excluded": [
+        {
+          "test": "instret_overflow",
+          "reason": "Requires writable minstret/minstreth counter overflow semantics from Zicntr, outside the RV32IMF_Zicsr target"
+        },
+        {
+          "test": "pmpaddr",
+          "reason": "Requires Physical Memory Protection CSRs, which are optional and outside the RV32IMF_Zicsr target"
+        }
+      ]
     },
     {
       "name": "rv32um",
@@ -110,7 +116,7 @@
     {
       "name": "rv32uf",
       "march": "rv32imf_zicsr",
-      "mabi": "ilp32",
+      "mabi": "ilp32f",
       "generate": true,
       "tests": [
         "fadd",
@@ -131,7 +137,7 @@
       "name": "rv32ud",
       "march": "rv32imfd_zicsr",
       "mabi": "ilp32",
-      "generate": true,
+      "generate": false,
       "tests": [
         "fadd",
         "fclass",

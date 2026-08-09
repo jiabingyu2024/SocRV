@@ -4,6 +4,7 @@
 #include "encoding.h"
 
 #define TESTNUM gp
+#define SOCRV_TEST_STATUS_BASE 0x10003014
 
 #define RVTEST_RV32U                                                 \
     .macro init;                                                     \
@@ -35,7 +36,7 @@ trap_vector:                                                          \
     beqz t5, unexpected_trap;                                         \
     jr t5;                                                            \
 unexpected_trap:                                                      \
-    li t0, 0x30002000;                                                \
+    li t0, SOCRV_TEST_STATUS_BASE;                                    \
     csrr t1, mcause;                                                  \
     sw t1, 4(t0);                                                     \
     li t1, 0x4641494c;                                                \
@@ -46,14 +47,14 @@ unexpected_trap:                                                      \
 #define RVTEST_CODE_END
 
 #define RVTEST_PASS                                                   \
-    li t0, 0x30002000;                                                \
+    li t0, SOCRV_TEST_STATUS_BASE;                                    \
     sw zero, 4(t0);                                                   \
     li t1, 0x50415353;                                                \
     sw t1, 0(t0);                                                     \
 0:  j 0b;
 
 #define RVTEST_FAIL                                                   \
-    li t0, 0x30002000;                                                \
+    li t0, SOCRV_TEST_STATUS_BASE;                                    \
     sw TESTNUM, 4(t0);                                                \
     li t1, 0x4641494c;                                                \
     sw t1, 0(t0);                                                     \

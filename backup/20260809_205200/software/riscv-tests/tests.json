@@ -1,0 +1,154 @@
+{
+  "schema_version": 2,
+  "current_gate": "current",
+  "final_gate": {
+    "mandatory_suites": [
+      "rv32ui",
+      "rv32mi",
+      "rv32um",
+      "rv32uf"
+    ],
+    "floating_point_selection": "single"
+  },
+  "suites": [
+    {
+      "name": "rv32ui",
+      "march": "rv32i_zicsr",
+      "mabi": "ilp32",
+      "generate": true,
+      "tests": [
+        "simple",
+        "add",
+        "addi",
+        "and",
+        "andi",
+        "auipc",
+        "beq",
+        "bge",
+        "bgeu",
+        "blt",
+        "bltu",
+        "bne",
+        "jal",
+        "jalr",
+        "lb",
+        "lbu",
+        "ld_st",
+        "lh",
+        "lhu",
+        "lui",
+        "lw",
+        "or",
+        "ori",
+        "sb",
+        "sh",
+        "sll",
+        "slli",
+        "slt",
+        "slti",
+        "sltiu",
+        "sltu",
+        "sra",
+        "srai",
+        "srl",
+        "srli",
+        "st_ld",
+        "sub",
+        "sw",
+        "xor",
+        "xori"
+      ],
+      "excluded": [
+        {
+          "test": "ma_data",
+          "reason": "The frozen target contract permits misaligned accesses to trap"
+        }
+      ]
+    },
+    {
+      "name": "rv32mi",
+      "march": "rv32imf_zicsr",
+      "mabi": "ilp32",
+      "generate": true,
+      "tests": [
+        "breakpoint",
+        "csr",
+        "illegal",
+        "instret_overflow",
+        "lh-misaligned",
+        "lw-misaligned",
+        "ma_addr",
+        "ma_fetch",
+        "mcsr",
+        "pmpaddr",
+        "sbreak",
+        "scall",
+        "sh-misaligned",
+        "shamt",
+        "sw-misaligned"
+      ],
+      "excluded": []
+    },
+    {
+      "name": "rv32um",
+      "march": "rv32im_zicsr",
+      "mabi": "ilp32",
+      "generate": true,
+      "tests": [
+        "div",
+        "divu",
+        "mul",
+        "mulh",
+        "mulhsu",
+        "mulhu",
+        "rem",
+        "remu"
+      ],
+      "excluded": []
+    },
+    {
+      "name": "rv32uf",
+      "march": "rv32imf_zicsr",
+      "mabi": "ilp32f",
+      "generate": true,
+      "tests": [
+        "fadd",
+        "fclass",
+        "fcmp",
+        "fcvt",
+        "fcvt_w",
+        "fdiv",
+        "fmadd",
+        "fmin",
+        "ldst",
+        "move",
+        "recoding"
+      ],
+      "excluded": []
+    },
+    {
+      "name": "rv32ud",
+      "march": "rv32imfd_zicsr",
+      "mabi": "ilp32",
+      "generate": false,
+      "tests": [
+        "fadd",
+        "fclass",
+        "fcmp",
+        "fcvt",
+        "fcvt_w",
+        "fdiv",
+        "fmadd",
+        "fmin",
+        "ldst",
+        "recoding"
+      ],
+      "excluded": [
+        {
+          "test": "move",
+          "reason": "The pinned upstream rv32ud Makefrag excludes this test because the RV32 move case is not implemented"
+        }
+      ]
+    }
+  ]
+}
