@@ -21,7 +21,7 @@ module xilinx_clock_wrapper (
     .CLKIN1_PERIOD(5.000),
     .DIVCLK_DIVIDE(1),
     .CLKFBOUT_MULT_F(6.000),
-    .CLKOUT0_DIVIDE_F(10.000),
+    .CLKOUT0_DIVIDE_F(8.000),
     .STARTUP_WAIT("FALSE")
   ) u_mmcm (
     .CLKIN1(clk_input),
