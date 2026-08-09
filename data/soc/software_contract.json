@@ -47,8 +47,8 @@
     "compressed": false
   },
   "clocks": {
-    "soc_hz": 150000000,
-    "timer_hz": 150000000,
+    "soc_hz": 170000000,
+    "timer_hz": 170000000,
     "uart_baud": 115200
   },
   "interrupts": {

@@ -558,8 +558,9 @@ def run_image(
         argv.extend(["--uart-reject", forbidden])
     # UART timing is part of the generated SoC contract even for tests that
     # only decode TX and never inject an RX command.  Leaving those tests at
-    # the C++ harness's historical 50 MHz default makes a valid 150 MHz image
-    # look like framing-error garbage and hides real board-safety regressions.
+    # the C++ harness's historical 50 MHz default makes a valid image built for
+    # the generated frequency look like framing-error garbage and hides real
+    # board-safety regressions.
     contract = read_json(
         repo_path("data", "soc", "software_contract.json")
     )
