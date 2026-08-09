@@ -25,6 +25,12 @@ def check_manifest(path: Path) -> None:
             image = repo_path(image.as_posix())
         if not image.exists() or sha256_file(image) != region["sha256"]:
             raise ValueError(f"region hash mismatch: {image}")
+    for bank in document.get("banks", []):
+        image = Path(bank["file"])
+        if not image.is_absolute():
+            image = repo_path(image.as_posix())
+        if not image.exists() or sha256_file(image) != bank["sha256"]:
+            raise ValueError(f"bank hash mismatch: {image}")
     print(f"Image OK: {path}")
 
 

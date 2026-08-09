@@ -1,14 +1,15 @@
-if {$argc < 4} {
-    error "usage: build_bitstream.tcl BUILD_DIR CODE_MEM DATA_MEM JOBS"
+if {$argc < 5} {
+    error "usage: build_bitstream.tcl BUILD_DIR CODE_LO_MEM CODE_HI_MEM DATA_MEM JOBS"
 }
 set script_dir [file normalize [file dirname [info script]]]
 set build_dir [file normalize [lindex $argv 0]]
-set code_mem [file normalize [lindex $argv 1]]
-set data_mem [file normalize [lindex $argv 2]]
-set jobs [lindex $argv 3]
+set code_lo_mem [file normalize [lindex $argv 1]]
+set code_hi_mem [file normalize [lindex $argv 2]]
+set data_mem [file normalize [lindex $argv 3]]
+set jobs [lindex $argv 4]
 
-set argv [list $build_dir $code_mem $data_mem]
-set argc 3
+set argv [list $build_dir $code_lo_mem $code_hi_mem $data_mem]
+set argc 4
 source [file join $script_dir create_project.tcl]
 close_project
 

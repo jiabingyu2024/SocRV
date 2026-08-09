@@ -249,6 +249,10 @@ def build_profile(
         f"{image_dir / 'data.mem'}",
         "--manifest",
         str(image_dir / "image.json"),
+        "--code-bank-low",
+        str(image_dir / "code_lo.mem"),
+        "--code-bank-high",
+        str(image_dir / "code_hi.mem"),
     ]
     subprocess.run(command, cwd=repo_path(), check=True)
     return elf, image_dir

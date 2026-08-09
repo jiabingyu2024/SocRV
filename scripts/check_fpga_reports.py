@@ -23,6 +23,16 @@ def check(build_root: Path) -> Path:
     timing_text = timing.read_text(encoding="utf-8", errors="replace")
     drc_text = drc.read_text(encoding="utf-8", errors="replace")
     timing_met = "All user specified timing constraints are met." in timing_text
+    # Vivado's Design Timing Summary table starts with WNS/TNS/WHS/THS.  Keep
+    # the numeric result in the sign-off JSON so frequency bottlenecks can be
+    # compared without treating a looser build as proof for a faster one.
+    wns_match = re.search(
+        r"WNS\(ns\).*?\n[-\s]+\n\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)",
+        timing_text,
+        re.DOTALL,
+    )
+    wns_ns = float(wns_match.group(1)) if wns_match else None
+    tns_ns = float(wns_match.group(2)) if wns_match else None
     drc_errors = len(re.findall(r"\|\s*(?:Error|Critical Warning)\s*\|", drc_text))
     warning_match = re.search(r"Violations found:\s*(\d+)", drc_text)
     warnings = int(warning_match.group(1)) if warning_match else 0
@@ -36,6 +46,8 @@ def check(build_root: Path) -> Path:
             "target": "kintex7_competition",
             "status": status,
             "timing_met": timing_met,
+            "wns_ns": wns_ns,
+            "tns_ns": tns_ns,
             "drc_error_count": drc_errors,
             "drc_warning_count": warnings,
             "artifacts": {

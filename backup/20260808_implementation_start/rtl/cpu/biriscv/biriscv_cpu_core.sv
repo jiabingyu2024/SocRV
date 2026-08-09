@@ -11,8 +11,8 @@ module biriscv_cpu_core #(
 ) (
   input  logic clk_i,
   input  logic rst_ni,
-  cpu_instr_if.master instr,
-  cpu_data_if.master data,
+  hxi_if.master instr_hxi,
+  hxi_if.master data_hxi,
   input  logic irq_software_i,
   input  logic irq_timer_i,
   input  logic irq_external_i,
@@ -22,6 +22,17 @@ module biriscv_cpu_core #(
 );
   logic core_rst;
   assign core_rst = !rst_ni;
+
+  logic ic_req_valid, ic_req_ready;
+  logic [31:0] ic_req_addr;
+  logic ic_rsp_valid, ic_rsp_ready, ic_rsp_err;
+  logic [31:0] ic_rsp_rdata;
+
+  logic dc_req_valid, dc_req_ready, dc_req_write;
+  logic [31:0] dc_req_addr, dc_req_wdata;
+  logic [3:0] dc_req_wstrb;
+  logic dc_rsp_valid, dc_rsp_ready, dc_rsp_err;
+  logic [31:0] dc_rsp_rdata;
 
   logic [31:0] dcache_data_rd;
   logic dcache_accept, dcache_ack, dcache_error;
@@ -60,21 +71,55 @@ module biriscv_cpu_core #(
                        {1'b0, core_commit_slot1_valid};
   end
 
-  biriscv_itcm_adapter u_itcm_adapter (
+  assign instr_hxi.req_valid = ic_req_valid;
+  assign instr_hxi.req_addr  = ic_req_addr;
+  assign instr_hxi.req_write = 1'b0;
+  assign instr_hxi.req_wdata = '0;
+  assign instr_hxi.req_wstrb = '0;
+  assign instr_hxi.rsp_ready = ic_rsp_ready;
+  assign ic_req_ready       = instr_hxi.req_ready;
+  assign ic_rsp_valid       = instr_hxi.rsp_valid;
+  assign ic_rsp_rdata       = instr_hxi.rsp_rdata;
+  assign ic_rsp_err         = instr_hxi.rsp_err;
+
+  assign data_hxi.req_valid = dc_req_valid;
+  assign data_hxi.req_addr  = {dc_req_addr[31:2], 2'b00};
+  assign data_hxi.req_write = dc_req_write;
+  assign data_hxi.req_wdata = dc_req_wdata << {dc_req_addr[1:0], 3'b000};
+  assign data_hxi.req_wstrb = (dc_req_wstrb << dc_req_addr[1:0]) & 4'hf;
+  assign data_hxi.rsp_ready = dc_rsp_ready;
+  assign dc_req_ready       = data_hxi.req_ready;
+  assign dc_rsp_valid       = data_hxi.rsp_valid;
+  assign dc_rsp_rdata       = data_hxi.rsp_rdata;
+  assign dc_rsp_err         = data_hxi.rsp_err;
+
+  biriscv_icache u_icache (
     .clk_i(clk_i), .rst_i(core_rst),
     .req_rd_i(icache_rd), .req_flush_i(icache_flush),
     .req_invalidate_i(icache_invalidate), .req_pc_i(icache_pc),
+    .hxi_req_ready_i(ic_req_ready), .hxi_rsp_valid_i(ic_rsp_valid),
+    .hxi_rsp_rdata_i(ic_rsp_rdata), .hxi_rsp_err_i(ic_rsp_err),
     .req_accept_o(icache_accept), .req_valid_o(icache_valid),
-    .req_error_o(icache_error), .req_inst_o(icache_inst), .instr(instr)
+    .req_error_o(icache_error), .req_inst_o(icache_inst),
+    .hxi_req_valid_o(ic_req_valid), .hxi_req_addr_o(ic_req_addr),
+    .hxi_rsp_ready_o(ic_rsp_ready)
   );
 
-  biriscv_dtcm_adapter u_dtcm_adapter (
+  biriscv_dcache u_dcache (
     .clk_i(clk_i), .rst_i(core_rst),
     .mem_addr_i(dcache_addr), .mem_data_wr_i(dcache_data_wr),
-    .mem_rd_i(dcache_rd), .mem_wr_i(dcache_wr), .mem_req_tag_i(dcache_req_tag),
+    .mem_rd_i(dcache_rd), .mem_wr_i(dcache_wr),
+    .mem_cacheable_i(dcache_cacheable), .mem_req_tag_i(dcache_req_tag),
+    .mem_invalidate_i(dcache_invalidate),
+    .mem_writeback_i(dcache_writeback), .mem_flush_i(dcache_flush),
+    .hxi_req_ready_i(dc_req_ready), .hxi_rsp_valid_i(dc_rsp_valid),
+    .hxi_rsp_rdata_i(dc_rsp_rdata), .hxi_rsp_err_i(dc_rsp_err),
     .mem_data_rd_o(dcache_data_rd), .mem_accept_o(dcache_accept),
     .mem_ack_o(dcache_ack), .mem_error_o(dcache_error),
-    .mem_resp_tag_o(dcache_resp_tag), .data(data)
+    .mem_resp_tag_o(dcache_resp_tag), .hxi_req_valid_o(dc_req_valid),
+    .hxi_req_addr_o(dc_req_addr), .hxi_req_write_o(dc_req_write),
+    .hxi_req_wdata_o(dc_req_wdata), .hxi_req_wstrb_o(dc_req_wstrb),
+    .hxi_rsp_ready_o(dc_rsp_ready)
   );
 
   riscv_core #(
@@ -88,10 +133,7 @@ module biriscv_cpu_core #(
     .SUPPORT_LOAD_BYPASS(1),
     .SUPPORT_MUL_BYPASS(1),
     .SUPPORT_REGFILE_XILINX(0),
-    // Add the core's optional registered decode stage.  This separates the
-    // frontend FIFO/branch-control fanout from LSU operand formation and is
-    // required for a realistic 100 MHz timing target on Kintex-7.
-    .EXTRA_DECODE_STAGE(1)
+    .EXTRA_DECODE_STAGE(0)
   ) u_core (
     .clk_i(clk_i), .rst_i(core_rst),
     .mem_d_data_rd_i(dcache_data_rd), .mem_d_accept_i(dcache_accept),
@@ -127,7 +169,7 @@ module biriscv_cpu_core #(
     end else begin
       if (|core_event_count)
         order_q <= order_q + {{62{1'b0}}, core_event_count};
-      if (data.rsp_valid && data.rsp_error)
+      if (dc_rsp_valid && dc_rsp_err)
         data_fault_q <= 1'b1;
     end
   end

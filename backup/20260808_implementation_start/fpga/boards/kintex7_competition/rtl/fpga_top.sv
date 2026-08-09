@@ -1,7 +1,5 @@
 module fpga_top #(
-  parameter real CORE_CLKOUT_DIVIDE_F = 10.0,
-  parameter string CODE_MEM_LO_FILE = "",
-  parameter string CODE_MEM_HI_FILE = "",
+  parameter string CODE_MEM_FILE = "",
   parameter string DATA_MEM_FILE = ""
 ) (
   input  logic i_sys_clk_p,
@@ -16,6 +14,8 @@ module fpga_top #(
   logic core_rst_n;
   logic periph_rst_n;
   logic clock_locked;
+  mem_native_if code_mem(core_clk);
+  mem_native_if data_mem(core_clk);
   logic [15:0] gpio_i;
   logic [15:0] gpio_o;
   logic [15:0] gpio_oe;
@@ -30,9 +30,7 @@ module fpga_top #(
   assign gpio_i = '0;
   assign ext_irq = '0;
 
-  board_clock_reset #(
-    .CORE_CLKOUT_DIVIDE_F(CORE_CLKOUT_DIVIDE_F)
-  ) u_clock_reset (
+  board_clock_reset u_clock_reset (
     .sys_clk_p_i(i_sys_clk_p),
     .sys_clk_n_i(i_sys_clk_n),
     .core_clk_o(core_clk),
@@ -42,15 +40,13 @@ module fpga_top #(
     .clock_locked_o(clock_locked)
   );
 
-  soc_core #(
-    .CODE_MEM_LO_FILE(CODE_MEM_LO_FILE),
-    .CODE_MEM_HI_FILE(CODE_MEM_HI_FILE),
-    .DATA_MEM_FILE(DATA_MEM_FILE)
-  ) u_soc (
+  soc_core u_soc (
     .core_clk_i(core_clk),
     .core_rst_ni(core_rst_n),
     .periph_clk_i(periph_clk),
     .periph_rst_ni(periph_rst_n),
+    .code_mem,
+    .data_mem,
     .uart_rx_i(i_uart_rx),
     .uart_tx_o(o_uart_tx),
     .gpio_i,
@@ -63,6 +59,24 @@ module fpga_top #(
     .commit_o(commit),
     .retire_count_o(retire_count),
     .cpu_fault_o(cpu_fault)
+  );
+
+  xilinx_code_mem_backend #(
+    .BYTES(memory_map_pkg::CODE_SIZE),
+    .MEM_FILE(CODE_MEM_FILE)
+  ) u_code_memory (
+    .clk_i(core_clk),
+    .rst_ni(core_rst_n),
+    .mem(code_mem)
+  );
+
+  xilinx_data_mem_backend #(
+    .BYTES(memory_map_pkg::DATA_SIZE),
+    .MEM_FILE(DATA_MEM_FILE)
+  ) u_data_memory (
+    .clk_i(core_clk),
+    .rst_ni(core_rst_n),
+    .mem(data_mem)
   );
 
   board_io_wrapper u_board_io (

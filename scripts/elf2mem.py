@@ -140,6 +140,45 @@ def write_word_mem(region: Region, *, trim: bool) -> None:
             stream.write(f"{word:08x}\n")
 
 
+def write_instruction_banks(region: Region, low_output: Path, high_output: Path) -> list[dict[str, object]]:
+    """Write the two physical 32-bit banks used by the 64-bit I-TCM port.
+
+    The generic simulation backend continues to load the canonical code.mem
+    image.  FPGA synthesis uses these fixed-size files directly, which avoids
+    an elaboration-time array copy that would prevent clean BRAM inference.
+    """
+    if region.name != "CODE":
+        raise ValueError("instruction bank files can only be generated for CODE")
+    if region.size % 8:
+        raise ValueError("CODE region must be a multiple of one 64-bit fetch word")
+    low_output.parent.mkdir(parents=True, exist_ok=True)
+    high_output.parent.mkdir(parents=True, exist_ok=True)
+    with low_output.open("w", encoding="ascii", newline="\n") as low, high_output.open(
+        "w", encoding="ascii", newline="\n"
+    ) as high:
+        for offset in range(0, region.size, 8):
+            low_word = int.from_bytes(region.image[offset : offset + 4], "little")
+            high_word = int.from_bytes(region.image[offset + 4 : offset + 8], "little")
+            low.write(f"{low_word:08x}\n")
+            high.write(f"{high_word:08x}\n")
+    return [
+        {
+            "name": "CODE_LO",
+            "file": manifest_path(low_output),
+            "size": region.size // 2,
+            "stored_words": region.size // 8,
+            "sha256": sha256_file(low_output),
+        },
+        {
+            "name": "CODE_HI",
+            "file": manifest_path(high_output),
+            "size": region.size // 2,
+            "stored_words": region.size // 8,
+            "sha256": sha256_file(high_output),
+        },
+    ]
+
+
 def convert(
     elf: Path,
     regions: list[Region],
@@ -150,6 +189,8 @@ def convert(
     memory_map_hash: str | None = None,
     test_status_base: int | None = None,
     trim: bool = False,
+    code_bank_low: Path | None = None,
+    code_bank_high: Path | None = None,
 ) -> None:
     entry, segments = parse_elf32_little(elf)
     placement: list[dict[str, object]] = []
@@ -187,6 +228,14 @@ def convert(
                 "fill": "0x00000000",
             }
         )
+    banks: list[dict[str, object]] = []
+    if (code_bank_low is None) != (code_bank_high is None):
+        raise ValueError("both instruction bank output paths are required")
+    if code_bank_low is not None and code_bank_high is not None:
+        code_region = next((region for region in regions if region.name == "CODE"), None)
+        if code_region is None:
+            raise ValueError("CODE region is required for instruction bank generation")
+        banks = write_instruction_banks(code_region, code_bank_low, code_bank_high)
     manifest = {
         "schema_version": 2,
         "kind": "software_image",
@@ -205,6 +254,8 @@ def convert(
         "regions": region_entries,
         "segments": placement,
     }
+    if banks:
+        manifest["banks"] = banks
     if contract is not None:
         cpu = contract["cpu"]
         test_status = contract["test_status"]
@@ -246,6 +297,8 @@ def main() -> int:
         default=repo_path("data", "soc", "memory_map.json"),
     )
     parser.add_argument("--trim", action="store_true")
+    parser.add_argument("--code-bank-low", type=Path)
+    parser.add_argument("--code-bank-high", type=Path)
     args = parser.parse_args()
     try:
         contract = json.loads(args.contract.read_text(encoding="utf-8"))
@@ -262,6 +315,8 @@ def main() -> int:
                 0,
             ),
             trim=args.trim,
+            code_bank_low=args.code_bank_low.resolve() if args.code_bank_low else None,
+            code_bank_high=args.code_bank_high.resolve() if args.code_bank_high else None,
         )
     except (OSError, ValueError) as error:
         parser.error(str(error))

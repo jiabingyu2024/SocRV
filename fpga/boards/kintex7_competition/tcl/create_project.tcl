@@ -1,15 +1,16 @@
-if {$argc < 3} {
-    error "usage: create_project.tcl BUILD_DIR CODE_MEM DATA_MEM"
+if {$argc < 4} {
+    error "usage: create_project.tcl BUILD_DIR CODE_LO_MEM CODE_HI_MEM DATA_MEM"
 }
 
 set script_dir [file normalize [file dirname [info script]]]
 set repo_dir [file normalize [file join $script_dir .. .. .. ..]]
 set build_dir [file normalize [lindex $argv 0]]
-set code_mem [file normalize [lindex $argv 1]]
-set data_mem [file normalize [lindex $argv 2]]
+set code_lo_mem [file normalize [lindex $argv 1]]
+set code_hi_mem [file normalize [lindex $argv 2]]
+set data_mem [file normalize [lindex $argv 3]]
 set part xc7k325tffg900-2
 
-foreach required [list $code_mem $data_mem] {
+foreach required [list $code_lo_mem $code_hi_mem $data_mem] {
     if {![file exists $required]} {
         error "required memory image does not exist: $required"
     }
@@ -52,7 +53,21 @@ read_xdc [file join $repo_dir fpga boards kintex7_competition constraints clocks
 read_xdc [file join $repo_dir fpga boards kintex7_competition constraints cdc.xdc]
 
 set_property top fpga_top [current_fileset]
-set_property generic [list "CODE_MEM_FILE=$code_mem" "DATA_MEM_FILE=$data_mem"] [current_fileset]
+if {[info exists ::env(SOCRV_CORE_DIVIDE)]} {
+    set core_divide $::env(SOCRV_CORE_DIVIDE)
+} else {
+    set core_divide 10.0
+}
+set_property generic [list "CORE_CLKOUT_DIVIDE_F=$core_divide" "CODE_MEM_LO_FILE=$code_lo_mem" "CODE_MEM_HI_FILE=$code_hi_mem" "DATA_MEM_FILE=$data_mem"] [current_fileset]
 set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY rebuilt [get_runs synth_1]
+# The TCMs are explicit BRAM macros, so implementation effort should be spent
+# on the remaining high-fanout front-end/LSU control paths.  These directives
+# are part of every frequency sign-off build, rather than relying on a lucky
+# default-place seed.
+set_property STEPS.OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
+set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
+set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
+set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE AggressiveExplore [get_runs impl_1]
+set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
 update_compile_order -fileset sources_1
 puts "SOCRV_PROJECT=[get_property DIRECTORY [current_project]]"

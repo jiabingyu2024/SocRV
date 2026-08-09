@@ -1,8 +1,6 @@
 module soc_top_generic #(
   parameter int unsigned GPIO_WIDTH = 16,
   parameter string CODE_MEM_FILE = "",
-  parameter string CODE_MEM_LO_FILE = "",
-  parameter string CODE_MEM_HI_FILE = "",
   parameter string DATA_MEM_FILE = ""
 ) (
   input logic clk_i,
@@ -20,19 +18,18 @@ module soc_top_generic #(
   output logic [1:0] retire_count_o,
   output logic cpu_fault_o
 );
-  soc_core #(
-    .GPIO_WIDTH(GPIO_WIDTH),
-    .CODE_MEM_FILE(CODE_MEM_FILE),
-    .CODE_MEM_LO_FILE(CODE_MEM_LO_FILE),
-    .CODE_MEM_HI_FILE(CODE_MEM_HI_FILE),
-    .DATA_MEM_FILE(DATA_MEM_FILE)
-  ) u_soc (
+  mem_native_if code_mem(clk_i);
+  mem_native_if data_mem(clk_i);
+
+  soc_core #(.GPIO_WIDTH(GPIO_WIDTH)) u_soc (
     .core_clk_i(clk_i),
     .core_rst_ni(rst_ni),
     // Generic simulation intentionally uses one clock.  The same soc_core
     // instance receives separate clocks from fpga_top.
     .periph_clk_i(clk_i),
     .periph_rst_ni(rst_ni),
+    .code_mem,
+    .data_mem,
     .uart_rx_i,
     .uart_tx_o,
     .gpio_i,
@@ -47,4 +44,21 @@ module soc_top_generic #(
     .cpu_fault_o
   );
 
+  generic_rom #(
+    .BYTES(memory_map_pkg::CODE_SIZE),
+    .MEM_FILE(CODE_MEM_FILE)
+  ) u_code_memory (
+    .clk_i,
+    .rst_ni,
+    .mem(code_mem)
+  );
+
+  generic_spram #(
+    .BYTES(memory_map_pkg::DATA_SIZE),
+    .MEM_FILE(DATA_MEM_FILE)
+  ) u_data_memory (
+    .clk_i,
+    .rst_ni,
+    .mem(data_mem)
+  );
 endmodule

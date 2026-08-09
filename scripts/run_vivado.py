@@ -30,9 +30,15 @@ def main() -> int:
         default="rtthread-coremark",
     )
     parser.add_argument("--jobs", type=int, default=4)
+    parser.add_argument(
+        "--core-mhz", type=int, choices=(100, 150, 200), default=100,
+        help="core clock target; periph_clk remains 50 MHz",
+    )
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
-    build_root = repo_path("build", "vivado", f"kintex7-{args.profile}")
+    build_root = repo_path(
+        "build", "vivado", f"kintex7-{args.profile}-{args.core_mhz}mhz"
+    )
     if args.check_only:
         check(build_root)
         return 0
@@ -58,11 +64,15 @@ def main() -> int:
         str(repo_path("fpga", "boards", "kintex7_competition", "tcl", "build_bitstream.tcl")),
         "-tclargs",
         str(project_dir),
-        str(image_dir / "code.mem"),
+        str(image_dir / "code_lo.mem"),
+        str(image_dir / "code_hi.mem"),
         str(image_dir / "data.mem"),
         str(args.jobs),
     ]
-    completed = subprocess.run(command, cwd=build_root, check=False)
+    divide = {100: "10.0", 150: "6.6666666667", 200: "5.0"}[args.core_mhz]
+    env = dict(os.environ)
+    env["SOCRV_CORE_DIVIDE"] = divide
+    completed = subprocess.run(command, cwd=build_root, check=False, env=env)
     if completed.returncode != 0:
         parser.error(f"Vivado failed with exit code {completed.returncode}")
     check(build_root)
