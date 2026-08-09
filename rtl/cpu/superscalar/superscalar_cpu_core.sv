@@ -18,6 +18,7 @@ module superscalar_cpu_core (
   logic core_rst;
   logic [31:0] imem_addr;
   logic imem_req_valid;
+  logic imem_req_ready;
   logic dmem_req_valid;
   logic dmem_req_ready;
   logic dmem_req_write;
@@ -85,8 +86,22 @@ module superscalar_cpu_core (
 
   assign core_rst = !rst_ni;
 
-  assign instr_hxi.req_valid = imem_req_valid;
-  assign instr_hxi.req_addr  = imem_addr;
+  // Keep the frontend's issue/redirect/queue-credit cone out of the HXI
+  // arbitration and external BRAM controls.  This slice is deliberately
+  // registered (no empty bypass), while still accepting one request per cycle
+  // whenever HXI is ready.  Requests accepted before a redirect must not be
+  // flushed here: the frontend has already allocated pending metadata for
+  // them and uses its epoch tag to discard their eventual responses safely.
+  skid_buffer #(.WIDTH(32)) u_instr_request_slice (
+    .clk_i,
+    .rst_ni,
+    .in_valid_i(imem_req_valid),
+    .in_ready_o(imem_req_ready),
+    .in_data_i(imem_addr),
+    .out_valid_o(instr_hxi.req_valid),
+    .out_ready_i(instr_hxi.req_ready),
+    .out_data_o(instr_hxi.req_addr)
+  );
   assign instr_hxi.req_write = 1'b0;
   assign instr_hxi.req_wdata = '0;
   assign instr_hxi.req_wstrb = '0;
@@ -113,7 +128,7 @@ module superscalar_cpu_core (
     .rst(core_rst),
     .irom_addr_o(imem_addr),
     .irom_ena_o(imem_req_valid),
-    .irom_req_ready_i(instr_hxi.req_ready),
+    .irom_req_ready_i(imem_req_ready),
     .irom_resp_valid_i(instr_hxi.rsp_valid),
     .irom_data_i(instr_hxi.rsp_rdata),
     .irom_resp_err_i(instr_hxi.rsp_err),

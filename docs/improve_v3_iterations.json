@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "release": "improve_v3",
+  "branch": "dev-improve",
+  "target_frequency_mhz": 150,
+  "implementation_strategy": "Performance_ExplorePostRoutePhysOpt",
+  "cycle_limit": 4000000,
+  "git_base": "a5ed40c99dc305baaf98569f637aaf01ed096b08",
+  "iterations": [
+    {
+      "version": "v3.1",
+      "summary": "Inserted a fully registered instruction-request slice between the frontend and instruction HXI master. The slice breaks the branch-miss, queue-credit and fetch-request control cone before HXI arbitration and external BRAM controls while retaining one accepted request per cycle.",
+      "status": "selected_release",
+      "timing": {
+        "post_synth_wns_ns": -2.469,
+        "post_synth_tns_ns": -857.336,
+        "final_wns_ns": -0.194,
+        "final_tns_ns": -33.155,
+        "failing_endpoints": 505,
+        "whs_ns": 0.003,
+        "ths_ns": 0.0,
+        "estimated_timing_limited_fmax_mhz": 145.76,
+        "worst_path": "DCache data-bank BRAM through load-completion operand bypass and the address-generation adder to exec_mem_addr_q"
+      },
+      "comparison_to_v2_1_150mhz": {
+        "baseline_final_wns_ns": -2.089,
+        "baseline_final_tns_ns": -6181.937,
+        "baseline_failing_endpoints": 7796,
+        "wns_improvement_ns": 1.895,
+        "tns_violation_reduction_percent": 99.46,
+        "failing_endpoint_reduction_percent": 93.52
+      },
+      "coremark": {
+        "iterations": 10,
+        "exact_ticks": 3951771,
+        "performance_window_cycles": 3951832,
+        "commits": 2998684,
+        "ipc": 0.758808573,
+        "time_seconds_at_150mhz": 0.026345547,
+        "iterations_per_second": 379.570791471,
+        "cycle_delta_vs_v2_1": 61920,
+        "cycle_penalty_percent": 1.59,
+        "crc": "PASS"
+      },
+      "verification": [
+        "RTL lint PASS",
+        "150 MHz WSL smoke PASS: 236760 cycles",
+        "WSL final ISA gate PASS: 76/76 RV32UI/RV32MI/RV32UM/RV32UF",
+        "WSL FP-single gate PASS: 11/11 RV32UF",
+        "RT-Thread CoreMark 10 CRC PASS",
+        "RT-Thread ps/help follow-up commands and shell prompt recovery PASS",
+        "Vivado DRC: 0 errors",
+        "Manual bitstream export from final post-route physopt checkpoint PASS"
+      ]
+    }
+  ],
+  "board_safety": {
+    "request_slice_policy": "Requests already accepted by the frontend are never flushed in the slice; stale responses return normally and are discarded by the frontend epoch mechanism. Flushing an accepted request would strand its pending metadata and can cause the historical no-response or repeated-trap board failure.",
+    "clock_contract": "MMCM, RTL/board metadata, SoC and timer frequency, UART cycles per bit, CoreMark timebase and embedded firmware all remain one generated 150 MHz set.",
+    "uart_simulation_fix": "The Verilator launcher now applies the generated UART cycles-per-bit contract to every simulation, including receive-less smoke tests.",
+    "branch_prediction": "No branch predictor table, policy, history or update logic was changed.",
+    "physical_board_status": "Not yet physically programmed; v2.1 remains the last board-verified baseline."
+  },
+  "decision": {
+    "selected": "v3.1",
+    "reason": "It enters the accepted timing envelope with a 99.46 percent TNS reduction while retaining the CoreMark cycle limit. Further pipelining of the new DCache-to-AGU worst path would directly risk the remaining 48168-cycle margin and broaden the board-validation surface.",
+    "estimated_runtime_at_timing_limited_fmax_seconds": 0.027112202,
+    "estimated_runtime_improvement_vs_v2_1_at_its_timing_limited_fmax_percent": 20.40
+  }
+}
