@@ -22,12 +22,17 @@ module soc_core #(
   hxi_if cpu_i_hxi(core_clk_i);
   hxi_if cpu_d_hxi(core_clk_i);
   hxi_if mmio_hxi(core_clk_i);
+  hxi_if timer_hxi(core_clk_i);
+  hxi_if irq_hxi(core_clk_i);
+  hxi_if periph_hxi(core_clk_i);
 
-  logic irq_software_periph;
-  logic irq_timer_periph;
-  logic irq_external_periph;
-  logic [2:0] irq_periph_q;
-  logic [2:0] irq_core;
+  logic irq_software_core;
+  logic irq_timer_core;
+  logic irq_external_core;
+  logic uart_irq_periph;
+  logic uart_irq_core;
+  logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] ext_irq_core;
+  logic [soc_config_pkg::EXT_IRQ_COUNT-1:0] irq_sources_core;
 
   logic [31:0] paddr;
   logic psel;
@@ -39,35 +44,37 @@ module soc_core #(
   logic pready;
   logic pslverr;
 
-  // Do not feed combinational interrupt reductions directly into a CDC
-  // synchronizer.  Register the complete level vector in the peripheral
-  // domain so each crossing has a single, auditable source register.
-  always_ff @(posedge periph_clk_i) begin
-    if (!periph_rst_ni)
-      irq_periph_q <= '0;
-    else
-      irq_periph_q <= {
-        irq_external_periph,
-        irq_timer_periph,
-        irq_software_periph
-      };
-  end
-
-  level_sync #(.WIDTH(3)) u_irq_sync (
+  // Only physical peripheral interrupt levels cross into the core domain.
+  // The architectural timer and software interrupt stay core-local so their
+  // clear operations are visible before mret and cannot be re-delivered by
+  // CDC deassertion latency.
+  level_sync u_uart_irq_sync (
     .clk_i(core_clk_i),
     .rst_ni(core_rst_ni),
-    .async_i(irq_periph_q),
-    .sync_o(irq_core)
+    .async_i(uart_irq_periph),
+    .sync_o(uart_irq_core)
   );
+
+  level_sync #(.WIDTH(soc_config_pkg::EXT_IRQ_COUNT)) u_ext_irq_sync (
+    .clk_i(core_clk_i),
+    .rst_ni(core_rst_ni),
+    .async_i(ext_irq_i),
+    .sync_o(ext_irq_core)
+  );
+
+  always_comb begin
+    irq_sources_core = ext_irq_core;
+    irq_sources_core[0] = ext_irq_core[0] | uart_irq_core;
+  end
 
   cpu_subsystem u_cpu (
     .clk_i(core_clk_i),
     .rst_ni(core_rst_ni),
     .instr_hxi(cpu_i_hxi),
     .data_hxi(cpu_d_hxi),
-    .irq_software_i(irq_core[0]),
-    .irq_timer_i(irq_core[1]),
-    .irq_external_i(irq_core[2]),
+    .irq_software_i(irq_software_core),
+    .irq_timer_i(irq_timer_core),
+    .irq_external_i(irq_external_core),
     .commit_o,
     .fault_o(cpu_fault_o)
   );
@@ -88,10 +95,37 @@ module soc_core #(
     .mmio_hxi
   );
 
+  // CPU-architectural MMIO remains in the 120 MHz domain.  This is a
+  // one-master router, not a general crossbar, and it is off the BRAM path.
+  hxi_core_mmio_router u_core_mmio_router (
+    .clk_i(core_clk_i),
+    .rst_ni(core_rst_ni),
+    .cpu_hxi(mmio_hxi),
+    .timer_hxi,
+    .irq_hxi,
+    .periph_hxi
+  );
+
+  machine_timer u_timer (
+    .clk_i(core_clk_i),
+    .rst_ni(core_rst_ni),
+    .hxi(timer_hxi),
+    .irq_timer_o(irq_timer_core)
+  );
+
+  interrupt_controller u_irq (
+    .clk_i(core_clk_i),
+    .rst_ni(core_rst_ni),
+    .ext_irq_i(irq_sources_core),
+    .hxi(irq_hxi),
+    .irq_software_o(irq_software_core),
+    .irq_external_o(irq_external_core)
+  );
+
   mmio_cdc_bridge u_mmio_cdc (
     .core_clk_i,
     .core_rst_ni,
-    .core_hxi(mmio_hxi),
+    .core_hxi(periph_hxi),
     .periph_clk_i,
     .periph_rst_ni,
     .paddr_o(paddr),
@@ -122,10 +156,7 @@ module soc_core #(
     .gpio_i,
     .gpio_o,
     .gpio_oe_o,
-    .ext_irq_i,
-    .irq_software_o(irq_software_periph),
-    .irq_timer_o(irq_timer_periph),
-    .irq_external_o(irq_external_periph),
+    .uart_irq_o(uart_irq_periph),
     .test_done_o,
     .test_pass_o,
     .test_code_o

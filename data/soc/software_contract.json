@@ -49,7 +49,7 @@
   "clocks": {
     "soc_hz": 120000000,
     "peripheral_hz": 50000000,
-    "timer_hz": 50000000,
+    "timer_hz": 120000000,
     "uart_baud": 115200
   },
   "interrupts": {

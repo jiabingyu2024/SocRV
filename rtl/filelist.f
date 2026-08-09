@@ -68,11 +68,14 @@ rtl/cpu/superscalar/core_top.sv
 rtl/cpu/superscalar/superscalar_cpu_core.sv
 rtl/cpu/cpu_subsystem.sv
 rtl/bus/hxi/hxi_data_router.sv
+rtl/bus/hxi/hxi_core_mmio_router.sv
 rtl/bus/bridge/mmio_cdc_bridge.sv
 rtl/bus/bridge/apb_interconnect.sv
 rtl/memory/adapter/hxi_code_mem_slave.sv
 rtl/memory/generic/generic_rom.sv
 rtl/memory/generic/generic_spram.sv
+rtl/peripheral/timer/machine_timer.sv
+rtl/peripheral/irq/interrupt_controller.sv
 rtl/peripheral/timer/apb_machine_timer.sv
 rtl/peripheral/irq/apb_interrupt_controller.sv
 rtl/peripheral/uart/uart_fifo.sv
