@@ -58,12 +58,10 @@ void timer_start(int irq_enable)
 
 uint64_t timer_init_tick(uint32_t tick_hz)
 {
-    uint32_t clock_hz = soc_peripheral_clock_hz();
-
-    if (tick_hz == 0u || (clock_hz % tick_hz) != 0u) {
+    if (tick_hz == 0u || (SOCRV_TIMER_CLOCK_HZ % tick_hz) != 0u) {
         return 0u;
     }
-    tick_delta = clock_hz / tick_hz;
+    tick_delta = SOCRV_TIMER_CLOCK_HZ / tick_hz;
     next_deadline = timer_read() + tick_delta;
     timer_set_compare(next_deadline);
     timer_start(1);

@@ -39,6 +39,7 @@ module uart #(
 
    wire tx_full  = (tx_count == 3'd4);
    wire tx_empty = (tx_count == 3'd0);
+   wire tx_idle  = tx_empty && (tx_bits_left == 0);
    wire rx_full  = (rx_count == 3'd4);
    wire rx_empty = (rx_count == 3'd0);
    wire txdata_access = (req_addr[7:2] == 6'h00);
@@ -55,7 +56,7 @@ module uart #(
    always_comb begin
       unique case (req_addr[7:2])
          6'h01: req_rdata = rx_empty ? 32'b0 : {24'b0, rx_fifo[rx_rd_ptr]};
-         6'h02: req_rdata = {28'b0, rx_full, tx_empty, !tx_full, !rx_empty};
+         6'h02: req_rdata = {28'b0, rx_full, tx_idle, !tx_full, !rx_empty};
          6'h03: req_rdata = baud_div;
          6'h04: req_rdata = {30'b0, uart_ctrl};
          6'h05: req_rdata = {31'b0, irq_pending};

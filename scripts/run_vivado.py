@@ -31,7 +31,7 @@ def main() -> int:
     )
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument(
-        "--core-mhz", type=int, choices=(100, 250), default=250,
+        "--core-mhz", type=int, choices=(100, 250), default=100,
         help="EH1 TCM SoC target clock (100 MHz board bring-up or 250 MHz performance target)",
     )
     parser.add_argument("--check-only", action="store_true")

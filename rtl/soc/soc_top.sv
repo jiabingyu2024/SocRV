@@ -1,5 +1,6 @@
 module soc_top #(
-   parameter int unsigned CLOCK_HZ   = 250_000_000,
+   parameter int unsigned CORE_CLOCK_HZ       = 100_000_000,
+   parameter int unsigned PERIPHERAL_CLOCK_HZ = 50_000_000,
    parameter int unsigned UART_BAUD  = 115_200,
    parameter int unsigned GPIO_WIDTH = 16,
    parameter string ICCM_LANE0_INIT_FILE = "",
@@ -16,6 +17,7 @@ module soc_top #(
    parameter string DCCM_BANK7_INIT_FILE = ""
 ) (
    input  logic                  core_clk,
+   input  logic                  peripheral_clk,
    input  logic                  rst_n,
    input  logic                  uart_rx,
    output logic                  uart_tx,
@@ -33,23 +35,100 @@ module soc_top #(
    logic        mmio_ready;
    logic [31:0] mmio_rdata;
    logic        mmio_error;
-   logic        timer_irq;
-   logic        software_irq;
+   logic        periph_mmio_valid;
+   logic        periph_mmio_write;
+   logic [31:0] periph_mmio_addr;
+   logic [31:0] periph_mmio_wdata;
+   logic [3:0]  periph_mmio_wstrb;
+   logic        periph_mmio_ready;
+   logic [31:0] periph_mmio_rdata;
+   logic        periph_mmio_error;
+   logic        timer_irq_peripheral;
+   logic        software_irq_peripheral;
    logic        uart_irq_unused;
+   logic        peripheral_rst_n;
+   logic [1:0]  peripheral_reset_release_q;
+   (* ASYNC_REG = "TRUE" *) logic timer_irq_meta_q, timer_irq_sync_q;
+   (* ASYNC_REG = "TRUE" *) logic software_irq_meta_q, software_irq_sync_q;
+   logic [31:0] test_status_peripheral, test_code_peripheral;
+   logic [31:0] test_status_meta_q, test_code_meta_q;
+
+   // Reset is asserted globally and released synchronously in the slower
+   // peripheral domain.  The incoming core reset is already synchronous to
+   // core_clk in both the board and simulation wrappers.
+   always_ff @(posedge peripheral_clk or negedge rst_n) begin
+      if (!rst_n)
+         peripheral_reset_release_q <= 2'b00;
+      else
+         peripheral_reset_release_q <= {peripheral_reset_release_q[0], 1'b1};
+   end
+   assign peripheral_rst_n = peripheral_reset_release_q[1];
+
+   soc_clock_bridge u_mmio_cdc (
+      .core_clk,
+      .core_rst_n(rst_n),
+      .core_req_valid(mmio_valid),
+      .core_req_write(mmio_write),
+      .core_req_addr(mmio_addr),
+      .core_req_wdata(mmio_wdata),
+      .core_req_wstrb(mmio_wstrb),
+      .core_req_ready(mmio_ready),
+      .core_req_rdata(mmio_rdata),
+      .core_req_error(mmio_error),
+      .periph_clk(peripheral_clk),
+      .periph_rst_n(peripheral_rst_n),
+      .periph_req_valid(periph_mmio_valid),
+      .periph_req_write(periph_mmio_write),
+      .periph_req_addr(periph_mmio_addr),
+      .periph_req_wdata(periph_mmio_wdata),
+      .periph_req_wstrb(periph_mmio_wstrb),
+      .periph_req_ready(periph_mmio_ready),
+      .periph_req_rdata(periph_mmio_rdata),
+      .periph_req_error(periph_mmio_error)
+   );
 
    local_peripheral_subsystem #(
-      .CLOCK_HZ(CLOCK_HZ),
+      .CORE_CLOCK_HZ(CORE_CLOCK_HZ),
+      .PERIPHERAL_CLOCK_HZ(PERIPHERAL_CLOCK_HZ),
       .UART_BAUD(UART_BAUD),
       .GPIO_WIDTH(GPIO_WIDTH)
    ) peripherals (
-      .clk(core_clk), .rst_l(rst_n),
-      .req_valid(mmio_valid), .req_write(mmio_write), .req_addr(mmio_addr),
-      .req_wdata(mmio_wdata), .req_wstrb(mmio_wstrb),
-      .req_ready(mmio_ready), .req_rdata(mmio_rdata), .req_error(mmio_error),
+      .clk(peripheral_clk), .rst_l(peripheral_rst_n),
+      .req_valid(periph_mmio_valid), .req_write(periph_mmio_write),
+      .req_addr(periph_mmio_addr), .req_wdata(periph_mmio_wdata),
+      .req_wstrb(periph_mmio_wstrb), .req_ready(periph_mmio_ready),
+      .req_rdata(periph_mmio_rdata), .req_error(periph_mmio_error),
       .uart_rx, .uart_tx, .gpio_in, .gpio_out, .gpio_oe,
-      .timer_irq, .software_irq, .uart_irq(uart_irq_unused),
-      .test_status, .test_code
+      .timer_irq(timer_irq_peripheral),
+      .software_irq(software_irq_peripheral), .uart_irq(uart_irq_unused),
+      .test_status(test_status_peripheral), .test_code(test_code_peripheral)
    );
+
+   // Peripheral interrupts are level signals.  Two-stage synchronizers make
+   // them safe for the core domain; the shared EH1 cause remains unchanged.
+   // Test status/code are software-held level buses and are similarly sampled
+   // twice before they leave soc_top for the simulation/board status logic.
+   always_ff @(posedge core_clk or negedge rst_n) begin
+      if (!rst_n) begin
+         timer_irq_meta_q    <= 1'b0;
+         timer_irq_sync_q    <= 1'b0;
+         software_irq_meta_q <= 1'b0;
+         software_irq_sync_q <= 1'b0;
+         test_status_meta_q  <= 32'b0;
+         test_status         <= 32'b0;
+         test_code_meta_q    <= 32'b0;
+         test_code           <= 32'b0;
+      end else begin
+         timer_irq_meta_q    <= timer_irq_peripheral;
+         timer_irq_sync_q    <= timer_irq_meta_q;
+         software_irq_meta_q <= software_irq_peripheral;
+         software_irq_sync_q <= software_irq_meta_q;
+         test_status_meta_q  <= test_status_peripheral;
+         test_status         <= test_status_meta_q;
+         test_code_meta_q    <= test_code_peripheral;
+         test_code           <= test_code_meta_q;
+      end
+   end
 
    veer_wrapper #(
       .ICCM_LANE0_INIT_FILE(ICCM_LANE0_INIT_FILE),
@@ -86,7 +165,7 @@ module soc_top #(
       // EH1 exposes a direct machine-timer interrupt but no direct MSIP pin.
       // SYSCTRL software requests therefore share cause 7; the BSP reads the
       // pending bit first and performs either a scheduler switch or a tick.
-      .timer_int(timer_irq | software_irq),
+      .timer_int(timer_irq_sync_q | software_irq_sync_q),
       .extintsrc_req('0),
       .lsu_mmio_valid(mmio_valid),
       .lsu_mmio_write(mmio_write),

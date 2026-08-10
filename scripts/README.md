@@ -7,7 +7,7 @@
 - ICCM：128 KiB
 - DCCM：64 KiB
 - 无 C、无 cache、无 ECC、无 AXI/AHB 外部存储
-- FPGA 目标频率：250 MHz
+- FPGA 默认 core 目标频率：100 MHz；外设固定 50 MHz
 
 主要链路：
 

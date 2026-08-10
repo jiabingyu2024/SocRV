@@ -26,6 +26,17 @@ module soc_sim_top (
    logic [15:0] gpio_out;
    logic [15:0] gpio_oe;
    logic [31:0] test_status;
+   logic        peripheral_clk;
+
+   // The simulation contract fixes the core at 100 MHz and the peripherals
+   // at 50 MHz.  clk_i is one core cycle per harness step, so this divider is
+   // confined to the non-synthesizable simulation wrapper.
+   always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni)
+         peripheral_clk <= 1'b0;
+      else
+         peripheral_clk <= ~peripheral_clk;
+   end
 
    assign gpio_in     = '0;
    assign test_done_o = (test_status == TEST_PASS_MAGIC) ||
@@ -61,11 +72,13 @@ module soc_sim_top (
    };
 
    soc_top #(
-      .CLOCK_HZ(250_000_000),
+      .CORE_CLOCK_HZ(100_000_000),
+      .PERIPHERAL_CLOCK_HZ(50_000_000),
       .UART_BAUD(115_200),
       .GPIO_WIDTH(16)
    ) dut (
       .core_clk(clk_i),
+      .peripheral_clk(peripheral_clk),
       .rst_n(rst_ni),
       .uart_rx(uart_rx_i),
       .uart_tx(uart_tx_o),

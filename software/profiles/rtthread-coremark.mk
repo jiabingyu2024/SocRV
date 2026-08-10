@@ -3,7 +3,7 @@ include profiles/rtthread_sources.inc
 # The command selects the iteration count at runtime. This compile-time value
 # only initializes CoreMark before the FinSH command overrides it.
 COREMARK_ITERATIONS := 10000
-COREMARK_TICKS_PER_SEC := 250000000
+COREMARK_TICKS_PER_SEC := 50000000
 COREMARK_FLAGS_TEXT := O3-rv32imf_zicsr-ilp32f-veer-eh1-tcm-rtthread-command
 include profiles/coremark_sources.inc
 

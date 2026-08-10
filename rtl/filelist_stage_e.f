@@ -82,6 +82,7 @@ rtl/core/eh1f/dmi/rvjtag_tap.sv
 rtl/core/eh1f/veer.sv
 rtl/core/eh1f/veer_wrapper.sv
 
+rtl/soc/soc_clock_bridge.sv
 rtl/soc/machine_timer.sv
 rtl/soc/uart.sv
 rtl/soc/gpio.sv

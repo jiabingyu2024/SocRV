@@ -788,11 +788,11 @@ def main() -> int:
             benchmark_iterations = BENCHMARK_ITERATIONS.get(args.profile, 0)
         max_cycles = args.max_cycles
         if max_cycles is None and args.profile == "rtthread-coremark":
-            # RT-Thread boot, shell command echo and the final UART report
-            # dominate short CoreMark runs at a real 250 MHz / 115200-baud
-            # UART. Keep a generous fixed allowance for that traffic, then
-            # scale the benchmark window with the requested iteration count.
-            max_cycles = 24_000_000 + 1_000_000 * benchmark_iterations
+        # RT-Thread boot, shell command echo and the final UART report dominate
+        # short CoreMark runs at a real 250 MHz / 115200-baud UART.  Keep a
+        # generous fixed allowance for that traffic, then scale the benchmark
+        # window itself with the requested iteration count.
+        max_cycles = 24_000_000 + 1_000_000 * benchmark_iterations
         uart_command = args.uart_command or (
             f"coremark {benchmark_iterations}"
             if args.profile == "rtthread-coremark"

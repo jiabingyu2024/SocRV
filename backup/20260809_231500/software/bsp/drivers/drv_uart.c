@@ -4,14 +4,9 @@
 
 void uart_init(void)
 {
-    uint32_t divisor = soc_peripheral_clock_hz() / SOCRV_UART_BAUD;
-
-    if (divisor < 2u) {
-        divisor = 2u;
-    }
     mmio_write32(
         SOCRV_UART_BASE + SOCRV_UART_DIVISOR_OFFSET,
-        divisor
+        SOCRV_UART_DIVISOR
     );
     mmio_write32(
         SOCRV_UART_BASE + SOCRV_UART_CONTROL_OFFSET,

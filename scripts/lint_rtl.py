@@ -18,7 +18,7 @@ def main() -> int:
         "-Wno-UNUSEDSIGNAL",
         "-Wno-SYNCASYNCNET",
         "--top-module",
-        "soc_top_generic",
+        "soc_top",
         "-f",
         "rtl/filelist.f",
     ]

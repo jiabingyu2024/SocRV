@@ -61,6 +61,7 @@ static int cmd_coremark(int argc, char **argv)
         return -RT_EINVAL;
     }
 
+    uart_flush();
     rt_kprintf("SocRV CoreMark: iterations=%u, clock=%u Hz\n",
                iterations,
                COREMARK_TICKS_PER_SEC);
@@ -77,6 +78,10 @@ static int cmd_coremark(int argc, char **argv)
         return -RT_ERROR;
     }
 
+    // CoreMark's ee_printf stream may still occupy the four-byte hardware
+    // FIFO.  Drain it before the checker-critical exact-tick record so a
+    // timer/shell boundary cannot interleave that label on a slow UART.
+    uart_flush();
     uart_puts("SocRV exact total ticks: ");
     print_u64(ticks);
     uart_puts("\nSocRV total time (ms): ");

@@ -17,27 +17,6 @@ static inline uint32_t mmio_read32(uintptr_t address)
     return *(volatile const uint32_t *)address;
 }
 
-static inline uint32_t soc_clock_hz(void)
-{
-    uint32_t clock_hz = mmio_read32(
-        SOCRV_SYSCTRL_BASE + SOCRV_SYSCTRL_CLOCK_HZ_OFFSET
-    );
-
-    /* Keep the generated contract as a safe fallback for simulation or an
-     * older SYSCTRL implementation, while allowing one firmware source tree
-     * to run correctly in both the 100 MHz bring-up and 250 MHz targets. */
-    return clock_hz != 0u ? clock_hz : SOCRV_SOC_CLOCK_HZ;
-}
-
-static inline uint32_t soc_peripheral_clock_hz(void)
-{
-    uint32_t clock_hz = mmio_read32(
-        SOCRV_SYSCTRL_BASE + SOCRV_SYSCTRL_PERIPHERAL_CLOCK_HZ_OFFSET
-    );
-
-    return clock_hz != 0u ? clock_hz : SOCRV_PERIPHERAL_CLOCK_HZ;
-}
-
 static inline uint32_t csr_read_mstatus(void)
 {
     uint32_t value;

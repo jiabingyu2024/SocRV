@@ -1,7 +1,8 @@
 module local_peripheral_subsystem #(
-   parameter int unsigned CLOCK_HZ   = 250_000_000,
-   parameter int unsigned UART_BAUD  = 115_200,
-   parameter int unsigned GPIO_WIDTH = 16
+   parameter int unsigned CORE_CLOCK_HZ       = 100_000_000,
+   parameter int unsigned PERIPHERAL_CLOCK_HZ = 50_000_000,
+   parameter int unsigned UART_BAUD            = 115_200,
+   parameter int unsigned GPIO_WIDTH           = 16
 ) (
    input  logic                  clk,
    input  logic                  rst_l,
@@ -59,7 +60,7 @@ module local_peripheral_subsystem #(
       .req_rdata(timer_rdata), .timer_irq
    );
 
-   uart #(.CLOCK_HZ(CLOCK_HZ), .BAUD(UART_BAUD)) uart0 (
+   uart #(.CLOCK_HZ(PERIPHERAL_CLOCK_HZ), .BAUD(UART_BAUD)) uart0 (
       .clk, .rst_l, .uart_rx, .uart_tx,
       .req_valid(uart_sel), .req_write, .req_addr(req_addr[11:0]),
       .req_wdata, .req_wstrb, .req_ready(uart_ready),
@@ -72,7 +73,10 @@ module local_peripheral_subsystem #(
       .req_wdata, .req_wstrb, .req_ready(gpio_ready), .req_rdata(gpio_rdata)
    );
 
-   sysctrl #(.CLOCK_HZ(CLOCK_HZ)) sysctrl0 (
+   sysctrl #(
+      .CORE_CLOCK_HZ(CORE_CLOCK_HZ),
+      .PERIPHERAL_CLOCK_HZ(PERIPHERAL_CLOCK_HZ)
+   ) sysctrl0 (
       .clk, .rst_l,
       .req_valid(sysctrl_sel), .req_write, .req_addr(req_addr[11:0]),
       .req_wdata, .req_wstrb, .req_ready(sysctrl_ready),

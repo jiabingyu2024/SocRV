@@ -1,6 +1,7 @@
 module fpga_top #(
-  parameter real CORE_CLKOUT_DIVIDE_F = 4.0,
-  parameter int unsigned CORE_CLOCK_HZ = 250_000_000,
+  parameter real CORE_CLKOUT_DIVIDE_F = 10.0,
+  parameter int unsigned CORE_CLOCK_HZ = 100_000_000,
+  parameter int unsigned PERIPHERAL_CLOCK_HZ = 50_000_000,
   parameter string ICCM_LANE0_INIT_FILE = "",
   parameter string ICCM_LANE1_INIT_FILE = "",
   parameter string ICCM_LANE2_INIT_FILE = "",
@@ -22,6 +23,7 @@ module fpga_top #(
   output logic [39:0] virtual_seg
 );
   logic core_clk;
+  logic peripheral_clk;
   logic core_rst_n;
   logic clock_locked;
   logic [15:0] gpio_i;
@@ -45,12 +47,14 @@ module fpga_top #(
     .sys_clk_p_i(i_sys_clk_p),
     .sys_clk_n_i(i_sys_clk_n),
     .core_clk_o(core_clk),
+    .peripheral_clk_o(peripheral_clk),
     .core_rst_no(core_rst_n),
     .clock_locked_o(clock_locked)
   );
 
   soc_top #(
-    .CLOCK_HZ(CORE_CLOCK_HZ),
+    .CORE_CLOCK_HZ(CORE_CLOCK_HZ),
+    .PERIPHERAL_CLOCK_HZ(PERIPHERAL_CLOCK_HZ),
     .ICCM_LANE0_INIT_FILE(ICCM_LANE0_INIT_FILE),
     .ICCM_LANE1_INIT_FILE(ICCM_LANE1_INIT_FILE),
     .ICCM_LANE2_INIT_FILE(ICCM_LANE2_INIT_FILE),
@@ -65,6 +69,7 @@ module fpga_top #(
     .DCCM_BANK7_INIT_FILE(DCCM_BANK7_INIT_FILE)
   ) u_soc (
     .core_clk(core_clk),
+    .peripheral_clk(peripheral_clk),
     .rst_n(core_rst_n),
     .uart_rx(i_uart_rx),
     .uart_tx(o_uart_tx),

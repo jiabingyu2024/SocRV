@@ -1,9 +1,10 @@
 module board_clock_reset #(
-  parameter real CORE_CLKOUT_DIVIDE_F = 4.0
+  parameter real CORE_CLKOUT_DIVIDE_F = 10.0
 ) (
   input logic sys_clk_p_i,
   input logic sys_clk_n_i,
   output logic core_clk_o,
+  output logic peripheral_clk_o,
   output logic core_rst_no,
   output logic clock_locked_o
 );
@@ -16,6 +17,7 @@ module board_clock_reset #(
     .clk_200mhz_n_i(sys_clk_n_i),
     .reset_i(1'b0),
     .clk_core_o(core_clk_o),
+    .clk_peripheral_o(peripheral_clk_o),
     .locked_o(mmcm_locked)
   );
 

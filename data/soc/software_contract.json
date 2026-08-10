@@ -48,8 +48,9 @@
     "compressed": false
   },
   "clocks": {
-    "soc_hz": 250000000,
-    "timer_hz": 250000000,
+    "soc_hz": 100000000,
+    "peripheral_hz": 50000000,
+    "timer_hz": 50000000,
     "uart_baud": 115200
   },
   "interrupts": {
@@ -119,13 +120,13 @@
           "offset": "0x00000008",
           "access": "RO",
           "reset": "0x00000006",
-          "side_effect": "bit0 RX valid, bit1 TX ready, bit2 TX empty, bit3 RX full"
+          "side_effect": "bit0 RX valid, bit1 TX FIFO ready, bit2 TX serializer and FIFO idle, bit3 RX full"
         },
         "DIVISOR": {
           "offset": "0x0000000c",
           "access": "RW",
-          "reset": "0x0000087a",
-          "side_effect": "baud divisor is floor(soc_hz/uart_baud)"
+          "reset": "0x000001b2",
+          "side_effect": "baud divisor is floor(peripheral_hz/uart_baud)"
         },
         "CONTROL": {
           "offset": "0x00000010",
@@ -194,8 +195,8 @@
         "CLOCK_HZ": {
           "offset": "0x00000004",
           "access": "RO",
-          "reset": "0x0ee6b280",
-          "side_effect": "implemented core/peripheral clock frequency"
+          "reset": "0x05f5e100",
+          "side_effect": "implemented core clock frequency"
         },
         "RESET_CAUSE": {
           "offset": "0x00000008",
@@ -226,6 +227,12 @@
           "access": "RW",
           "reset": "0x00000000",
           "side_effect": "software-defined diagnostic or architectural test number"
+        },
+        "PERIPHERAL_CLOCK_HZ": {
+          "offset": "0x00000020",
+          "access": "RO",
+          "reset": "0x02faf080",
+          "side_effect": "fixed UART/GPIO/timer/SYSCTRL peripheral clock frequency"
         }
       }
     }
