@@ -39,7 +39,8 @@ RTTHREAD_COMMON_SOURCES := \
 	bsp/drivers/test_status.c \
 	runtime/platform.c \
 	runtime/minilibc.c \
-	applications/rtthread/commands/cmd_info.c
+	applications/rtthread/commands/cmd_info.c \
+	applications/rtthread/commands/cmd_hpm.c
 RTTHREAD_INCLUDES := \
 	-Irt-thread/port \
 	-I$(RT_ROOT)/include \

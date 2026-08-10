@@ -20,7 +20,9 @@ UTIL_METRIC ?= luts
 UTIL_LIMIT ?= 30
 UTIL_FILTER ?=
 UTIL_DIFF ?=
-COREMARK_TARGET_ITERATIONS ?= 2000
+# Final goal: 10,000 CoreMark iterations in 10 s. iter-status reports the
+# required frequency against this count, so it must match the real target.
+COREMARK_TARGET_ITERATIONS ?= 10000
 DIFFTEST ?= 0
 DIFFTEST_MODE ?= ram-strict
 DIFFTEST_ISA ?= rv32imf_zicsr
