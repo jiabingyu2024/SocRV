@@ -63,11 +63,14 @@ module scoreboard #(
         logic [31:0] link_addr;
     } scoreboard_static_t;
 
+    localparam int unsigned STATIC_W = $bits(scoreboard_static_t);
+
     scoreboard_entry_t entries_q [0:DEPTH-1];
     // These fields are immutable after allocation and are only observed at
     // the commit head. A single packed distributed-RAM write removes their
     // per-slot FF clock enables from the branch/issue allocation cone.
-    (* ram_style = "distributed" *) scoreboard_static_t static_q [0:DEPTH-1];
+    (* ram_style = "distributed" *) logic [STATIC_W-1:0] static_q [0:DEPTH-1];
+    scoreboard_static_t static_head;
     logic [31:0] producer_valid_q;
     logic [TRANS_ID_W-1:0] producer_tid_q [0:31];
     logic [TRANS_ID_W-1:0] allocate_ptr_q, commit_ptr_q;
@@ -76,24 +79,25 @@ module scoreboard #(
     assign allocate_trans_id_o = allocate_ptr_q;
     assign commit_trans_id_o = commit_ptr_q;
     always_comb begin
+        static_head = scoreboard_static_t'(static_q[commit_ptr_q]);
         commit_entry_o = entries_q[commit_ptr_q];
-        commit_entry_o.pc = static_q[commit_ptr_q].pc;
-        commit_entry_o.instr = static_q[commit_ptr_q].instr;
-        commit_entry_o.rd = static_q[commit_ptr_q].rd;
-        commit_entry_o.writes_rd = static_q[commit_ptr_q].writes_rd;
-        commit_entry_o.frd = static_q[commit_ptr_q].frd;
-        commit_entry_o.writes_frd = static_q[commit_ptr_q].writes_frd;
-        commit_entry_o.fp_dirty = static_q[commit_ptr_q].fp_dirty;
-        commit_entry_o.fp_op = static_q[commit_ptr_q].fp_op;
-        commit_entry_o.fu = static_q[commit_ptr_q].fu;
-        commit_entry_o.serialize = static_q[commit_ptr_q].serialize;
-        commit_entry_o.sys_op = static_q[commit_ptr_q].sys_op;
-        commit_entry_o.csr_op = static_q[commit_ptr_q].csr_op;
-        commit_entry_o.csr_addr = static_q[commit_ptr_q].csr_addr;
-        commit_entry_o.csr_src = static_q[commit_ptr_q].csr_src;
-        commit_entry_o.is_call = static_q[commit_ptr_q].is_call;
-        commit_entry_o.is_return = static_q[commit_ptr_q].is_return;
-        commit_entry_o.link_addr = static_q[commit_ptr_q].link_addr;
+        commit_entry_o.pc = static_head.pc;
+        commit_entry_o.instr = static_head.instr;
+        commit_entry_o.rd = static_head.rd;
+        commit_entry_o.writes_rd = static_head.writes_rd;
+        commit_entry_o.frd = static_head.frd;
+        commit_entry_o.writes_frd = static_head.writes_frd;
+        commit_entry_o.fp_dirty = static_head.fp_dirty;
+        commit_entry_o.fp_op = static_head.fp_op;
+        commit_entry_o.fu = static_head.fu;
+        commit_entry_o.serialize = static_head.serialize;
+        commit_entry_o.sys_op = static_head.sys_op;
+        commit_entry_o.csr_op = static_head.csr_op;
+        commit_entry_o.csr_addr = static_head.csr_addr;
+        commit_entry_o.csr_src = static_head.csr_src;
+        commit_entry_o.is_call = static_head.is_call;
+        commit_entry_o.is_return = static_head.is_return;
+        commit_entry_o.link_addr = static_head.link_addr;
 
         query_rs1_found_o = query_uop_i.uses_rs1 && query_uop_i.rs1 != 0 &&
                             producer_valid_q[query_uop_i.rs1];
@@ -191,7 +195,7 @@ module scoreboard #(
                 entries_q[allocate_ptr_q].exception_cause <= allocate_uop_i.exception_cause;
                 entries_q[allocate_ptr_q].exception_tval <= allocate_uop_i.exception_tval;
                 entries_q[allocate_ptr_q].store_slot_valid <= 1'b0;
-                static_q[allocate_ptr_q] <= '{
+                static_q[allocate_ptr_q] <= scoreboard_static_t'{
                     pc: allocate_uop_i.pc,
                     instr: allocate_uop_i.instr,
                     rd: allocate_uop_i.rd,
