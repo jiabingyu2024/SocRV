@@ -20,9 +20,9 @@ module xilinx_clock_wrapper (
     .BANDWIDTH("OPTIMIZED"),
     .CLKIN1_PERIOD(5.000),
     .DIVCLK_DIVIDE(1),
-    // 200 MHz * 4.25 / 5 = 170 MHz; VCO = 850 MHz.
-    .CLKFBOUT_MULT_F(4.250),
-    .CLKOUT0_DIVIDE_F(5.000),
+    // 200 MHz * 6 / 8 = 150 MHz; VCO = 1200 MHz.
+    .CLKFBOUT_MULT_F(6.000),
+    .CLKOUT0_DIVIDE_F(8.000),
     .STARTUP_WAIT("FALSE")
   ) u_mmcm (
     .CLKIN1(clk_input),
