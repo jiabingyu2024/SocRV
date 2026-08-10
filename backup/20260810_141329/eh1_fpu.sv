@@ -24,7 +24,7 @@ module eh1_fpu (
       PipeRegs:   '{'{default: 3},
                     '{default: 1},
                     '{default: 1},
-                    '{default: 4}},
+                    '{default: 3}},
       UnitTypes:  '{'{default: PARALLEL},
                     '{default: MERGED},
                     '{default: PARALLEL},

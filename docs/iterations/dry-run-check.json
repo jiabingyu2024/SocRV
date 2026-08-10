@@ -1,0 +1,163 @@
+{
+  "artifacts": {
+    "manifest": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/dry-run-check.json",
+    "markdown": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/dry-run-check.md",
+    "scratch_root": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check"
+  },
+  "core_mhz": 125,
+  "git_revision": "f157e17fd57bea3c755d8162903f3e171d279c5e",
+  "kind": "rtl-optimization-iteration",
+  "schema_version": 1,
+  "started_at": "2026-08-10T11:17:36.771371+00:00",
+  "status": "DRY-RUN",
+  "steps": [
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_filelists.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/check_filelists.log",
+      "name": "check_filelists",
+      "status": "DRY-RUN"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_generated_tree.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/check_generated_tree.log",
+      "name": "check_generated_tree",
+      "status": "DRY-RUN"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_memory_map.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/check_memory_map.log",
+      "name": "check_memory_map",
+      "status": "DRY-RUN"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\validate_schemas.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/validate_schemas.log",
+      "name": "validate_schemas",
+      "status": "DRY-RUN"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\lint_rtl.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/lint_rtl.log",
+      "name": "lint_rtl",
+      "status": "DRY-RUN"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "smoke",
+        "--build-only"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/verilator-build.log",
+      "name": "verilator-build",
+      "status": "DRY-RUN"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "smoke",
+        "--no-rtl-build",
+        "--no-software-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/sim-smoke.log",
+      "name": "sim-smoke",
+      "status": "DRY-RUN"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_isa_tests.py",
+        "--gate",
+        "current",
+        "--no-rtl-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/sim-isa.log",
+      "name": "sim-isa",
+      "status": "DRY-RUN"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "rtthread-coremark",
+        "--test",
+        "opt-dry-run-check-coremark-1",
+        "--benchmark-iterations",
+        "1",
+        "--uart-command",
+        "coremark 1",
+        "--no-rtl-build",
+        "--no-software-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/sim-coremark.log",
+      "name": "sim-coremark",
+      "status": "DRY-RUN"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_vivado.py",
+        "--profile",
+        "rtthread-coremark",
+        "--jobs",
+        "2",
+        "--core-mhz",
+        "125",
+        "--stage",
+        "synth",
+        "--run-tag",
+        "dry-run-check",
+        "--no-software-build",
+        "--no-analyze"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/vivado.log",
+      "name": "vivado",
+      "status": "DRY-RUN"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\analyze_vivado_reports.py",
+        "--build-root",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\build\\vivado\\kintex7-rtthread-coremark-125mhz-dry-run-check",
+        "--stage",
+        "synth"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/dry-run-check/logs/vivado-analysis.log",
+      "name": "vivado-analysis",
+      "status": "DRY-RUN"
+    }
+  ],
+  "tag": "dry-run-check",
+  "vivado_stage": "synth"
+}

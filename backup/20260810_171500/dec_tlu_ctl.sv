@@ -373,15 +373,6 @@ module dec_tlu_ctl
           debug_halt_req_f, debug_resume_req_f_raw, debug_resume_req_f, enter_debug_halt_req, dcsr_single_step_done, dcsr_single_step_done_f,
           debug_halt_req_d1, debug_halt_req_ns, dcsr_single_step_running, dcsr_single_step_running_f, internal_dbg_halt_timers;
 
-   // Keep the two LSU-idle consumers physically local. Both copies are
-   // cycle-equivalent to the input; separating them prevents the registered
-   // halt state and the combinational core-empty check from sharing a long
-   // route back through the LSU packet/forwarding cone.
-   (* keep = "true", max_fanout = "8" *) logic lsu_halt_idle_any_halt_d;
-   (* keep = "true", max_fanout = "8" *) logic lsu_halt_idle_any_empty_d;
-   assign lsu_halt_idle_any_halt_d  = lsu_halt_idle_any;
-   assign lsu_halt_idle_any_empty_d = lsu_halt_idle_any;
-
    logic [3:0] i0_trigger_e4, i1_trigger_e4, trigger_action, trigger_enabled,
                i0_trigger_chain_masked_e4, i1_trigger_chain_masked_e4;
    logic [2:0] trigger_chain;
@@ -555,7 +546,7 @@ module dec_tlu_ctl
 
    // After doing halt flush (RFNPC) wait until core is idle before asserting a particular halt mode
    // It takes a cycle for mb_empty to assert after a fetch, take_halt covers that cycle
-   assign core_empty = lsu_halt_idle_any_empty_d & lsu_halt_idle_any_f & ifu_miss_state_idle & ifu_miss_state_idle_f & ~debug_halt_req & ~debug_halt_req_d1;
+   assign core_empty = lsu_halt_idle_any & lsu_halt_idle_any_f & ifu_miss_state_idle & ifu_miss_state_idle_f & ~debug_halt_req & ~debug_halt_req_d1;
 
 //--------------------------------------------------------------------------------
 // Debug start
@@ -587,7 +578,7 @@ module dec_tlu_ctl
 
    assign request_debug_mode_done = (request_debug_mode_wb | request_debug_mode_done_f) & ~dbg_tlu_halted_f;
 
-   rvdff #(22)  halt_ff (.*, .clk(free_clk), .din({halt_taken, take_halt, lsu_halt_idle_any_halt_d, ifu_miss_state_idle, dbg_tlu_halted,
+    rvdff #(22)  halt_ff (.*, .clk(free_clk), .din({halt_taken, take_halt, lsu_halt_idle_any, ifu_miss_state_idle, dbg_tlu_halted,
                                   resume_ack_ns, dbg_cmd_done_ns, debug_halt_req_ns, debug_resume_req, trigger_hit_dmode_e4,
                                   dcsr_single_step_done, debug_halt_req,  update_hit_bit_e4[3:0], dec_tlu_wr_pause_wb, dec_pause_state,
                                   request_debug_mode_e4, request_debug_mode_done, dcsr_single_step_running, dcsr_single_step_running_f}),

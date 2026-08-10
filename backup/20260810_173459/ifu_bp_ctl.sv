@@ -160,8 +160,7 @@ module ifu_bp_ctl
 
    logic [6:0] fgmask_f2;
    logic [3:0] branch_error_bank_conflict_f1, branch_error_bank_conflict_f2;
-   (* keep = "true", max_fanout = "8" *) logic [`RV_BHT_GHR_RANGE] merged_ghr;
-   logic [`RV_BHT_GHR_RANGE] fghr_ns, fghr;
+   logic [`RV_BHT_GHR_RANGE] merged_ghr, fghr_ns, fghr;
    logic [3:0] num_valids;
    logic [LRU_SIZE-1:0] btb_lru_b0_f, btb_lru_b0_hold, btb_lru_b0_ns, btb_lru_b1_f, btb_lru_b1_hold, btb_lru_b1_ns,
                         btb_lru_b2_f, btb_lru_b2_hold, btb_lru_b2_ns, btb_lru_b3_f, btb_lru_b3_hold, btb_lru_b3_ns,
@@ -1613,8 +1612,8 @@ assign fgmask_f2[0] = (~ifc_fetch_addr_f2[3] & ~ifc_fetch_addr_f2[2]
 
    logic [7:0] [(`RV_BHT_ARRAY_DEPTH/NUM_BHT_LOOP)-1:0][NUM_BHT_LOOP-1:0][1:0]      bht_bank_wr_data ;
    logic [7:0] [`RV_BHT_ARRAY_DEPTH-1:0] [1:0]                bht_bank_rd_data_out ;
-    (* keep = "true", max_fanout = "4" *) logic [1:0]         bht_bank0_rd_data_f2_in, bht_bank1_rd_data_f2_in, bht_bank2_rd_data_f2_in, bht_bank3_rd_data_f2_in;
-    (* keep = "true", max_fanout = "4" *) logic [1:0]         bht_bank4_rd_data_f2_in, bht_bank5_rd_data_f2_in, bht_bank6_rd_data_f2_in, bht_bank7_rd_data_f2_in;
+   logic [1:0]                                                bht_bank0_rd_data_f2_in, bht_bank1_rd_data_f2_in, bht_bank2_rd_data_f2_in, bht_bank3_rd_data_f2_in;
+   logic [1:0]                                                bht_bank4_rd_data_f2_in, bht_bank5_rd_data_f2_in, bht_bank6_rd_data_f2_in, bht_bank7_rd_data_f2_in;
    logic [7:0] [(`RV_BHT_ARRAY_DEPTH/NUM_BHT_LOOP)-1:0]                 bht_bank_clken ;
    logic [7:0] [(`RV_BHT_ARRAY_DEPTH/NUM_BHT_LOOP)-1:0]                 bht_bank_clk   ;
    logic [7:0] [(`RV_BHT_ARRAY_DEPTH/NUM_BHT_LOOP)-1:0][NUM_BHT_LOOP-1:0]           bht_bank_sel   ;
@@ -1652,10 +1651,7 @@ assign fgmask_f2[0] = (~ifc_fetch_addr_f2[3] & ~ifc_fetch_addr_f2[2]
    end // block: BHT_CLK_GROUP
  end // block: BANKS
 
-     // Keep the read-mux outputs local to the BHT data register bank. This
-     // prevents the collision/BTB update cone from being merged into every
-     // bank's data-select route.
-     always_comb begin : BHT_rd_mux
+    always_comb begin : BHT_rd_mux
      bht_bank0_rd_data_f2_in[1:0] = '0 ;
      bht_bank1_rd_data_f2_in[1:0] = '0 ;
      bht_bank2_rd_data_f2_in[1:0] = '0 ;

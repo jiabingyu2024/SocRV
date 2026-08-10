@@ -282,13 +282,6 @@ module lsu
    logic        lsu_busm_clk;
    logic        lsu_free_c2_clk;
 
-   // Split the halt-idle cone into pipe and buffer portions. These signals
-   // are consumed by decode and TLU; keeping the portions separate avoids
-   // rebuilding the five-stage packet OR together with buffer reductions.
-   (* keep = "true", max_fanout = "8" *) logic lsu_halt_pipe_busy;
-   (* keep = "true", max_fanout = "8" *) logic lsu_halt_buffer_busy;
-   (* keep = "true", max_fanout = "8" *) logic lsu_halt_pipe_idle;
-
 
    lsu_lsc_ctl lsu_lsc_ctl(.*);
 
@@ -315,14 +308,12 @@ module lsu
    // lsu halt idle. This is used for entering the halt mode
    // Indicates non-idle if there is a instruction valid in dc1-dc5 or read/write buffers are non-empty since they can come with error
    // Need to make sure bus trxns are done and there are no non-dma writes in store buffer
-   assign lsu_halt_pipe_busy = (lsu_pkt_dc1.valid & ~lsu_pkt_dc1.dma) |
+   assign lsu_halt_idle_any = ~((lsu_pkt_dc1.valid & ~lsu_pkt_dc1.dma) |
                                 (lsu_pkt_dc2.valid & ~lsu_pkt_dc2.dma) |
                                 (lsu_pkt_dc3.valid & ~lsu_pkt_dc3.dma) |
                                 (lsu_pkt_dc4.valid & ~lsu_pkt_dc4.dma) |
-                                (lsu_pkt_dc5.valid & ~lsu_pkt_dc5.dma);
-   assign lsu_halt_pipe_idle   = ~lsu_halt_pipe_busy;
-   assign lsu_halt_buffer_busy = ~lsu_bus_buffer_empty_any | ~lsu_stbuf_nodma_empty_any;
-   assign lsu_halt_idle_any    = lsu_halt_pipe_idle & ~lsu_halt_buffer_busy;
+                                (lsu_pkt_dc5.valid & ~lsu_pkt_dc5.dma)) &
+                               lsu_bus_buffer_empty_any & lsu_stbuf_nodma_empty_any;
 
    // Instantiate the store buffer
    //assign ldst_stbuf_reqvld_dc3  = store_stbuf_reqvld_dc3 | load_stbuf_reqvld_dc3;

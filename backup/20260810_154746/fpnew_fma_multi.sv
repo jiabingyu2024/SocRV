@@ -83,20 +83,16 @@ module fpnew_fma_multi #(
   // Shift amount width: maximum internal mantissa size is 3p+4 bits
   localparam int unsigned SHIFT_AMOUNT_WIDTH = $clog2(3 * PRECISION_BITS + 5);
   // Pipelines
-  // For DISTRIBUTED pipelines, place registers at the actual FMA cut points instead of stacking
-  // multiple registers at the legacy input/inside boundaries.  The first cut is before the
-  // add/LZA cone and the second cut is after add/LZA, leaving the final register for rounding and
-  // post-classification.  With the EH1F three-register configuration this maps one register to
-  // pre-add, one register to mid/add result, and one register to output.
-  localparam NUM_INP_REGS = PipeConfig == fpnew_pkg::BEFORE ? NumPipeRegs : 0;
-  localparam NUM_PRE_REGS = PipeConfig == fpnew_pkg::DISTRIBUTED
-                            ? ((NumPipeRegs + 2) / 3) // First distributed register: before add/LZA
-                            : 0;
-  localparam NUM_MID_REGS = PipeConfig == fpnew_pkg::INSIDE
+  localparam NUM_INP_REGS = PipeConfig == fpnew_pkg::BEFORE
                             ? NumPipeRegs
                             : (PipeConfig == fpnew_pkg::DISTRIBUTED
-                               ? ((NumPipeRegs + 1) / 3) // Second distributed register: after add/LZA
-                               : 0);
+                               ? ((NumPipeRegs + 1) / 3) // Second to get distributed regs
+                               : 0); // no regs here otherwise
+  localparam NUM_MID_REGS = PipeConfig == fpnew_pkg::INSIDE
+                          ? NumPipeRegs
+                          : (PipeConfig == fpnew_pkg::DISTRIBUTED
+                             ? ((NumPipeRegs + 2) / 3) // First to get distributed regs
+                             : 0); // no regs here otherwise
   localparam NUM_OUT_REGS = PipeConfig == fpnew_pkg::AFTER
                             ? NumPipeRegs
                             : (PipeConfig == fpnew_pkg::DISTRIBUTED
@@ -460,6 +456,7 @@ module fpnew_fma_multi #(
   // ------------------
   logic [PRECISION_BITS-1:0]   mantissa_a, mantissa_b, mantissa_c;
   logic [2*PRECISION_BITS-1:0] product;             // the p*p product is 2p bits wide
+  logic [3*PRECISION_BITS+3:0] product_shifted;     // addends are 3p+4 bit wide (including G/R)
 
   // Add implicit bits to mantissae
   assign mantissa_a = {info_a.is_normal, operand_a.mantissa};
@@ -469,12 +466,19 @@ module fpnew_fma_multi #(
   // Mantissa multiplier (a*b)
   assign product = mantissa_a * mantissa_b;
 
+  // Product is placed into a 3p+4 bit wide vector, padded with 2 bits for round and sticky:
+  // | 000...000 | product | RS |
+  //  <-  p+2  -> <-  2p -> < 2>
+  assign product_shifted = product << 2; // constant shift
+
   // -----------------
   // Addend data path
   // -----------------
   logic [3*PRECISION_BITS+3:0] addend_after_shift;  // upper 3p+4 bits are needed to go on
   logic [PRECISION_BITS-1:0]   addend_sticky_bits;  // up to p bit of shifted addend are sticky
   logic                        sticky_before_add;   // they are compressed into a single sticky bit
+  logic [3*PRECISION_BITS+3:0] addend_shifted;      // addends are 3p+4 bit wide (including G/R)
+  logic                        inject_carry_in;     // inject carry for subtractions if needed
 
   // In parallel, the addend is right-shifted according to the exponent difference. Up to p bits are
   // shifted out and compressed into a sticky bit.
@@ -489,106 +493,9 @@ module fpnew_fma_multi #(
 
   assign sticky_before_add     = (| addend_sticky_bits);
 
-  // ----------------
-  // Pre-add pipeline
-  // ----------------
-  // The legacy distributed pipeline registered only the completed sum.  That left operand
-  // classification, exponent alignment, the multiplier, variable shift, both adders and the LZA
-  // in one cycle.  Capture the multiplier/alignment outputs here so the add/LZA cone starts from a
-  // local register bank.  All control and transaction metadata follows the same ready/valid stage.
-  logic [2*PRECISION_BITS-1:0] product_pre_q;
-  logic [3*PRECISION_BITS+3:0] product_shifted_pre_q;
-  logic [3*PRECISION_BITS+3:0] addend_after_shift_pre_q;
-  logic [3*PRECISION_BITS+3:0] addend_shifted_pre_q;
-  logic                        inject_carry_in_pre_q;
-  logic                        effective_subtraction_pre_q;
-  logic                        tentative_sign_pre_q;
-  logic signed [EXP_WIDTH-1:0] exponent_product_pre_q;
-  logic signed [EXP_WIDTH-1:0] exponent_difference_pre_q;
-  logic signed [EXP_WIDTH-1:0] tentative_exponent_pre_q;
-  logic [SHIFT_AMOUNT_WIDTH-1:0] addend_shamt_pre_q;
-  logic                        sticky_before_add_pre_q;
-
-  logic                  [0:NUM_PRE_REGS][2*PRECISION_BITS-1:0] pre_pipe_product_q;
-  logic                  [0:NUM_PRE_REGS][3*PRECISION_BITS+3:0] pre_pipe_addend_q;
-  logic                  [0:NUM_PRE_REGS]                       pre_pipe_eff_sub_q;
-  logic                  [0:NUM_PRE_REGS]                       pre_pipe_tent_sign_q;
-  logic signed           [0:NUM_PRE_REGS][EXP_WIDTH-1:0]        pre_pipe_exp_prod_q;
-  logic signed           [0:NUM_PRE_REGS][EXP_WIDTH-1:0]        pre_pipe_exp_diff_q;
-  logic signed           [0:NUM_PRE_REGS][EXP_WIDTH-1:0]        pre_pipe_tent_exp_q;
-  logic                  [0:NUM_PRE_REGS][SHIFT_AMOUNT_WIDTH-1:0] pre_pipe_add_shamt_q;
-  logic                  [0:NUM_PRE_REGS]                       pre_pipe_sticky_q;
-  fpnew_pkg::roundmode_e [0:NUM_PRE_REGS]                       pre_pipe_rnd_mode_q;
-  fpnew_pkg::fp_format_e [0:NUM_PRE_REGS]                       pre_pipe_dst_fmt_q;
-  logic                  [0:NUM_PRE_REGS]                       pre_pipe_res_is_spec_q;
-  fp_t                   [0:NUM_PRE_REGS]                       pre_pipe_spec_res_q;
-  fpnew_pkg::status_t    [0:NUM_PRE_REGS]                       pre_pipe_spec_stat_q;
-  TagType                [0:NUM_PRE_REGS]                       pre_pipe_tag_q;
-  logic                  [0:NUM_PRE_REGS]                       pre_pipe_mask_q;
-  AuxType                [0:NUM_PRE_REGS]                       pre_pipe_aux_q;
-  logic                  [0:NUM_PRE_REGS]                       pre_pipe_valid_q;
-  logic                  [0:NUM_PRE_REGS]                       pre_pipe_ready;
-
-  assign pre_pipe_product_q[0]     = product;
-  assign pre_pipe_addend_q[0]      = addend_after_shift;
-  assign pre_pipe_eff_sub_q[0]     = effective_subtraction;
-  assign pre_pipe_tent_sign_q[0]   = tentative_sign;
-  assign pre_pipe_exp_prod_q[0]    = exponent_product;
-  assign pre_pipe_exp_diff_q[0]    = exponent_difference;
-  assign pre_pipe_tent_exp_q[0]    = tentative_exponent;
-  assign pre_pipe_add_shamt_q[0]   = addend_shamt + addend_normalize_shamt;
-  assign pre_pipe_sticky_q[0]      = sticky_before_add;
-  assign pre_pipe_rnd_mode_q[0]    = inp_pipe_rnd_mode_q[NUM_INP_REGS];
-  assign pre_pipe_dst_fmt_q[0]     = dst_fmt_q;
-  assign pre_pipe_res_is_spec_q[0] = result_is_special;
-  assign pre_pipe_spec_res_q[0]    = special_result;
-  assign pre_pipe_spec_stat_q[0]   = special_status;
-  assign pre_pipe_tag_q[0]         = inp_pipe_tag_q[NUM_INP_REGS];
-  assign pre_pipe_mask_q[0]        = inp_pipe_mask_q[NUM_INP_REGS];
-  assign pre_pipe_aux_q[0]         = inp_pipe_aux_q[NUM_INP_REGS];
-  assign pre_pipe_valid_q[0]       = inp_pipe_valid_q[NUM_INP_REGS];
-  assign inp_pipe_ready[NUM_INP_REGS] = pre_pipe_ready[0];
-
-  for (genvar i = 0; i < NUM_PRE_REGS; i++) begin : gen_preadd_pipeline
-    logic reg_ena;
-    assign pre_pipe_ready[i] = pre_pipe_ready[i+1] | ~pre_pipe_valid_q[i+1];
-    `FFLARNC(pre_pipe_valid_q[i+1], pre_pipe_valid_q[i], pre_pipe_ready[i], flush_i, 1'b0, clk_i, rst_ni)
-    assign reg_ena = (pre_pipe_ready[i] & pre_pipe_valid_q[i]) |
-                     reg_ena_i[NUM_INP_REGS + i];
-    `FFL(pre_pipe_product_q[i+1],     pre_pipe_product_q[i],     reg_ena, '0)
-    `FFL(pre_pipe_addend_q[i+1],      pre_pipe_addend_q[i],      reg_ena, '0)
-    `FFL(pre_pipe_eff_sub_q[i+1],     pre_pipe_eff_sub_q[i],     reg_ena, '0)
-    `FFL(pre_pipe_tent_sign_q[i+1],   pre_pipe_tent_sign_q[i],   reg_ena, '0)
-    `FFL(pre_pipe_exp_prod_q[i+1],    pre_pipe_exp_prod_q[i],    reg_ena, '0)
-    `FFL(pre_pipe_exp_diff_q[i+1],    pre_pipe_exp_diff_q[i],    reg_ena, '0)
-    `FFL(pre_pipe_tent_exp_q[i+1],    pre_pipe_tent_exp_q[i],    reg_ena, '0)
-    `FFL(pre_pipe_add_shamt_q[i+1],   pre_pipe_add_shamt_q[i],   reg_ena, '0)
-    `FFL(pre_pipe_sticky_q[i+1],      pre_pipe_sticky_q[i],      reg_ena, '0)
-    `FFL(pre_pipe_rnd_mode_q[i+1],    pre_pipe_rnd_mode_q[i],    reg_ena, fpnew_pkg::RNE)
-    `FFL(pre_pipe_dst_fmt_q[i+1],     pre_pipe_dst_fmt_q[i],     reg_ena, fpnew_pkg::fp_format_e'(0))
-    `FFL(pre_pipe_res_is_spec_q[i+1], pre_pipe_res_is_spec_q[i], reg_ena, '0)
-    `FFL(pre_pipe_spec_res_q[i+1],    pre_pipe_spec_res_q[i],    reg_ena, '0)
-    `FFL(pre_pipe_spec_stat_q[i+1],   pre_pipe_spec_stat_q[i],   reg_ena, '0)
-    `FFL(pre_pipe_tag_q[i+1],         pre_pipe_tag_q[i],         reg_ena, TagType'('0))
-    `FFL(pre_pipe_mask_q[i+1],        pre_pipe_mask_q[i],        reg_ena, '0)
-    `FFL(pre_pipe_aux_q[i+1],         pre_pipe_aux_q[i],         reg_ena, AuxType'('0))
-  end
-
-  assign product_pre_q               = pre_pipe_product_q[NUM_PRE_REGS];
-  assign product_shifted_pre_q       = product_pre_q << 2;
-  assign addend_after_shift_pre_q    = pre_pipe_addend_q[NUM_PRE_REGS];
-  assign effective_subtraction_pre_q = pre_pipe_eff_sub_q[NUM_PRE_REGS];
-  assign addend_shifted_pre_q        = effective_subtraction_pre_q
-                                       ? ~addend_after_shift_pre_q
-                                       : addend_after_shift_pre_q;
-  assign sticky_before_add_pre_q     = pre_pipe_sticky_q[NUM_PRE_REGS];
-  assign inject_carry_in_pre_q       = effective_subtraction_pre_q &
-                                       ~sticky_before_add_pre_q;
-  assign tentative_sign_pre_q        = pre_pipe_tent_sign_q[NUM_PRE_REGS];
-  assign exponent_product_pre_q      = pre_pipe_exp_prod_q[NUM_PRE_REGS];
-  assign exponent_difference_pre_q   = pre_pipe_exp_diff_q[NUM_PRE_REGS];
-  assign tentative_exponent_pre_q    = pre_pipe_tent_exp_q[NUM_PRE_REGS];
-  assign addend_shamt_pre_q          = pre_pipe_add_shamt_q[NUM_PRE_REGS];
+  // In case of a subtraction, the addend is inverted
+  assign addend_shifted = (effective_subtraction) ? ~addend_after_shift : addend_after_shift;
+  assign inject_carry_in = effective_subtraction & ~sticky_before_add;
 
   // ------
   // Adder
@@ -599,21 +506,21 @@ module fpnew_fma_multi #(
   logic                        final_sign;
 
   //Mantissa adder (ab+c). In normal addition, it cannot overflow.
-  assign sum_pos = product_shifted_pre_q + addend_shifted_pre_q + inject_carry_in_pre_q;
+  assign sum_pos = product_shifted + addend_shifted + inject_carry_in;
   assign sum_carry = sum_pos[3*PRECISION_BITS+4];
 
   // Parallel adder for negative sum (only used for effective subtractions).
   // Note: inject_carry_in is used to complete the negation of the addend in the positive sum but
   // for the negative sum the addend is not negated, so no carry needs to be injected.
-  assign sum_neg = addend_after_shift_pre_q - product_shifted_pre_q;
+  assign sum_neg = addend_after_shift - product_shifted;
 
   // Complement negative sum (can only happen in subtraction -> overflows for positive results)
-  assign sum = (effective_subtraction_pre_q && ~sum_carry) ? sum_neg : sum_pos;
+  assign sum        = (effective_subtraction && ~sum_carry) ? sum_neg : sum_pos;
 
   // In case of a mispredicted subtraction result, do a sign flip
-  assign final_sign = (effective_subtraction_pre_q && (sum_carry == tentative_sign_pre_q))
+  assign final_sign = (effective_subtraction && (sum_carry == tentative_sign))
                       ? 1'b1
-                      : (effective_subtraction_pre_q ? 1'b0 : tentative_sign_pre_q);
+                      : (effective_subtraction ? 1'b0 : tentative_sign);
 
   // ------
   // Leading Zero Anticipator
@@ -624,10 +531,10 @@ module fpnew_fma_multi #(
     .WIDTH ( LOWER_SUM_WIDTH      ),
     .NF    ( PRECISION_BITS-1     )
   ) i_fmalza (
-    .A    ( addend_shifted_pre_q[LOWER_SUM_WIDTH-1:0] ),
-    .Pm   ( product_pre_q                             ),
-    .Cin  ( inject_carry_in_pre_q                     ),
-    .sub  ( effective_subtraction_pre_q               ),
+    .A    ( addend_shifted[LOWER_SUM_WIDTH-1:0] ),
+    .Pm   ( product                             ),
+    .Cin  ( inject_carry_in                     ),
+    .sub  ( effective_subtraction               ),
     .SCnt ( lza_count                           )
   );
 
@@ -673,26 +580,26 @@ module fpnew_fma_multi #(
   logic [0:NUM_MID_REGS] mid_pipe_ready;
 
   // Input stage: First element of pipeline is taken from upstream logic
-  assign mid_pipe_eff_sub_q[0]     = effective_subtraction_pre_q;
-  assign mid_pipe_exp_prod_q[0]    = exponent_product_pre_q;
-  assign mid_pipe_exp_diff_q[0]    = exponent_difference_pre_q;
-  assign mid_pipe_tent_exp_q[0]    = tentative_exponent_pre_q;
-  assign mid_pipe_add_shamt_q[0]   = addend_shamt_pre_q;
-  assign mid_pipe_sticky_q[0]      = sticky_before_add_pre_q;
+  assign mid_pipe_eff_sub_q[0]     = effective_subtraction;
+  assign mid_pipe_exp_prod_q[0]    = exponent_product;
+  assign mid_pipe_exp_diff_q[0]    = exponent_difference;
+  assign mid_pipe_tent_exp_q[0]    = tentative_exponent;
+  assign mid_pipe_add_shamt_q[0]   = addend_shamt + addend_normalize_shamt;
+  assign mid_pipe_sticky_q[0]      = sticky_before_add;
   assign mid_pipe_sum_q[0]         = sum;
   assign mid_pipe_lza_count_q[0]   = lza_count;
   assign mid_pipe_final_sign_q[0]  = final_sign;
-  assign mid_pipe_rnd_mode_q[0]    = pre_pipe_rnd_mode_q[NUM_PRE_REGS];
-  assign mid_pipe_dst_fmt_q[0]     = pre_pipe_dst_fmt_q[NUM_PRE_REGS];
-  assign mid_pipe_res_is_spec_q[0] = pre_pipe_res_is_spec_q[NUM_PRE_REGS];
-  assign mid_pipe_spec_res_q[0]    = pre_pipe_spec_res_q[NUM_PRE_REGS];
-  assign mid_pipe_spec_stat_q[0]   = pre_pipe_spec_stat_q[NUM_PRE_REGS];
-  assign mid_pipe_tag_q[0]         = pre_pipe_tag_q[NUM_PRE_REGS];
-  assign mid_pipe_mask_q[0]        = pre_pipe_mask_q[NUM_PRE_REGS];
-  assign mid_pipe_aux_q[0]         = pre_pipe_aux_q[NUM_PRE_REGS];
-  assign mid_pipe_valid_q[0]       = pre_pipe_valid_q[NUM_PRE_REGS];
-  // Propagate pipeline ready into the pre-add stage.
-  assign pre_pipe_ready[NUM_PRE_REGS] = mid_pipe_ready[0];
+  assign mid_pipe_rnd_mode_q[0]    = inp_pipe_rnd_mode_q[NUM_INP_REGS];
+  assign mid_pipe_dst_fmt_q[0]     = dst_fmt_q;
+  assign mid_pipe_res_is_spec_q[0] = result_is_special;
+  assign mid_pipe_spec_res_q[0]    = special_result;
+  assign mid_pipe_spec_stat_q[0]   = special_status;
+  assign mid_pipe_tag_q[0]         = inp_pipe_tag_q[NUM_INP_REGS];
+  assign mid_pipe_mask_q[0]        = inp_pipe_mask_q[NUM_INP_REGS];
+  assign mid_pipe_aux_q[0]         = inp_pipe_aux_q[NUM_INP_REGS];
+  assign mid_pipe_valid_q[0]       = inp_pipe_valid_q[NUM_INP_REGS];
+  // Input stage: Propagate pipeline ready signal to input pipe
+  assign inp_pipe_ready[NUM_INP_REGS] = mid_pipe_ready[0];
 
   // Generate the register stages
   for (genvar i = 0; i < NUM_MID_REGS; i++) begin : gen_inside_pipeline
@@ -705,8 +612,7 @@ module fpnew_fma_multi #(
     // Valid: enabled by ready signal, synchronous clear with the flush signal
     `FFLARNC(mid_pipe_valid_q[i+1], mid_pipe_valid_q[i], mid_pipe_ready[i], flush_i, 1'b0, clk_i, rst_ni)
     // Enable register if pipleine ready and a valid data item is present
-    assign reg_ena = (mid_pipe_ready[i] & mid_pipe_valid_q[i]) |
-                     reg_ena_i[NUM_INP_REGS + NUM_PRE_REGS + i];
+    assign reg_ena = (mid_pipe_ready[i] & mid_pipe_valid_q[i]) | reg_ena_i[NUM_INP_REGS + i];
     // Generate the pipeline registers within the stages, use enable-registers
     `FFL(mid_pipe_eff_sub_q[i+1],     mid_pipe_eff_sub_q[i],     reg_ena, '0)
     `FFL(mid_pipe_exp_prod_q[i+1],    mid_pipe_exp_prod_q[i],    reg_ena, '0)
@@ -985,7 +891,7 @@ module fpnew_fma_multi #(
   assign out_pipe_mask_q[0]   = mid_pipe_mask_q[NUM_MID_REGS];
   assign out_pipe_aux_q[0]    = mid_pipe_aux_q[NUM_MID_REGS];
   assign out_pipe_valid_q[0]  = mid_pipe_valid_q[NUM_MID_REGS];
-  // Propagate pipeline ready into the normalization/rounding stage.
+  // Input stage: Propagate pipeline ready signal to inside pipe
   assign mid_pipe_ready[NUM_MID_REGS] = out_pipe_ready[0];
   // Generate the register stages
   for (genvar i = 0; i < NUM_OUT_REGS; i++) begin : gen_output_pipeline
@@ -998,8 +904,7 @@ module fpnew_fma_multi #(
     // Valid: enabled by ready signal, synchronous clear with the flush signal
     `FFLARNC(out_pipe_valid_q[i+1], out_pipe_valid_q[i], out_pipe_ready[i], flush_i, 1'b0, clk_i, rst_ni)
     // Enable register if pipleine ready and a valid data item is present
-    assign reg_ena = (out_pipe_ready[i] & out_pipe_valid_q[i]) |
-                     reg_ena_i[NUM_INP_REGS + NUM_PRE_REGS + NUM_MID_REGS + i];
+    assign reg_ena = (out_pipe_ready[i] & out_pipe_valid_q[i]) | reg_ena_i[NUM_INP_REGS + NUM_MID_REGS + i];
     // Generate the pipeline registers within the stages, use enable-registers
     `FFL(out_pipe_result_q[i+1], out_pipe_result_q[i], reg_ena, '0)
     `FFL(out_pipe_status_q[i+1], out_pipe_status_q[i], reg_ena, '0)
@@ -1017,19 +922,15 @@ module fpnew_fma_multi #(
   assign mask_o          = out_pipe_mask_q[NUM_OUT_REGS];
   assign aux_o           = out_pipe_aux_q[NUM_OUT_REGS];
   assign out_valid_o     = out_pipe_valid_q[NUM_OUT_REGS];
-  assign busy_o          = (| {inp_pipe_valid_q, pre_pipe_valid_q, mid_pipe_valid_q,
-                               out_pipe_valid_q});
+  assign busy_o          = (| {inp_pipe_valid_q, mid_pipe_valid_q, out_pipe_valid_q});
 
   // Early valid_o signal. This is used for dispatching instructions for dual-issue processor.
   if (NUM_OUT_REGS > 0) begin
     assign early_out_valid_o = |{out_pipe_valid_q[NUM_OUT_REGS] & ~out_pipe_ready[NUM_OUT_REGS],
                                  out_pipe_valid_q[NUM_OUT_REGS-1]};
   end else if (NUM_MID_REGS > 0) begin
-    assign early_out_valid_o = |{mid_pipe_valid_q[NUM_MID_REGS] & ~mid_pipe_ready[NUM_MID_REGS],
+    assign early_out_valid_o = |{mid_pipe_valid_q[NUM_MID_REGS] & ~mid_pipe_ready[NUM_OUT_REGS],
                                  mid_pipe_valid_q[NUM_MID_REGS-1]};
-  end else if (NUM_PRE_REGS > 0) begin
-    assign early_out_valid_o = |{pre_pipe_valid_q[NUM_PRE_REGS] & ~pre_pipe_ready[NUM_PRE_REGS],
-                                 pre_pipe_valid_q[NUM_PRE_REGS-1]};
   end else if (NUM_INP_REGS > 0) begin
     assign early_out_valid_o = |{inp_pipe_valid_q[NUM_INP_REGS] & ~inp_pipe_ready[NUM_INP_REGS],
                                  inp_pipe_valid_q[NUM_INP_REGS-1]};

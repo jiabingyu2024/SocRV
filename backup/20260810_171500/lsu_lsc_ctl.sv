@@ -172,15 +172,6 @@ module lsu_lsc_ctl
    lsu_pkt_t           dma_pkt_d;
    lsu_pkt_t           lsu_pkt_dc1_in, lsu_pkt_dc2_in, lsu_pkt_dc3_in, lsu_pkt_dc4_in, lsu_pkt_dc5_in;
 
-   // Keep packet-valid control physically separate from packed packet data.
-   // Valid feeds clock enables and TLU halt logic; sharing its muxes with
-   // load-correction/address fields creates a long stbuf-to-flush cone.
-   (* keep = "true", max_fanout = "8" *) logic lsu_pkt_dc1_valid_d;
-   (* keep = "true", max_fanout = "8" *) logic lsu_pkt_dc2_valid_d;
-   (* keep = "true", max_fanout = "8" *) logic lsu_pkt_dc3_valid_d;
-   (* keep = "true", max_fanout = "8" *) logic lsu_pkt_dc4_valid_d;
-   (* keep = "true", max_fanout = "8" *) logic lsu_pkt_dc5_valid_d;
-
    // Premux the rs1/offset for dma
    assign lsu_rs1_d[31:0] = dma_dccm_req ? dma_mem_addr[31:0] : exu_lsu_rs1_d[31:0];
    assign lsu_offset_d[11:0] = dec_lsu_offset_d[11:0] & ~{12{dma_dccm_req}};
@@ -252,22 +243,16 @@ module lsu_lsc_ctl
       lsu_pkt_dc4_in = lsu_pkt_dc3;
       lsu_pkt_dc5_in = lsu_pkt_dc4;
 
-      lsu_pkt_dc1_valid_d = (lsu_p.valid & ~flush_dc2_up) | dma_dccm_req;
-      lsu_pkt_dc2_valid_d = lsu_pkt_dc1.valid & ~(flush_dc2_up & ~lsu_pkt_dc1.dma);
-      lsu_pkt_dc3_valid_d = lsu_pkt_dc2.valid & ~(flush_dc2_up & ~lsu_pkt_dc2.dma);
-      lsu_pkt_dc4_valid_d = lsu_pkt_dc3.valid & ~(flush_dc3 & ~lsu_pkt_dc3.dma) & ~lsu_freeze_dc3;
-      lsu_pkt_dc5_valid_d = lsu_pkt_dc4.valid & ~(flush_dc4 & ~lsu_pkt_dc4.dma);
-
-      lsu_pkt_dc1_in.valid = lsu_pkt_dc1_valid_d;
-      lsu_pkt_dc2_in.valid = lsu_pkt_dc2_valid_d;
-      lsu_pkt_dc3_in.valid = lsu_pkt_dc3_valid_d;
-      lsu_pkt_dc4_in.valid = lsu_pkt_dc4_valid_d;
-      lsu_pkt_dc5_in.valid = lsu_pkt_dc5_valid_d;
+      lsu_pkt_dc1_in.valid = (lsu_p.valid & ~flush_dc2_up) | dma_dccm_req;
+      lsu_pkt_dc2_in.valid = lsu_pkt_dc1.valid & ~(flush_dc2_up & ~lsu_pkt_dc1.dma);
+      lsu_pkt_dc3_in.valid = lsu_pkt_dc2.valid & ~(flush_dc2_up & ~lsu_pkt_dc2.dma);
+      lsu_pkt_dc4_in.valid = lsu_pkt_dc3.valid & ~(flush_dc3 & ~lsu_pkt_dc3.dma) & ~lsu_freeze_dc3;
+      lsu_pkt_dc5_in.valid = lsu_pkt_dc4.valid & ~(flush_dc4 & ~lsu_pkt_dc4.dma);
    end
 
    // C2 clock for valid and C1 for other bits of packet
-   rvdff #(1) lsu_pkt_vlddc4ff (.*, .din(lsu_pkt_dc4_valid_d), .dout(lsu_pkt_dc4.valid), .clk(lsu_c2_dc4_clk));
-   rvdff #(1) lsu_pkt_vlddc5ff (.*, .din(lsu_pkt_dc5_valid_d), .dout(lsu_pkt_dc5.valid), .clk(lsu_c2_dc5_clk));
+   rvdff #(1) lsu_pkt_vlddc4ff (.*, .din(lsu_pkt_dc4_in.valid), .dout(lsu_pkt_dc4.valid), .clk(lsu_c2_dc4_clk));
+   rvdff #(1) lsu_pkt_vlddc5ff (.*, .din(lsu_pkt_dc5_in.valid), .dout(lsu_pkt_dc5.valid), .clk(lsu_c2_dc5_clk));
 
    rvdffe #($bits(lsu_pkt_t)-1) lsu_pkt_dc1ff (.*, .din(lsu_pkt_dc1_in[$bits(lsu_pkt_t)-1:1]), .dout(lsu_pkt_dc1[$bits(lsu_pkt_t)-1:1]), .en(lsu_freeze_c1_dc1_clken));
    rvdffe #($bits(lsu_pkt_t)-1) lsu_pkt_dc2ff (.*, .din(lsu_pkt_dc2_in[$bits(lsu_pkt_t)-1:1]), .dout(lsu_pkt_dc2[$bits(lsu_pkt_t)-1:1]), .en(lsu_freeze_c1_dc2_clken));
@@ -346,9 +331,9 @@ module lsu_lsc_ctl
    rvdff_fpga #(1) addr_external_dc3ff    (.din(addr_external_dc2),    .dout(addr_external_dc3),    .clk(lsu_freeze_c1_dc3_clk), .rawclk(clk), .clken(lsu_freeze_c1_dc3_clken), .*);
    rvdff_fpga #(1) misaligned_fault_dc2ff (.din(misaligned_fault_dc1), .dout(misaligned_fault_dc2), .clk(lsu_freeze_c1_dc2_clk), .rawclk(clk), .clken(lsu_freeze_c1_dc2_clken), .*);
    rvdff_fpga #(1) misaligned_fault_dc3ff (.din(misaligned_fault_dc2), .dout(misaligned_fault_dc3), .clk(lsu_freeze_c1_dc3_clk), .rawclk(clk), .clken(lsu_freeze_c1_dc3_clken), .*);
-   rvdff_fpga #(1) lsu_pkt_vlddc1ff       (.din(lsu_pkt_dc1_valid_d), .dout(lsu_pkt_dc1.valid),    .clk(lsu_freeze_c2_dc1_clk), .rawclk(clk), .clken(lsu_freeze_c2_dc1_clken), .*);
-   rvdff_fpga #(1) lsu_pkt_vlddc2ff       (.din(lsu_pkt_dc2_valid_d), .dout(lsu_pkt_dc2.valid),    .clk(lsu_freeze_c2_dc2_clk), .rawclk(clk), .clken(lsu_freeze_c2_dc2_clken), .*);
-   rvdff_fpga #(1) lsu_pkt_vlddc3ff       (.din(lsu_pkt_dc3_valid_d), .dout(lsu_pkt_dc3.valid),    .clk(lsu_freeze_c2_dc3_clk), .rawclk(clk), .clken(lsu_freeze_c2_dc3_clken), .*);
+   rvdff_fpga #(1) lsu_pkt_vlddc1ff       (.din(lsu_pkt_dc1_in.valid), .dout(lsu_pkt_dc1.valid),    .clk(lsu_freeze_c2_dc1_clk), .rawclk(clk), .clken(lsu_freeze_c2_dc1_clken), .*);
+   rvdff_fpga #(1) lsu_pkt_vlddc2ff       (.din(lsu_pkt_dc2_in.valid), .dout(lsu_pkt_dc2.valid),    .clk(lsu_freeze_c2_dc2_clk), .rawclk(clk), .clken(lsu_freeze_c2_dc2_clken), .*);
+   rvdff_fpga #(1) lsu_pkt_vlddc3ff       (.din(lsu_pkt_dc3_in.valid), .dout(lsu_pkt_dc3.valid),    .clk(lsu_freeze_c2_dc3_clk), .rawclk(clk), .clken(lsu_freeze_c2_dc3_clken), .*);
 
    rvdff #(1) addr_external_dc4ff(.din(addr_external_dc3), .dout(addr_external_dc4), .clk(lsu_c1_dc4_clk), .*);
    rvdff #(1) addr_external_dc5ff(.din(addr_external_dc4), .dout(addr_external_dc5), .clk(lsu_c1_dc5_clk), .*);

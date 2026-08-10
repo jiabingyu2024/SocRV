@@ -5,6 +5,22 @@ SUITE ?= smoke
 TRACE ?= 0
 ISA_GATE ?= current
 COREMARK_ITERATIONS ?= 3
+CORE_MHZ ?= 125
+ITER_TAG ?= manual
+VIVADO_STAGE ?= synth
+VIVADO_BUILD ?= build/vivado/kintex7-$(PROFILE)-$(CORE_MHZ)mhz
+ANALYZE_ALL ?= 0
+PATH_GROUP ?= category
+PATH_LIMIT ?= 15
+PATH_INDEX ?= 1
+PATH_MODE ?= chain
+UTIL_STAGE ?= auto
+UTIL_DEPTH ?= 4
+UTIL_METRIC ?= luts
+UTIL_LIMIT ?= 30
+UTIL_FILTER ?=
+UTIL_DIFF ?=
+COREMARK_TARGET_ITERATIONS ?= 2000
 DIFFTEST ?= 0
 DIFFTEST_MODE ?= ram-strict
 DIFFTEST_ISA ?= rv32imf_zicsr
@@ -18,7 +34,10 @@ DIFFTEST_ISA ?= rv32imf_zicsr
 	software-rtthread software-fpga sim sim-smoke sim-trap-timer \
 	sim-rtthread sim-msh sim-coremark sim-isa sim-quick sim-full regression \
 	difftest-build difftest-selftest diff-isa diff-smoke diff-rtthread diff-replay \
-	fpga-build fpga-bitstream fpga-check fpga-program check-images \
+	fpga-build fpga-synth fpga-impl fpga-bitstream fpga-check fpga-analyze fpga-program check-images \
+	fpga-paths fpga-path fpga-util \
+	iter-status iter-trend \
+	rtl-iteration \
 	release release-check clean-software clean-images clean-sim \
 	clean-regression clean-fpga clean
 
@@ -180,12 +199,39 @@ regression: deps-check
 
 # Vivado is only invoked when the user explicitly runs fpga-build/program.
 fpga-build: deps-check
-	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --jobs $(JOBS)
+	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --jobs $(JOBS) --core-mhz $(CORE_MHZ)
+
+fpga-synth: deps-check
+	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --jobs $(JOBS) --core-mhz $(CORE_MHZ) --stage synth --run-tag $(ITER_TAG) --all-violations --no-software-build
+
+fpga-impl: deps-check
+	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --jobs $(JOBS) --core-mhz $(CORE_MHZ) --stage impl --run-tag $(ITER_TAG) --all-violations --no-software-build
 
 fpga-bitstream: fpga-build
 
 fpga-check:
-	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --check-only
+	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --core-mhz $(CORE_MHZ) --check-only
+
+fpga-analyze:
+	@$(PYTHON) scripts/analyze_vivado_reports.py --build-root $(VIVADO_BUILD) --stage $(VIVADO_STAGE) $(if $(filter 1,$(ANALYZE_ALL)),--export-all,)
+
+fpga-paths:
+	@$(PYTHON) scripts/query_timing_paths.py --build-root $(VIVADO_BUILD) --group $(PATH_GROUP) --limit $(PATH_LIMIT)
+
+fpga-path:
+	@$(PYTHON) scripts/show_timing_path.py --build-root $(VIVADO_BUILD) --stage $(VIVADO_STAGE) --index $(PATH_INDEX) --mode $(PATH_MODE)
+
+fpga-util:
+	@$(PYTHON) scripts/summarize_utilization.py --build-root $(VIVADO_BUILD) --stage $(UTIL_STAGE) --depth $(UTIL_DEPTH) --metric $(UTIL_METRIC) --limit $(UTIL_LIMIT) $(if $(UTIL_FILTER),--filter $(UTIL_FILTER),) $(if $(UTIL_DIFF),--diff $(UTIL_DIFF),)
+
+iter-status:
+	@$(PYTHON) scripts/iteration_status.py $(if $(VIVADO_BUILD),--build-root $(VIVADO_BUILD),) --iterations $(COREMARK_TARGET_ITERATIONS)
+
+iter-trend:
+	@$(PYTHON) scripts/iteration_status.py --trend
+
+rtl-iteration:
+	@$(PYTHON) scripts/run_optimization_iteration.py --tag $(ITER_TAG) --core-mhz $(CORE_MHZ) --jobs $(JOBS) --vivado-stage $(VIVADO_STAGE)
 
 fpga-program:
 	@$(PYTHON) scripts/program_board.py --profile $(PROFILE)

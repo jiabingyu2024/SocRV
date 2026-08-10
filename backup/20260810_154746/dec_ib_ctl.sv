@@ -157,13 +157,7 @@ module dec_ib_ctl
    logic [3:0]   i0_wen;
    logic [3:1]   i1_wen;
    logic [3:0]   shift_ibval;
-   // Keep physically local write-enable copies for each wide instruction-buffer register bank.
-   // Each copy is driven by its own expression so synthesis can place the small OR cones beside
-   // the destination bank instead of retaining one flattened high-fanout ibwrite source.
-   (* keep = "true", max_fanout = "32" *) logic [3:0] ibwrite_cinst;
-   (* keep = "true", max_fanout = "32" *) logic [3:0] ibwrite_pc;
-   (* keep = "true", max_fanout = "32" *) logic [3:0] ibwrite_bp;
-   (* keep = "true", max_fanout = "32" *) logic [3:0] ibwrite_instr;
+   logic [3:0]   ibwrite;
 
    assign ibvalid[3:0] = ibval[3:0] | i0_wen[3:0] | {i1_wen[3:1],1'b0};
 
@@ -200,13 +194,13 @@ module dec_ib_ctl
       assign cinst3_in[15:0] = ({16{write_i0_ib3}} & ifu_i0_cinst[15:0]) |
                                ({16{write_i1_ib3}} & ifu_i1_cinst[15:0]);
 
-      rvdffe #(16) cinst3ff (.*, .en(ibwrite_cinst[3]), .din(cinst3_in[15:0]), .dout(cinst3[15:0]));
+      rvdffe #(16) cinst3ff (.*, .en(ibwrite[3]), .din(cinst3_in[15:0]), .dout(cinst3[15:0]));
 
       assign cinst2_in[15:0] = ({16{write_i0_ib2}} & ifu_i0_cinst[15:0]) |
                                ({16{write_i1_ib2}} & ifu_i1_cinst[15:0]) |
                                ({16{shift_ib3_ib2}} & cinst3[15:0]);
 
-      rvdffe #(16) cinst2ff (.*, .en(ibwrite_cinst[2]), .din(cinst2_in[15:0]), .dout(cinst2[15:0]));
+      rvdffe #(16) cinst2ff (.*, .en(ibwrite[2]), .din(cinst2_in[15:0]), .dout(cinst2[15:0]));
    end // if (DEC_INSTBUF_DEPTH==4)
    else begin
       assign cinst3 = '0;
@@ -218,14 +212,14 @@ module dec_ib_ctl
                             ({16{shift_ib2_ib1}} & cinst2[15:0]) |
                             ({16{shift_ib3_ib1}} & cinst3[15:0]);
 
-   rvdffe #(16) cinst1ff (.*, .en(ibwrite_cinst[1]), .din(cinst1_in[15:0]), .dout(cinst1[15:0]));
+   rvdffe #(16) cinst1ff (.*, .en(ibwrite[1]), .din(cinst1_in[15:0]), .dout(cinst1[15:0]));
 
 
    assign cinst0_in[15:0] = ({16{write_i0_ib0}} & ifu_i0_cinst[15:0]) |
                             ({16{shift_ib1_ib0}} & cinst1[15:0]) |
                             ({16{shift_ib2_ib0}} & cinst2[15:0]);
 
-   rvdffe #(16) cinst0ff (.*, .en(ibwrite_cinst[0]), .din(cinst0_in[15:0]), .dout(cinst0[15:0]));
+   rvdffe #(16) cinst0ff (.*, .en(ibwrite[0]), .din(cinst0_in[15:0]), .dout(cinst0[15:0]));
 
    assign dec_i0_cinst_d[15:0] = cinst0[15:0];
 
@@ -237,22 +231,11 @@ module dec_ib_ctl
    // pc tracking
 
 
-   assign ibwrite_cinst = {write_i0_ib3 | write_i1_ib3,
-                           write_i0_ib2 | write_i1_ib2 | shift_ib3_ib2,
-                           write_i0_ib1 | write_i1_ib1 | shift_ib2_ib1 | shift_ib3_ib1,
-                           write_i0_ib0 | shift_ib1_ib0 | shift_ib2_ib0};
-   assign ibwrite_pc    = {write_i0_ib3 | write_i1_ib3,
-                           write_i0_ib2 | write_i1_ib2 | shift_ib3_ib2,
-                           write_i0_ib1 | write_i1_ib1 | shift_ib2_ib1 | shift_ib3_ib1,
-                           write_i0_ib0 | shift_ib1_ib0 | shift_ib2_ib0};
-   assign ibwrite_bp    = {write_i0_ib3 | write_i1_ib3,
-                           write_i0_ib2 | write_i1_ib2 | shift_ib3_ib2,
-                           write_i0_ib1 | write_i1_ib1 | shift_ib2_ib1 | shift_ib3_ib1,
-                           write_i0_ib0 | shift_ib1_ib0 | shift_ib2_ib0};
-   assign ibwrite_instr = {write_i0_ib3 | write_i1_ib3,
-                           write_i0_ib2 | write_i1_ib2 | shift_ib3_ib2,
-                           write_i0_ib1 | write_i1_ib1 | shift_ib2_ib1 | shift_ib3_ib1,
-                           write_i0_ib0 | shift_ib1_ib0 | shift_ib2_ib0};
+   assign ibwrite[3:0] = {  write_i0_ib3 | write_i1_ib3,
+                            write_i0_ib2 | write_i1_ib2 | shift_ib3_ib2,
+                            write_i0_ib1 | write_i1_ib1 | shift_ib2_ib1 | shift_ib3_ib1,
+                            write_i0_ib0 | shift_ib1_ib0 | shift_ib2_ib0
+                            };
 
    logic [36:0]  ifu_i1_pcdata, ifu_i0_pcdata;
 
@@ -265,13 +248,13 @@ module dec_ib_ctl
       assign pc3_in[36:0] = ({37{write_i0_ib3}} & ifu_i0_pcdata[36:0]) |
                             ({37{write_i1_ib3}} & ifu_i1_pcdata[36:0]);
 
-      rvdffe #(37) pc3ff (.*, .en(ibwrite_pc[3]), .din(pc3_in[36:0]), .dout(pc3[36:0]));
+      rvdffe #(37) pc3ff (.*, .en(ibwrite[3]), .din(pc3_in[36:0]), .dout(pc3[36:0]));
 
       assign pc2_in[36:0] = ({37{write_i0_ib2}} & ifu_i0_pcdata[36:0]) |
                             ({37{write_i1_ib2}} & ifu_i1_pcdata[36:0]) |
                             ({37{shift_ib3_ib2}} & pc3[36:0]);
 
-      rvdffe #(37) pc2ff (.*, .en(ibwrite_pc[2]), .din(pc2_in[36:0]), .dout(pc2[36:0]));
+      rvdffe #(37) pc2ff (.*, .en(ibwrite[2]), .din(pc2_in[36:0]), .dout(pc2[36:0]));
    end // if (DEC_INSTBUF_DEPTH==4)
    else begin
       assign pc3 = '0;
@@ -283,14 +266,14 @@ module dec_ib_ctl
                          ({37{shift_ib2_ib1}} & pc2[36:0]) |
                          ({37{shift_ib3_ib1}} & pc3[36:0]);
 
-   rvdffe #(37) pc1ff (.*, .en(ibwrite_pc[1]), .din(pc1_in[36:0]), .dout(pc1[36:0]));
+   rvdffe #(37) pc1ff (.*, .en(ibwrite[1]), .din(pc1_in[36:0]), .dout(pc1[36:0]));
 
 
    assign pc0_in[36:0] = ({37{write_i0_ib0}} & ifu_i0_pcdata[36:0]) |
                          ({37{shift_ib1_ib0}} & pc1[36:0]) |
                          ({37{shift_ib2_ib0}} & pc2[36:0]);
 
-   rvdffe #(37) pc0ff (.*, .en(ibwrite_pc[0]), .din(pc0_in[36:0]), .dout(pc0[36:0]));
+   rvdffe #(37) pc0ff (.*, .en(ibwrite[0]), .din(pc0_in[36:0]), .dout(pc0[36:0]));
 
    assign dec_i0_icaf_second_d = pc0[36];   // icaf's can only decode as i0
 
@@ -320,13 +303,13 @@ module dec_ib_ctl
       assign bp3_in = ({$bits(br_pkt_t){write_i0_ib3}} & i0_brp) |
                       ({$bits(br_pkt_t){write_i1_ib3}} & i1_brp);
 
-      rvdffe #($bits(br_pkt_t)) bp3ff (.*, .en(ibwrite_bp[3]), .din(bp3_in), .dout(bp3));
+      rvdffe #($bits(br_pkt_t)) bp3ff (.*, .en(ibwrite[3]), .din(bp3_in), .dout(bp3));
 
       assign bp2_in = ({$bits(br_pkt_t){write_i0_ib2}} & i0_brp) |
                       ({$bits(br_pkt_t){write_i1_ib2}} & i1_brp) |
                       ({$bits(br_pkt_t){shift_ib3_ib2}} & bp3);
 
-      rvdffe #($bits(br_pkt_t)) bp2ff (.*, .en(ibwrite_bp[2]), .din(bp2_in), .dout(bp2));
+      rvdffe #($bits(br_pkt_t)) bp2ff (.*, .en(ibwrite[2]), .din(bp2_in), .dout(bp2));
    end // if (DEC_INSTBUF_DEPTH==4)
    else begin
       assign bp3 = '0;
@@ -338,7 +321,7 @@ module dec_ib_ctl
                    ({$bits(br_pkt_t){shift_ib2_ib1}} & bp2) |
                    ({$bits(br_pkt_t){shift_ib3_ib1}} & bp3);
 
-   rvdffe #($bits(br_pkt_t)) bp1ff (.*, .en(ibwrite_bp[1]), .din(bp1_in), .dout(bp1));
+   rvdffe #($bits(br_pkt_t)) bp1ff (.*, .en(ibwrite[1]), .din(bp1_in), .dout(bp1));
 
 
 
@@ -346,7 +329,7 @@ module dec_ib_ctl
                    ({$bits(br_pkt_t){shift_ib1_ib0}} & bp1) |
                    ({$bits(br_pkt_t){shift_ib2_ib0}} & bp2);
 
-   rvdffe #($bits(br_pkt_t)) bp0ff (.*, .en(ibwrite_bp[0]), .din(bp0_in), .dout(bp0));
+   rvdffe #($bits(br_pkt_t)) bp0ff (.*, .en(ibwrite[0]), .din(bp0_in), .dout(bp0));
 
    // instruction buffers
 
@@ -354,13 +337,13 @@ module dec_ib_ctl
       assign ib3_in[31:0] = ({32{write_i0_ib3}} & ifu_i0_instr[31:0]) |
                             ({32{write_i1_ib3}} & ifu_i1_instr[31:0]);
 
-      rvdffe #(32) ib3ff (.*, .en(ibwrite_instr[3]), .din(ib3_in[31:0]), .dout(ib3[31:0]));
+      rvdffe #(32) ib3ff (.*, .en(ibwrite[3]), .din(ib3_in[31:0]), .dout(ib3[31:0]));
 
       assign ib2_in[31:0] = ({32{write_i0_ib2}} & ifu_i0_instr[31:0]) |
                             ({32{write_i1_ib2}} & ifu_i1_instr[31:0]) |
                             ({32{shift_ib3_ib2}} & ib3[31:0]);
 
-      rvdffe #(32) ib2ff (.*, .en(ibwrite_instr[2]), .din(ib2_in[31:0]), .dout(ib2[31:0]));
+      rvdffe #(32) ib2ff (.*, .en(ibwrite[2]), .din(ib2_in[31:0]), .dout(ib2[31:0]));
    end // if (DEC_INSTBUF_DEPTH==4)
    else begin
       assign ib3 = '0;
@@ -372,7 +355,7 @@ module dec_ib_ctl
                          ({32{shift_ib2_ib1}} & ib2[31:0]) |
                          ({32{shift_ib3_ib1}} & ib3[31:0]);
 
-   rvdffe #(32) ib1ff (.*, .en(ibwrite_instr[1]), .din(ib1_in[31:0]), .dout(ib1[31:0]));
+   rvdffe #(32) ib1ff (.*, .en(ibwrite[1]), .din(ib1_in[31:0]), .dout(ib1[31:0]));
 
 
 // GPR accesses
@@ -431,7 +414,7 @@ module dec_ib_ctl
                          ({32{shift_ib1_ib0}} & ib1[31:0]) |
                          ({32{shift_ib2_ib0}} & ib2[31:0]);
 
-   rvdffe #(32) ib0ff (.*, .en(ibwrite_instr[0]), .din(ib0_in[31:0]), .dout(ib0[31:0]));
+   rvdffe #(32) ib0ff (.*, .en(ibwrite[0]), .din(ib0_in[31:0]), .dout(ib0[31:0]));
 
    assign dec_ib3_valid_d = ibval[3];
    assign dec_ib2_valid_d = ibval[2];

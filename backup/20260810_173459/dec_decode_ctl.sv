@@ -408,12 +408,6 @@ module dec_decode_ctl
    logic        i0_secondary_block_d, i1_secondary_block_d;
    logic        non_block_case_d;
    logic        i0_div_decode_d;
-   // Keep the divide packet's three control bits local to the divider input.
-   // They are equivalent to the existing fields but avoid sharing the
-   // general decode mux with the long operand/bypass cone.
-   (* keep = "true", max_fanout = "8" *) logic div_p_valid_d;
-   (* keep = "true", max_fanout = "8" *) logic div_p_unsign_d;
-   (* keep = "true", max_fanout = "8" *) logic div_p_rem_d;
    logic [31:0] i0_result_e4_final, i1_result_e4_final;
    logic        i0_load_block_d;
    logic        i0_mul_block_d;
@@ -1220,12 +1214,10 @@ end : cam_array
    assign dec_i1_div_d = i1_dp.div;
 
 
-   assign div_p_valid_d  = div_decode_d;
-   assign div_p_unsign_d = (i0_dp.div) ? i0_dp.unsign : i1_dp.unsign;
-   assign div_p_rem_d    = (i0_dp.div) ? i0_dp.rem    : i1_dp.rem;
-   assign div_p.valid     = div_p_valid_d;
-   assign div_p.unsign    = div_p_unsign_d;
-   assign div_p.rem       = div_p_rem_d;
+   assign div_p.valid = div_decode_d;
+
+   assign div_p.unsign = (i0_dp.div) ? i0_dp.unsign :   i1_dp.unsign;
+   assign div_p.rem  =   (i0_dp.div) ? i0_dp.rem    :   i1_dp.rem;
 
 
    assign mul_p.valid = mul_decode_d;
