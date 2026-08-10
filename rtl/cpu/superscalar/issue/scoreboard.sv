@@ -189,8 +189,6 @@ module scoreboard #(
                 entries_q[allocate_ptr_q].occupied <= 1'b1;
                 entries_q[allocate_ptr_q].done <= allocate_uop_i.exception_valid ||
                                                   allocate_uop_i.fu == FU_SYSTEM;
-                entries_q[allocate_ptr_q].fp_result <= '0;
-                entries_q[allocate_ptr_q].fp_flags <= '0;
                 entries_q[allocate_ptr_q].exception_valid <= allocate_uop_i.exception_valid;
                 entries_q[allocate_ptr_q].exception_cause <= allocate_uop_i.exception_cause;
                 entries_q[allocate_ptr_q].exception_tval <= allocate_uop_i.exception_tval;
