@@ -44,10 +44,6 @@ module scoreboard #(
     import core_types_pkg::*;
 
     scoreboard_entry_t entries_q [0:DEPTH-1];
-    // csr_src is written once at allocation and only read by the commit head.
-    // Keep it out of the per-entry FF payload so its 8x32 storage uses one
-    // distributed-RAM write enable instead of hundreds of CE/reset endpoints.
-    (* ram_style = "distributed" *) logic [31:0] csr_src_q [0:DEPTH-1];
     logic [31:0] producer_valid_q;
     logic [TRANS_ID_W-1:0] producer_tid_q [0:31];
     logic [TRANS_ID_W-1:0] allocate_ptr_q, commit_ptr_q;
@@ -55,10 +51,9 @@ module scoreboard #(
 
     assign allocate_trans_id_o = allocate_ptr_q;
     assign commit_trans_id_o = commit_ptr_q;
-    always_comb begin
-        commit_entry_o = entries_q[commit_ptr_q];
-        commit_entry_o.csr_src = csr_src_q[commit_ptr_q];
+    assign commit_entry_o = entries_q[commit_ptr_q];
 
+    always_comb begin
         query_rs1_found_o = query_uop_i.uses_rs1 && query_uop_i.rs1 != 0 &&
                             producer_valid_q[query_uop_i.rs1];
         query_rs1_trans_id_o = query_rs1_found_o ?
@@ -166,7 +161,7 @@ module scoreboard #(
                 entries_q[allocate_ptr_q].csr_op <= allocate_uop_i.csr_op;
                 entries_q[allocate_ptr_q].csr_addr <= allocate_uop_i.csr_addr;
                 if (allocate_uop_i.sys_op == SYS_CSR)
-                    csr_src_q[allocate_ptr_q] <= allocate_uop_i.csr_imm ?
+                    entries_q[allocate_ptr_q].csr_src <= allocate_uop_i.csr_imm ?
                         {27'd0, allocate_uop_i.rs1} : allocate_csr_src_i;
                 entries_q[allocate_ptr_q].exception_valid <= allocate_uop_i.exception_valid;
                 entries_q[allocate_ptr_q].exception_cause <= allocate_uop_i.exception_cause;
