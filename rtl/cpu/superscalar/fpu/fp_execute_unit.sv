@@ -26,7 +26,7 @@ module fp_execute_unit (
     // The complete FP interface is 32-bit so no binary64 slice, register-file
     // half, or scoreboard payload can survive synthesis.
     localparam fpu_implementation_t SOCRV_PIPELINED = '{
-        PipeRegs:   '{'{default: 5}, // ADDMUL: input, pre-add, internal, pre-round and output
+        PipeRegs:   '{'{default: 6}, // ADDMUL: input, pre-add, internal, normalization, pre-round and output
                       '{default: 1}, // DIVSQRT: output
                       '{default: 1}, // NONCOMP: input
                       '{default: 4}},// CONV: input, internal, pre-round and output
