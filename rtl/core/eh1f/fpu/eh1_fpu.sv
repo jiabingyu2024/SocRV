@@ -21,7 +21,11 @@ module eh1_fpu (
    import fpnew_pkg::*;
 
    localparam fpu_implementation_t EH1F_PIPELINED = '{
-      PipeRegs:   '{'{default: 3},
+      // ADDMUL=4: fpnew_fma.sv splits DISTRIBUTED four ways (pre-add / post-add+LZA /
+      // post-normalize / post-round), so depth 4 puts one register on each cut.  At depth 3 the
+      // rounding+classification cone shares a stage with LZC and the normalization shift, which
+      // measured as the WNS owner at -2.656 ns.
+      PipeRegs:   '{'{default: 4},
                     '{default: 1},
                     '{default: 1},
                     '{default: 4}},

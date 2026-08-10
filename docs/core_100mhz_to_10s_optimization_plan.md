@@ -505,6 +505,22 @@ make fpga-util    VIVADO_BUILD=build/vivado/<run> UTIL_FILTER=fpu UTIL_DIFF=buil
 
 `--diff` 会把对比 run 的 stage 钉在基准 run 实际解析到的 stage 上，避免 `auto` 把 post_synth 和 post_impl 混比——两者面积差异与 RTL 改动无关，混比会得出完全错误的归因结论。
 
+#### 读 timing_summary.json 的三个陷阱
+
+1. **权威字段只有 `timing` 和 `utilization` 两个块。** `wns_ns` 在 JSON 里出现多次：
+   `timing.wns_ns` 是设计级真值（如 `-2.656`），而 `clock_interaction[i].wns_ns` 是
+   每个 clock pair 的四舍五入值（同一个 run 会显示 `-2.66`）。不要写递归搜索 key 的
+   取值函数——它会先命中 `clock_interaction[0]`，让 0.968 ns 的收益被记成 0.960 ns。
+   固定读 `d["timing"]["wns_ns"]`、`d["utilization"]["total_luts"]`、`["ff"]`。
+2. **跨 run 比较 per-category worst slack 前先确认导出深度一致。** 不带
+   `--all-violations` 的 run 只导出前 100 条路径，它的 cluster worst slack 是被截断
+   的采样值，与全量导出的 run 不可比。`timing_summary` 的 WNS/TNS/WHS/THS/失败
+   endpoint 数与导出深度无关，任何时候都可比。需要对截断 run 做严格断言时，用
+   "该 run 的全局 WNS 是其每个 category worst slack 的下界" 这个包夹关系。
+3. **单次综合的 WNS 噪声底约 0.15 ns。** 已实测：RTL 逐字节相同的两个 run，
+   FPU_FMA worst slack 因布局/利用率上下文不同而移动 0.109 ns。小于 ~0.15 ns 的
+   单run WNS 变化不构成改善，必须靠 mean slack、logic levels 或多轮重复来支撑。
+
 #### 与仿真侧的对应关系
 
 Vivado 侧四个脚本对应 8.1 的仿真侧命令表：仿真侧靠 `build/regression/*/summary.json` 收敛阅读量，Vivado 侧靠 `analysis/*` 和上述脚本收敛阅读量，两边在 `make iter-status` 汇合成一页。脚本自身的行为由 `make test-scripts` 保护（当前 21 个用例），修改脚本必须先跑通该门禁。
