@@ -465,14 +465,18 @@ module core_top (
                  (csr_privilege == 2'b00 && csr_tdata1_0[3])) &&
                 ((exec_q.uop.fu == FU_LOAD && csr_tdata1_0[0]) ||
                  (exec_q.uop.fu == FU_STORE && csr_tdata1_0[1])) &&
-                csr_tdata2_0 == exec_mem_addr_calc)
+                // The effective address was captured with exec_q at issue.
+                // Reuse that registered value so trigger qualification does
+                // not place a second 32-bit AGU on the load-request select
+                // path into the DCache BRAM address ports.
+                csr_tdata2_0 == exec_mem_addr_q)
                 memory_trigger_match = 1'b1;
             if (csr_tdata1_1[31:28] == 4'd2 &&
                 ((csr_privilege == 2'b11 && csr_tdata1_1[6]) ||
                  (csr_privilege == 2'b00 && csr_tdata1_1[3])) &&
                 ((exec_q.uop.fu == FU_LOAD && csr_tdata1_1[0]) ||
                  (exec_q.uop.fu == FU_STORE && csr_tdata1_1[1])) &&
-                csr_tdata2_1 == exec_mem_addr_calc)
+                csr_tdata2_1 == exec_mem_addr_q)
                 memory_trigger_match = 1'b1;
         end
         if (memory_trigger_match) begin
@@ -481,7 +485,7 @@ module core_top (
             fixed_completion.trans_id = exec_q.trans_id;
             fixed_completion.exception_valid = 1'b1;
             fixed_completion.exception_cause = 5'd3;
-            fixed_completion.exception_tval = exec_mem_addr_calc;
+            fixed_completion.exception_tval = exec_mem_addr_q;
             fixed_completion_valid = 1'b1;
             exec_load_enqueue = 1'b0;
             exec_store_enqueue = 1'b0;
@@ -887,6 +891,9 @@ module core_top (
             assert (dcache_miss_q <= dcache_access_q);
             assert (load_count_perf_q + store_count_perf_q <= commit_count_q);
             assert (!(mdu_resp_valid && bm_resp_valid));
+            if (exec_q.valid && (exec_q.uop.fu == FU_LOAD ||
+                                 exec_q.uop.fu == FU_STORE))
+                assert (exec_mem_addr_q == exec_mem_addr_calc);
             if (dc_mem_req_valid && dc_mem_req_write && !fp_mem_busy) begin
                 assert (store_count_q != 0);
                 assert (store_q[store_head_q].valid && store_committed_q[store_head_q]);
