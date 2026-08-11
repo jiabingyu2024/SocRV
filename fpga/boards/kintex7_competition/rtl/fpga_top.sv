@@ -1,5 +1,7 @@
 module fpga_top #(
+  parameter real CLOCK_MULT_F = 5.0,
   parameter real CORE_CLKOUT_DIVIDE_F = 10.0,
+  parameter int unsigned PERIPHERAL_CLKOUT_DIVIDE = 20,
   parameter int unsigned CORE_CLOCK_HZ = 100_000_000,
   parameter int unsigned PERIPHERAL_CLOCK_HZ = 50_000_000,
   parameter string ICCM_LANE0_INIT_FILE = "",
@@ -42,7 +44,9 @@ module fpga_top #(
   assign cpu_fault = test_status == 32'h4641_494c;
 
   board_clock_reset #(
-    .CORE_CLKOUT_DIVIDE_F(CORE_CLKOUT_DIVIDE_F)
+    .CLOCK_MULT_F(CLOCK_MULT_F),
+    .CORE_CLKOUT_DIVIDE_F(CORE_CLKOUT_DIVIDE_F),
+    .PERIPHERAL_CLKOUT_DIVIDE(PERIPHERAL_CLKOUT_DIVIDE)
   ) u_clock_reset (
     .sys_clk_p_i(i_sys_clk_p),
     .sys_clk_n_i(i_sys_clk_n),

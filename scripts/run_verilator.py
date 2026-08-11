@@ -269,7 +269,11 @@ def build_model(
     if object_dir.exists():
         shutil.rmtree(object_dir)
     object_dir.mkdir(parents=True, exist_ok=True)
-    cpp_sources = list(CPP_SOURCES)
+    # Verilator invokes the generated makefile from --Mdir.  Absolute source
+    # paths keep its explicit prerequisites valid from that working directory.
+    cpp_sources = [
+        to_wsl_path(repo_path(*Path(source).parts)) for source in CPP_SOURCES
+    ]
     cflags = (
         "-std=c++17 -O2 "
         "-I../../../../tb/cpp/common "
@@ -297,9 +301,12 @@ def build_model(
     if trace:
         argv.append("--trace")
     if difftest:
-        cpp_sources.append(SPIKE_COSIM_SOURCE)
+        spike_cosim_source = to_wsl_path(
+            repo_path(*Path(SPIKE_COSIM_SOURCE).parts)
+        )
+        cpp_sources.append(spike_cosim_source)
         argv[argv.index("--Mdir") - 1:argv.index("--Mdir") - 1] = [
-            SPIKE_COSIM_SOURCE
+            spike_cosim_source
         ]
         spike_install = repo_path(
             "build", "reference", "spike", "install"

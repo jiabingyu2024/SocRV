@@ -14,6 +14,7 @@ def find_vivado() -> Path:
     override = os.environ.get("VIVADO")
     candidates = [
         Path(override) if override else None,
+        Path(r"D:\Xilinx\Vivado\2023.2\bin\vivado.bat"),
         Path(r"D:\AppMajor\xilinx\Vivado\2023.2\bin\vivado.bat"),
     ]
     for candidate in candidates:
@@ -31,8 +32,8 @@ def main() -> int:
     )
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument(
-        "--core-mhz", type=int, choices=(100, 250), default=100,
-        help="EH1 TCM SoC target clock (100 MHz board bring-up or 250 MHz performance target)",
+        "--core-mhz", type=int, choices=(100, 125, 150, 250), default=100,
+        help="EH1 TCM SoC target clock (100, 125, 150 or 250 MHz)",
     )
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
@@ -67,9 +68,13 @@ def main() -> int:
         str(image_dir),
         str(args.jobs),
     ]
-    divide = {100: "10.0", 250: "4.0"}[args.core_mhz]
+    clock_mult = {100: "5.0", 125: "5.0", 150: "6.0", 250: "5.0"}[args.core_mhz]
+    divide = {100: "10.0", 125: "8.0", 150: "8.0", 250: "4.0"}[args.core_mhz]
+    peripheral_divide = {100: "20", 125: "20", 150: "24", 250: "20"}[args.core_mhz]
     env = dict(os.environ)
+    env["SOCRV_CLOCK_MULT"] = clock_mult
     env["SOCRV_CORE_DIVIDE"] = divide
+    env["SOCRV_PERIPHERAL_DIVIDE"] = peripheral_divide
     env["SOCRV_CORE_HZ"] = str(args.core_mhz * 1_000_000)
     completed = subprocess.run(command, cwd=build_root, check=False, env=env)
     if completed.returncode != 0:

@@ -1,0 +1,9 @@
+
+ \ | /
+- RT -     Thread Nano Operating System
+ / | \     5.2.2 build Aug 10 2026 21:30:35
+ 2006 - 2024 Copyright by RT-Thread team
+SocRV RT-Thread boot
+msh >
+PASS: test_code=0 cycles=1793838
+Result: /mnt/d/jichuang_soc/build/result/soc/v4.3-150-rtthread.json

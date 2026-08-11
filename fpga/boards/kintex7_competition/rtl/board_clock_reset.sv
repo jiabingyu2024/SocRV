@@ -1,5 +1,7 @@
 module board_clock_reset #(
-  parameter real CORE_CLKOUT_DIVIDE_F = 10.0
+  parameter real CLOCK_MULT_F = 5.0,
+  parameter real CORE_CLKOUT_DIVIDE_F = 10.0,
+  parameter int  PERIPHERAL_CLKOUT_DIVIDE = 20
 ) (
   input logic sys_clk_p_i,
   input logic sys_clk_n_i,
@@ -11,7 +13,9 @@ module board_clock_reset #(
   logic mmcm_locked;
 
   xilinx_clock_wrapper #(
-    .CORE_CLKOUT_DIVIDE_F(CORE_CLKOUT_DIVIDE_F)
+    .CLOCK_MULT_F(CLOCK_MULT_F),
+    .CORE_CLKOUT_DIVIDE_F(CORE_CLKOUT_DIVIDE_F),
+    .PERIPHERAL_CLKOUT_DIVIDE(PERIPHERAL_CLKOUT_DIVIDE)
   ) u_clock (
     .clk_200mhz_p_i(sys_clk_p_i),
     .clk_200mhz_n_i(sys_clk_n_i),

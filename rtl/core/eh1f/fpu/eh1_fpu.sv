@@ -21,8 +21,8 @@ module eh1_fpu (
    import fpnew_pkg::*;
 
    localparam fpu_implementation_t EH1F_PIPELINED = '{
-      PipeRegs:   '{'{default: 3},
-                    '{default: 1},
+       PipeRegs:   '{'{default: 5},
+                     '{default: 2},
                     '{default: 1},
                     '{default: 3}},
       UnitTypes:  '{'{default: PARALLEL},

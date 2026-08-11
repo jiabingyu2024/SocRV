@@ -66,9 +66,14 @@ read_xdc [file join $repo_dir fpga boards kintex7_competition constraints clocks
 read_xdc [file join $repo_dir fpga boards kintex7_competition constraints cdc.xdc]
 
 set_property top fpga_top [current_fileset]
+set clock_mult [expr {[info exists ::env(SOCRV_CLOCK_MULT)] ? $::env(SOCRV_CLOCK_MULT) : "5.0"}]
 set core_divide [expr {[info exists ::env(SOCRV_CORE_DIVIDE)] ? $::env(SOCRV_CORE_DIVIDE) : "4.0"}]
+set peripheral_divide [expr {[info exists ::env(SOCRV_PERIPHERAL_DIVIDE)] ? $::env(SOCRV_PERIPHERAL_DIVIDE) : 20}]
 set core_hz [expr {[info exists ::env(SOCRV_CORE_HZ)] ? $::env(SOCRV_CORE_HZ) : 250000000}]
-set generics [list "CORE_CLKOUT_DIVIDE_F=$core_divide" "CORE_CLOCK_HZ=$core_hz"]
+set generics [list "CLOCK_MULT_F=$clock_mult" \
+                   "CORE_CLKOUT_DIVIDE_F=$core_divide" \
+                   "PERIPHERAL_CLKOUT_DIVIDE=$peripheral_divide" \
+                   "CORE_CLOCK_HZ=$core_hz"]
 for {set lane 0} {$lane < 4} {incr lane} {
     lappend generics "ICCM_LANE${lane}_INIT_FILE=[file join $image_dir iccm_lane${lane}.mem]"
 }
@@ -81,6 +86,7 @@ set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY rebuilt [get_runs synth_1
 # on the remaining high-fanout front-end/LSU control paths.  These directives
 # are part of every frequency sign-off build, rather than relying on a lucky
 # default-place seed.
+set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
 set_property STEPS.OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
 set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
 set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]

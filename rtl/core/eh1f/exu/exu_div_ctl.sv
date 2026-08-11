@@ -57,7 +57,8 @@ module exu_div_ctl
    logic [31:0]  q_ff_eff;
    logic [31:0]  a_ff_comp;
    logic [31:0]  a_ff_eff;
-   logic         sign_ff, sign_eff;
+   logic         sign_ff;
+   logic         signed_op_ff;
    logic         rem_ff;
    logic         add;
    logic [32:0]  a_eff;
@@ -76,7 +77,10 @@ module exu_div_ctl
    rvdff  #(1)  e1val_ff          (.*, .clk(active_clk), .din(dp.valid & ~flush_lower_ff),                 .dout(valid_ff_e1));
    rvdff  #(1)  runff             (.*, .clk(active_clk), .din(run_in),                                     .dout(run_state));
    rvdff  #(6)  countff           (.*, .clk(active_clk), .din(count_in[5:0]),                              .dout(count[5:0]));
-   rvdffs #(4)  miscf             (.*, .clk(active_clk), .din({dividend[31],divisor[31],sign_eff,dp.rem}), .dout({dividend_neg_ff,divisor_neg_ff,sign_ff,rem_ff}), .en(dp.valid));
+   // Capture only control and the dividend sign here.  The divisor is already
+   // captured by mff on the same enable, so deriving its sign and nonzero state
+   // from m_ff avoids a 32-bit reduction on this register's D path.
+   rvdffs #(3)  miscf             (.*, .clk(active_clk), .din({dividend[31],~dp.unsign,dp.rem}),           .dout({dividend_neg_ff,signed_op_ff,rem_ff}), .en(dp.valid));
    rvdff  #(5)  smallnumff        (.*, .clk(active_clk), .din({smallnum_case,smallnum[3:0]}),              .dout({smallnum_case_ff,smallnum_ff[3:0]}));
    rvdffe #(33) mff               (.*, .en(dp.valid),    .din({ ~dp.unsign & divisor[31], divisor[31:0]}), .dout(m_ff[32:0]));
    rvdffe #(33) qff               (.*, .en(qff_enable),  .din(q_in[32:0]),                                 .dout(q_ff[32:0]));
@@ -86,6 +90,9 @@ module exu_div_ctl
    rvtwoscomp #(32) q_ff_c        (.din(q_ff[31:0]), .dout(q_ff_comp[31:0]));
    rvtwoscomp #(32) a_ff_c        (.din(a_ff[31:0]), .dout(a_ff_comp[31:0]));
 
+
+   assign divisor_neg_ff          = m_ff[31];
+   assign sign_ff                 = signed_op_ff & (m_ff[31:0] != 32'b0);
 
    assign valid_e1                = valid_ff_e1 & ~flush_lower_ff;
 
@@ -263,9 +270,6 @@ module exu_div_ctl
    assign finish_early            =  smallnum_case;
 
    assign finish                  = (smallnum_case | ((~rem_ff) ? (count[5:0] == 6'd32) : (count[5:0] == 6'd33))) & ~flush_lower & ~flush_lower_ff;
-
-   assign sign_eff                = ~dp.unsign & (divisor[31:0] != 32'b0);
-
 
    assign q_in[32:0]              = ({33{~run_state                                   }} &  {1'b0,dividend[31:0]}) |
                                     ({33{ run_state &  (valid_ff_e1 | shortq_enable_ff)}} &  ({dividend_eff[31:0], ~a_in[32]} << shortq_shift_ff[5:0])) |

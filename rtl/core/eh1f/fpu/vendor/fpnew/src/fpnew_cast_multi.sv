@@ -89,17 +89,22 @@ module fpnew_cast_multi #(
   localparam NUM_INP_REGS = PipeConfig == fpnew_pkg::BEFORE
                             ? NumPipeRegs
                             : (PipeConfig == fpnew_pkg::DISTRIBUTED
-                               ? ((NumPipeRegs + 1) / 3) // Second to get distributed regs
+                               ? ((NumPipeRegs + 2) / 4) // Second distributed boundary
                                : 0); // no regs here otherwise
   localparam NUM_MID_REGS = PipeConfig == fpnew_pkg::INSIDE
                           ? NumPipeRegs
                           : (PipeConfig == fpnew_pkg::DISTRIBUTED
-                             ? ((NumPipeRegs + 2) / 3) // First to get distributed regs
+                             ? ((NumPipeRegs + 3) / 4) // First distributed boundary
                              : 0); // no regs here otherwise
+  // A distributed register after denormalization separates the variable shifter
+  // from rounding, result classification and special-case selection.
+  localparam NUM_SHIFT_REGS = PipeConfig == fpnew_pkg::DISTRIBUTED
+                            ? ((NumPipeRegs + 1) / 4) // Third distributed boundary
+                            : 0;
   localparam NUM_OUT_REGS = PipeConfig == fpnew_pkg::AFTER
                             ? NumPipeRegs
                             : (PipeConfig == fpnew_pkg::DISTRIBUTED
-                               ? (NumPipeRegs / 3) // Last to get distributed regs
+                               ? (NumPipeRegs / 4) // Last distributed boundary
                                : 0); // no regs here otherwise
 
   // ---------------
@@ -312,19 +317,18 @@ module fpnew_cast_multi #(
   // Internal pipeline
   // ---------------
   // Pipeline output signals as non-arrays
-  logic                            input_sign_q;
-  logic signed [INT_EXP_WIDTH-1:0] input_exp_q;
-  logic [INT_MAN_WIDTH-1:0]        input_mant_q;
-  logic signed [INT_EXP_WIDTH-1:0] destination_exp_q;
-  logic                            src_is_int_q;
-  logic                            dst_is_int_q;
-  fpnew_pkg::fp_info_t             info_q;
-  logic                            mant_is_zero_q;
-  logic                            op_mod_q2;
-  fpnew_pkg::roundmode_e           rnd_mode_q;
-  fpnew_pkg::fp_format_e           src_fmt_q2;
-  fpnew_pkg::fp_format_e           dst_fmt_q2;
-  fpnew_pkg::int_format_e          int_fmt_q2;
+  logic                            cast_input_sign;
+  logic signed [INT_EXP_WIDTH-1:0] cast_input_exp;
+  logic [INT_MAN_WIDTH-1:0]        cast_input_mant;
+  logic signed [INT_EXP_WIDTH-1:0] cast_destination_exp;
+  logic                            cast_src_is_int;
+  logic                            cast_dst_is_int;
+  fpnew_pkg::fp_info_t             cast_info;
+  logic                            cast_mant_is_zero;
+  logic                            cast_op_mod;
+  fpnew_pkg::roundmode_e           cast_rnd_mode;
+  fpnew_pkg::fp_format_e           cast_dst_fmt;
+  fpnew_pkg::int_format_e          cast_int_fmt;
   // Internal pipeline signals, index i holds signal after i register stages
 
 
@@ -400,86 +404,85 @@ module fpnew_cast_multi #(
     `FFL(mid_pipe_aux_q[i+1],        mid_pipe_aux_q[i],        reg_ena, AuxType'('0))
   end
   // Output stage: assign selected pipe outputs to signals for later use
-  assign input_sign_q      = mid_pipe_input_sign_q[NUM_MID_REGS];
-  assign input_exp_q       = mid_pipe_input_exp_q[NUM_MID_REGS];
-  assign input_mant_q      = mid_pipe_input_mant_q[NUM_MID_REGS];
-  assign destination_exp_q = mid_pipe_dest_exp_q[NUM_MID_REGS];
-  assign src_is_int_q      = mid_pipe_src_is_int_q[NUM_MID_REGS];
-  assign dst_is_int_q      = mid_pipe_dst_is_int_q[NUM_MID_REGS];
-  assign info_q            = mid_pipe_info_q[NUM_MID_REGS];
-  assign mant_is_zero_q    = mid_pipe_mant_zero_q[NUM_MID_REGS];
-  assign op_mod_q2         = mid_pipe_op_mod_q[NUM_MID_REGS];
-  assign rnd_mode_q        = mid_pipe_rnd_mode_q[NUM_MID_REGS];
-  assign src_fmt_q2        = mid_pipe_src_fmt_q[NUM_MID_REGS];
-  assign dst_fmt_q2        = mid_pipe_dst_fmt_q[NUM_MID_REGS];
-  assign int_fmt_q2        = mid_pipe_int_fmt_q[NUM_MID_REGS];
+  assign cast_input_sign      = mid_pipe_input_sign_q[NUM_MID_REGS];
+  assign cast_input_exp       = mid_pipe_input_exp_q[NUM_MID_REGS];
+  assign cast_input_mant      = mid_pipe_input_mant_q[NUM_MID_REGS];
+  assign cast_destination_exp = mid_pipe_dest_exp_q[NUM_MID_REGS];
+  assign cast_src_is_int      = mid_pipe_src_is_int_q[NUM_MID_REGS];
+  assign cast_dst_is_int      = mid_pipe_dst_is_int_q[NUM_MID_REGS];
+  assign cast_info            = mid_pipe_info_q[NUM_MID_REGS];
+  assign cast_mant_is_zero    = mid_pipe_mant_zero_q[NUM_MID_REGS];
+  assign cast_op_mod          = mid_pipe_op_mod_q[NUM_MID_REGS];
+  assign cast_rnd_mode        = mid_pipe_rnd_mode_q[NUM_MID_REGS];
+  assign cast_dst_fmt         = mid_pipe_dst_fmt_q[NUM_MID_REGS];
+  assign cast_int_fmt         = mid_pipe_int_fmt_q[NUM_MID_REGS];
 
   // --------
   // Casting
   // --------
-  logic [INT_EXP_WIDTH-1:0] final_exp;        // after eventual adjustments
+  logic [INT_EXP_WIDTH-1:0] final_exp_d;      // after eventual adjustments
 
   logic [2*INT_MAN_WIDTH:0]  preshift_mant;    // mantissa before final shift
-  logic [2*INT_MAN_WIDTH:0]  destination_mant; // mantissa from shifter, with rnd bit
+  logic [2*INT_MAN_WIDTH:0]  destination_mant_d; // mantissa from shifter, with rnd bit
   logic [SUPER_MAN_BITS-1:0] final_mant;       // mantissa after adjustments
   logic [MAX_INT_WIDTH-1:0]  final_int;        // integer shifted in position
 
   logic [$clog2(INT_MAN_WIDTH+1)-1:0] denorm_shamt; // shift amount for denormalization
 
   logic [1:0] fp_round_sticky_bits, int_round_sticky_bits, round_sticky_bits;
-  logic       of_before_round, uf_before_round;
+  logic       of_before_round_d, uf_before_round_d;
 
 
   // Perform adjustments to mantissa and exponent
   always_comb begin : cast_value
     // Default assignment
-    final_exp       = unsigned'(destination_exp_q); // take exponent as is, only look at lower bits
+    final_exp_d     = unsigned'(cast_destination_exp); // take exponent as is, only look at lower bits
     preshift_mant   = '0;  // initialize mantissa container with zeroes
-    denorm_shamt    = SUPER_MAN_BITS - fpnew_pkg::man_bits(dst_fmt_q2); // right of mantissa
-    of_before_round = 1'b0;
-    uf_before_round = 1'b0;
+    denorm_shamt    = SUPER_MAN_BITS - fpnew_pkg::man_bits(cast_dst_fmt); // right of mantissa
+    of_before_round_d = 1'b0;
+    uf_before_round_d = 1'b0;
 
     // Place mantissa to the left of the shifter
-    preshift_mant = input_mant_q << (INT_MAN_WIDTH + 1);
+    preshift_mant = cast_input_mant << (INT_MAN_WIDTH + 1);
 
     // Handle INT casts
-    if (dst_is_int_q) begin
+    if (cast_dst_is_int) begin
       // By default right shift mantissa to be an integer
-      denorm_shamt = unsigned'(MAX_INT_WIDTH - 1 - input_exp_q);
+      denorm_shamt = unsigned'(MAX_INT_WIDTH - 1 - cast_input_exp);
       // overflow: when converting to unsigned the range is larger by one
-      if ((input_exp_q >= signed'(fpnew_pkg::int_width(int_fmt_q2) - 1 + op_mod_q2))    // Exponent larger than max int range,
-          && !(!op_mod_q2                                                               // unless cast to signed int
-               && input_sign_q                                                          // and input value is larges negative int value
-               && (input_exp_q == signed'(fpnew_pkg::int_width(int_fmt_q2) - 1)))) begin
+      if ((cast_input_exp >= signed'(fpnew_pkg::int_width(cast_int_fmt) - 1 + cast_op_mod)) // Exponent larger than max int range,
+          && !(!cast_op_mod                                                            // unless cast to signed int
+               && cast_input_sign                                                     // and input value is larges negative int value
+               && (cast_input_exp == signed'(fpnew_pkg::int_width(cast_int_fmt) - 1)))) begin
         denorm_shamt    = '0; // prevent shifting
-        of_before_round = 1'b1;
+        of_before_round_d = 1'b1;
       // underflow
-      end else if (input_exp_q < -1) begin
+      end else if (cast_input_exp < -1) begin
         denorm_shamt    = MAX_INT_WIDTH + 1; // all bits go to the sticky
-        uf_before_round = 1'b1;
+        uf_before_round_d = 1'b1;
       end
     // Handle FP over-/underflows
     end else begin
       // Infinities
-      if (~src_is_int_q && info_q.is_inf) begin
-        final_exp       = unsigned'(2**fpnew_pkg::exp_bits(dst_fmt_q2)-1); // largest exponent
+      if (~cast_src_is_int && cast_info.is_inf) begin
+        final_exp_d     = unsigned'(2**fpnew_pkg::exp_bits(cast_dst_fmt)-1); // largest exponent
         preshift_mant   = '0;
       // Overflow (for proper rounding)
-      end else if (destination_exp_q >= signed'(2**fpnew_pkg::exp_bits(dst_fmt_q2))-1) begin
-        final_exp       = unsigned'(2**fpnew_pkg::exp_bits(dst_fmt_q2)-2); // largest normal value
+      end else if (cast_destination_exp >= signed'(2**fpnew_pkg::exp_bits(cast_dst_fmt))-1) begin
+        final_exp_d     = unsigned'(2**fpnew_pkg::exp_bits(cast_dst_fmt)-2); // largest normal value
         preshift_mant   = '1;                           // largest normal value and RS bits set
-        of_before_round = 1'b1;
+        of_before_round_d = 1'b1;
       // Denormalize underflowing values
-      end else if (destination_exp_q < 1 &&
-                   destination_exp_q >= -signed'(fpnew_pkg::man_bits(dst_fmt_q2))) begin
-        final_exp       = '0; // denormal result
-        denorm_shamt    = unsigned'(denorm_shamt + 1 - destination_exp_q); // adjust right shifting
-        uf_before_round = 1'b1;
+      end else if (cast_destination_exp < 1 &&
+                   cast_destination_exp >= -signed'(fpnew_pkg::man_bits(cast_dst_fmt))) begin
+        final_exp_d     = '0; // denormal result
+        denorm_shamt    = unsigned'(denorm_shamt + 1 - cast_destination_exp); // adjust right shifting
+        uf_before_round_d = 1'b1;
       // Limit the shift to retain sticky bits
-      end else if (destination_exp_q < -signed'(fpnew_pkg::man_bits(dst_fmt_q2))) begin
-        final_exp       = '0; // denormal result
-        denorm_shamt    = unsigned'(denorm_shamt + 2 + fpnew_pkg::man_bits(dst_fmt_q2)); // to sticky
-        uf_before_round = 1'b1;
+      end else if (cast_destination_exp < -signed'(fpnew_pkg::man_bits(cast_dst_fmt))) begin
+        final_exp_d     = '0; // denormal result
+        denorm_shamt    = unsigned'(denorm_shamt + 2 + fpnew_pkg::man_bits(cast_dst_fmt)); // to sticky
+        uf_before_round_d = 1'b1;
       end
     end
   end
@@ -488,7 +491,109 @@ module fpnew_cast_multi #(
   localparam NUM_INT_STICKY = 2 * INT_MAN_WIDTH - MAX_INT_WIDTH; // removed int and R
 
   // Mantissa adjustment shift
-  assign destination_mant = preshift_mant >> denorm_shamt;
+  assign destination_mant_d = preshift_mant >> denorm_shamt;
+
+  // -------------------------------
+  // Post-denormalization pipeline
+  // -------------------------------
+  // The distributed third register is placed here instead of after the fully
+  // assembled result. This keeps the overall latency unchanged while cutting
+  // the variable shift/carry chain away from rounding and classification.
+  logic                            input_sign_q;
+  logic signed [INT_EXP_WIDTH-1:0] input_exp_q;
+  logic                            src_is_int_q;
+  logic                            dst_is_int_q;
+  fpnew_pkg::fp_info_t             info_q;
+  logic                            mant_is_zero_q;
+  logic                            op_mod_q2;
+  fpnew_pkg::roundmode_e           rnd_mode_q;
+  fpnew_pkg::fp_format_e           dst_fmt_q2;
+  fpnew_pkg::int_format_e          int_fmt_q2;
+  logic [INT_EXP_WIDTH-1:0]        final_exp;
+  logic [2*INT_MAN_WIDTH:0]        destination_mant;
+  logic                            of_before_round;
+  logic                            uf_before_round;
+
+  logic                   [0:NUM_SHIFT_REGS]                     shift_pipe_input_sign_q;
+  logic signed            [0:NUM_SHIFT_REGS][INT_EXP_WIDTH-1:0]  shift_pipe_input_exp_q;
+  logic                   [0:NUM_SHIFT_REGS]                     shift_pipe_src_is_int_q;
+  logic                   [0:NUM_SHIFT_REGS]                     shift_pipe_dst_is_int_q;
+  fpnew_pkg::fp_info_t    [0:NUM_SHIFT_REGS]                     shift_pipe_info_q;
+  logic                   [0:NUM_SHIFT_REGS]                     shift_pipe_mant_zero_q;
+  logic                   [0:NUM_SHIFT_REGS]                     shift_pipe_op_mod_q;
+  fpnew_pkg::roundmode_e  [0:NUM_SHIFT_REGS]                     shift_pipe_rnd_mode_q;
+  fpnew_pkg::fp_format_e  [0:NUM_SHIFT_REGS]                     shift_pipe_dst_fmt_q;
+  fpnew_pkg::int_format_e [0:NUM_SHIFT_REGS]                     shift_pipe_int_fmt_q;
+  logic                   [0:NUM_SHIFT_REGS][INT_EXP_WIDTH-1:0]  shift_pipe_final_exp_q;
+  logic                   [0:NUM_SHIFT_REGS][2*INT_MAN_WIDTH:0]  shift_pipe_destination_mant_q;
+  logic                   [0:NUM_SHIFT_REGS]                     shift_pipe_of_before_round_q;
+  logic                   [0:NUM_SHIFT_REGS]                     shift_pipe_uf_before_round_q;
+  TagType                 [0:NUM_SHIFT_REGS]                     shift_pipe_tag_q;
+  logic                   [0:NUM_SHIFT_REGS]                     shift_pipe_mask_q;
+  AuxType                 [0:NUM_SHIFT_REGS]                     shift_pipe_aux_q;
+  logic                   [0:NUM_SHIFT_REGS]                     shift_pipe_valid_q;
+  logic                   [0:NUM_SHIFT_REGS]                     shift_pipe_ready;
+
+  assign shift_pipe_input_sign_q[0]       = cast_input_sign;
+  assign shift_pipe_input_exp_q[0]        = cast_input_exp;
+  assign shift_pipe_src_is_int_q[0]       = cast_src_is_int;
+  assign shift_pipe_dst_is_int_q[0]       = cast_dst_is_int;
+  assign shift_pipe_info_q[0]             = cast_info;
+  assign shift_pipe_mant_zero_q[0]        = cast_mant_is_zero;
+  assign shift_pipe_op_mod_q[0]           = cast_op_mod;
+  assign shift_pipe_rnd_mode_q[0]         = cast_rnd_mode;
+  assign shift_pipe_dst_fmt_q[0]          = cast_dst_fmt;
+  assign shift_pipe_int_fmt_q[0]          = cast_int_fmt;
+  assign shift_pipe_final_exp_q[0]        = final_exp_d;
+  assign shift_pipe_destination_mant_q[0] = destination_mant_d;
+  assign shift_pipe_of_before_round_q[0]  = of_before_round_d;
+  assign shift_pipe_uf_before_round_q[0]  = uf_before_round_d;
+  assign shift_pipe_tag_q[0]              = mid_pipe_tag_q[NUM_MID_REGS];
+  assign shift_pipe_mask_q[0]             = mid_pipe_mask_q[NUM_MID_REGS];
+  assign shift_pipe_aux_q[0]              = mid_pipe_aux_q[NUM_MID_REGS];
+  assign shift_pipe_valid_q[0]            = mid_pipe_valid_q[NUM_MID_REGS];
+  assign mid_pipe_ready[NUM_MID_REGS]     = shift_pipe_ready[0];
+
+  for (genvar i = 0; i < NUM_SHIFT_REGS; i++) begin : gen_shift_pipeline
+    logic reg_ena;
+    assign shift_pipe_ready[i] = shift_pipe_ready[i+1] | ~shift_pipe_valid_q[i+1];
+    `FFLARNC(shift_pipe_valid_q[i+1], shift_pipe_valid_q[i], shift_pipe_ready[i], flush_i, 1'b0, clk_i, rst_ni)
+    assign reg_ena = (shift_pipe_ready[i] & shift_pipe_valid_q[i]) |
+                     reg_ena_i[NUM_INP_REGS + NUM_MID_REGS + i];
+    `FFL(shift_pipe_input_sign_q[i+1],       shift_pipe_input_sign_q[i],       reg_ena, '0)
+    `FFL(shift_pipe_input_exp_q[i+1],        shift_pipe_input_exp_q[i],        reg_ena, '0)
+    `FFL(shift_pipe_src_is_int_q[i+1],       shift_pipe_src_is_int_q[i],       reg_ena, '0)
+    `FFL(shift_pipe_dst_is_int_q[i+1],       shift_pipe_dst_is_int_q[i],       reg_ena, '0)
+    `FFL(shift_pipe_info_q[i+1],             shift_pipe_info_q[i],             reg_ena, '0)
+    `FFL(shift_pipe_mant_zero_q[i+1],        shift_pipe_mant_zero_q[i],        reg_ena, '0)
+    `FFL(shift_pipe_op_mod_q[i+1],           shift_pipe_op_mod_q[i],           reg_ena, '0)
+    `FFL(shift_pipe_rnd_mode_q[i+1],         shift_pipe_rnd_mode_q[i],         reg_ena, fpnew_pkg::RNE)
+    `FFL(shift_pipe_dst_fmt_q[i+1],          shift_pipe_dst_fmt_q[i],          reg_ena, fpnew_pkg::fp_format_e'(0))
+    `FFL(shift_pipe_int_fmt_q[i+1],          shift_pipe_int_fmt_q[i],          reg_ena, fpnew_pkg::int_format_e'(0))
+    `FFL(shift_pipe_final_exp_q[i+1],        shift_pipe_final_exp_q[i],        reg_ena, '0)
+    `FFL(shift_pipe_destination_mant_q[i+1], shift_pipe_destination_mant_q[i], reg_ena, '0)
+    `FFL(shift_pipe_of_before_round_q[i+1],  shift_pipe_of_before_round_q[i],  reg_ena, '0)
+    `FFL(shift_pipe_uf_before_round_q[i+1],  shift_pipe_uf_before_round_q[i],  reg_ena, '0)
+    `FFL(shift_pipe_tag_q[i+1],              shift_pipe_tag_q[i],              reg_ena, TagType'('0))
+    `FFL(shift_pipe_mask_q[i+1],             shift_pipe_mask_q[i],             reg_ena, '0)
+    `FFL(shift_pipe_aux_q[i+1],              shift_pipe_aux_q[i],              reg_ena, AuxType'('0))
+  end
+
+  assign input_sign_q      = shift_pipe_input_sign_q[NUM_SHIFT_REGS];
+  assign input_exp_q       = shift_pipe_input_exp_q[NUM_SHIFT_REGS];
+  assign src_is_int_q      = shift_pipe_src_is_int_q[NUM_SHIFT_REGS];
+  assign dst_is_int_q      = shift_pipe_dst_is_int_q[NUM_SHIFT_REGS];
+  assign info_q            = shift_pipe_info_q[NUM_SHIFT_REGS];
+  assign mant_is_zero_q    = shift_pipe_mant_zero_q[NUM_SHIFT_REGS];
+  assign op_mod_q2         = shift_pipe_op_mod_q[NUM_SHIFT_REGS];
+  assign rnd_mode_q        = shift_pipe_rnd_mode_q[NUM_SHIFT_REGS];
+  assign dst_fmt_q2        = shift_pipe_dst_fmt_q[NUM_SHIFT_REGS];
+  assign int_fmt_q2        = shift_pipe_int_fmt_q[NUM_SHIFT_REGS];
+  assign final_exp         = shift_pipe_final_exp_q[NUM_SHIFT_REGS];
+  assign destination_mant  = shift_pipe_destination_mant_q[NUM_SHIFT_REGS];
+  assign of_before_round   = shift_pipe_of_before_round_q[NUM_SHIFT_REGS];
+  assign uf_before_round   = shift_pipe_uf_before_round_q[NUM_SHIFT_REGS];
+
   // Extract final mantissa and round bit, discard the normal bit (for FP)
   assign {final_mant, fp_round_sticky_bits[1]} =
       destination_mant[2*INT_MAN_WIDTH-1-:SUPER_MAN_BITS+1];
@@ -797,12 +902,12 @@ module fpnew_cast_multi #(
   assign out_pipe_result_q[0]  = result_d;
   assign out_pipe_status_q[0]  = status_d;
   assign out_pipe_ext_bit_q[0] = extension_bit;
-  assign out_pipe_tag_q[0]     = mid_pipe_tag_q[NUM_MID_REGS];
-  assign out_pipe_mask_q[0]    = mid_pipe_mask_q[NUM_MID_REGS];
-  assign out_pipe_aux_q[0]     = mid_pipe_aux_q[NUM_MID_REGS];
-  assign out_pipe_valid_q[0]   = mid_pipe_valid_q[NUM_MID_REGS];
-  // Input stage: Propagate pipeline ready signal to inside pipe
-  assign mid_pipe_ready[NUM_MID_REGS] = out_pipe_ready[0];
+  assign out_pipe_tag_q[0]     = shift_pipe_tag_q[NUM_SHIFT_REGS];
+  assign out_pipe_mask_q[0]    = shift_pipe_mask_q[NUM_SHIFT_REGS];
+  assign out_pipe_aux_q[0]     = shift_pipe_aux_q[NUM_SHIFT_REGS];
+  assign out_pipe_valid_q[0]   = shift_pipe_valid_q[NUM_SHIFT_REGS];
+  // Input stage: Propagate pipeline ready signal to the shift boundary.
+  assign shift_pipe_ready[NUM_SHIFT_REGS] = out_pipe_ready[0];
   // Generate the register stages
   for (genvar i = 0; i < NUM_OUT_REGS; i++) begin : gen_output_pipeline
     // Internal register enable for this stage
@@ -814,7 +919,8 @@ module fpnew_cast_multi #(
     // Valid: enabled by ready signal, synchronous clear with the flush signal
     `FFLARNC(out_pipe_valid_q[i+1], out_pipe_valid_q[i], out_pipe_ready[i], flush_i, 1'b0, clk_i, rst_ni)
     // Enable register if pipleine ready and a valid data item is present
-    assign reg_ena = (out_pipe_ready[i] & out_pipe_valid_q[i]) | reg_ena_i[NUM_INP_REGS + NUM_MID_REGS + i];
+    assign reg_ena = (out_pipe_ready[i] & out_pipe_valid_q[i]) |
+                     reg_ena_i[NUM_INP_REGS + NUM_MID_REGS + NUM_SHIFT_REGS + i];
     // Generate the pipeline registers within the stages, use enable-registers
     `FFL(out_pipe_result_q[i+1],  out_pipe_result_q[i],  reg_ena, '0)
     `FFL(out_pipe_status_q[i+1],  out_pipe_status_q[i],  reg_ena, '0)
@@ -833,14 +939,18 @@ module fpnew_cast_multi #(
   assign mask_o          = out_pipe_mask_q[NUM_OUT_REGS];
   assign aux_o           = out_pipe_aux_q[NUM_OUT_REGS];
   assign out_valid_o     = out_pipe_valid_q[NUM_OUT_REGS];
-  assign busy_o          = (| {inp_pipe_valid_q, mid_pipe_valid_q, out_pipe_valid_q});
+  assign busy_o          = (| {inp_pipe_valid_q, mid_pipe_valid_q,
+                               shift_pipe_valid_q, out_pipe_valid_q});
 
   // Early valid_o signal. This is used for dispatching instructions for dual-issue processor.
   if (NUM_OUT_REGS > 0) begin
     assign early_out_valid_o = |{out_pipe_valid_q[NUM_OUT_REGS] & ~out_pipe_ready[NUM_OUT_REGS],
                                  out_pipe_valid_q[NUM_OUT_REGS-1]};
+  end else if (NUM_SHIFT_REGS > 0) begin
+    assign early_out_valid_o = |{shift_pipe_valid_q[NUM_SHIFT_REGS] & ~shift_pipe_ready[NUM_SHIFT_REGS],
+                                 shift_pipe_valid_q[NUM_SHIFT_REGS-1]};
   end else if (NUM_MID_REGS > 0) begin
-    assign early_out_valid_o = |{mid_pipe_valid_q[NUM_MID_REGS] & ~mid_pipe_ready[NUM_OUT_REGS],
+    assign early_out_valid_o = |{mid_pipe_valid_q[NUM_MID_REGS] & ~mid_pipe_ready[NUM_MID_REGS],
                                  mid_pipe_valid_q[NUM_MID_REGS-1]};
   end else if (NUM_INP_REGS > 0) begin
     assign early_out_valid_o = |{inp_pipe_valid_q[NUM_INP_REGS] & ~inp_pipe_ready[NUM_INP_REGS],

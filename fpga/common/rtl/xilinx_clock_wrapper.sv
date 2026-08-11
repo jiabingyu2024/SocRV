@@ -1,4 +1,5 @@
 module xilinx_clock_wrapper #(
+  parameter real CLOCK_MULT_F = 5.0,
   parameter real CORE_CLKOUT_DIVIDE_F = 10.0,
   parameter int  PERIPHERAL_CLKOUT_DIVIDE = 20
 ) (
@@ -25,7 +26,7 @@ module xilinx_clock_wrapper #(
     .BANDWIDTH("OPTIMIZED"),
     .CLKIN1_PERIOD(5.000),
     .DIVCLK_DIVIDE(1),
-    .CLKFBOUT_MULT_F(5.000),
+    .CLKFBOUT_MULT_F(CLOCK_MULT_F),
     .CLKOUT0_DIVIDE_F(CORE_CLKOUT_DIVIDE_F),
     .CLKOUT1_DIVIDE(PERIPHERAL_CLKOUT_DIVIDE),
     .STARTUP_WAIT("FALSE")
