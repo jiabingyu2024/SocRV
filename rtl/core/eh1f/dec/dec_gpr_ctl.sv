@@ -53,61 +53,79 @@ module dec_gpr_ctl #(parameter GPR_BANKS      = 1,
     input  logic        scan_mode
 );
 
-   logic [GPR_BANKS-1:0][31:1] [31:0] gpr_out;     // 31 x 32 bit GPRs
-   logic [31:1] [31:0] gpr_in;
-   logic [31:1] w0v,w1v,w2v;
-   logic [31:1] gpr_wr_en;
-   logic [GPR_BANKS-1:0][31:1] gpr_bank_wr_en;
-   logic [GPR_BANKS_LOG2-1:0] gpr_bank_id;
+   // Three single-write value banks plus a live-value table replace the
+   // ASIC-style 31-way flop read mux.  Each value bank is replicated for the
+   // four asynchronous read ports so Vivado can map the arrays to LUTRAM.
+   logic [1:0]  live_bank [0:31];
+   logic [4:0]  read_addr [0:3];
+   logic [31:0] bank0_rd  [0:3];
+   logic [31:0] bank1_rd  [0:3];
+   logic [31:0] bank2_rd  [0:3];
+   logic [31:0] read_data [0:3];
 
-   //assign gpr_bank_id[GPR_BANKS_LOG2-1:0] = '0;
-   rvdffs #(GPR_BANKS_LOG2) bankid_ff (.*, .clk(active_clk), .en(wen_bank_id), .din(wr_bank_id[GPR_BANKS_LOG2-1:0]), .dout(gpr_bank_id[GPR_BANKS_LOG2-1:0]));
+   assign read_addr[0] = raddr0;
+   assign read_addr[1] = raddr1;
+   assign read_addr[2] = raddr2;
+   assign read_addr[3] = raddr3;
 
-   // GPR Write Enables for power savings
-   assign gpr_wr_en[31:1] = (w0v[31:1] | w1v[31:1] | w2v[31:1]);
-   for (genvar i=0; i<GPR_BANKS; i++) begin: gpr_banks
-      assign gpr_bank_wr_en[i][31:1] = gpr_wr_en[31:1] & {31{gpr_bank_id[GPR_BANKS_LOG2-1:0] == i}};
-      for ( genvar j=1; j<32; j++ )  begin : gpr
-         rvdffe #(32) gprff (.*, .en(gpr_bank_wr_en[i][j]), .din(gpr_in[j][31:0]), .dout(gpr_out[i][j][31:0]));
-      end : gpr
-   end: gpr_banks
+   for (genvar rp = 0; rp < 4; rp++) begin : gpr_read_replica
+      (* ram_style = "distributed" *) logic [31:0] write_bank0 [0:31];
+      (* ram_style = "distributed" *) logic [31:0] write_bank1 [0:31];
+      (* ram_style = "distributed" *) logic [31:0] write_bank2 [0:31];
 
-// the read out
-   always_comb begin
-      rd0[31:0] = 32'b0;
-      rd1[31:0] = 32'b0;
-      rd2[31:0] = 32'b0;
-      rd3[31:0] = 32'b0;
-      w0v[31:1] = 31'b0;
-      w1v[31:1] = 31'b0;
-      w2v[31:1] = 31'b0;
-      gpr_in[31:1] = '0;
+      initial begin
+         for (int entry = 0; entry < 32; entry++) begin
+            write_bank0[entry] = '0;
+            write_bank1[entry] = '0;
+            write_bank2[entry] = '0;
+         end
+      end
 
-      // GPR Read logic
-      for (int i=0; i<GPR_BANKS; i++) begin
-         for (int j=1; j<32; j++ )  begin
-            rd0[31:0] |= ({32{rden0 & (raddr0[4:0]== 5'(j)) & (gpr_bank_id[GPR_BANKS_LOG2-1:0] == 1'(i))}} & gpr_out[i][j][31:0]);
-            rd1[31:0] |= ({32{rden1 & (raddr1[4:0]== 5'(j)) & (gpr_bank_id[GPR_BANKS_LOG2-1:0] == 1'(i))}} & gpr_out[i][j][31:0]);
-            rd2[31:0] |= ({32{rden2 & (raddr2[4:0]== 5'(j)) & (gpr_bank_id[GPR_BANKS_LOG2-1:0] == 1'(i))}} & gpr_out[i][j][31:0]);
-            rd3[31:0] |= ({32{rden3 & (raddr3[4:0]== 5'(j)) & (gpr_bank_id[GPR_BANKS_LOG2-1:0] == 1'(i))}} & gpr_out[i][j][31:0]);
-        end
-     end
+      always_ff @(posedge clk) begin
+         if (wen0 && (waddr0 != 5'd0)) write_bank0[waddr0] <= wd0;
+         if (wen1 && (waddr1 != 5'd0)) write_bank1[waddr1] <= wd1;
+         if (wen2 && (waddr2 != 5'd0)) write_bank2[waddr2] <= wd2;
+      end
 
-     // GPR Write logic
-     for (int j=1; j<32; j++ )  begin
-         w0v[j]     = wen0  & (waddr0[4:0]== 5'(j) );
-         w1v[j]     = wen1  & (waddr1[4:0]== 5'(j) );
-         w2v[j]     = wen2  & (waddr2[4:0]== 5'(j) );
-         gpr_in[j]  =    ({32{w0v[j]}} & wd0[31:0]) |
-                         ({32{w1v[j]}} & wd1[31:0]) |
-                         ({32{w2v[j]}} & wd2[31:0]);
-     end
-   end // always_comb begin
+      assign bank0_rd[rp] = write_bank0[read_addr[rp]];
+      assign bank1_rd[rp] = write_bank1[read_addr[rp]];
+      assign bank2_rd[rp] = write_bank2[read_addr[rp]];
+
+      always_comb begin
+         unique case (live_bank[read_addr[rp]])
+            2'd1:    read_data[rp] = bank1_rd[rp];
+            2'd2:    read_data[rp] = bank2_rd[rp];
+            default: read_data[rp] = bank0_rd[rp];
+         endcase
+      end
+   end
+
+   always_ff @(posedge clk or negedge rst_l) begin
+      if (!rst_l) begin
+         for (int entry = 0; entry < 32; entry++) live_bank[entry] <= 2'd0;
+      end
+      else begin
+         if (wen0 && (waddr0 != 5'd0)) live_bank[waddr0] <= 2'd0;
+         if (wen1 && (waddr1 != 5'd0)) live_bank[waddr1] <= 2'd1;
+         if (wen2 && (waddr2 != 5'd0)) live_bank[waddr2] <= 2'd2;
+      end
+   end
+
+   assign rd0 = (rden0 && (raddr0 != 5'd0)) ? read_data[0] : 32'b0;
+   assign rd1 = (rden1 && (raddr1 != 5'd0)) ? read_data[1] : 32'b0;
+   assign rd2 = (rden2 && (raddr2 != 5'd0)) ? read_data[2] : 32'b0;
+   assign rd3 = (rden3 && (raddr3 != 5'd0)) ? read_data[3] : 32'b0;
 
 `ifdef ASSERT_ON
    // asserting that no 2 ports will write to the same gpr simultaneously
-   assert_multiple_wen_to_same_gpr: assert #0 (~( ((w0v[31:1] == w1v[31:1]) & wen0 & wen1) | ((w0v[31:1] == w2v[31:1]) & wen0 & wen2) | ((w1v[31:1] == w2v[31:1]) & wen1 & wen2) ) );
+   assert_multiple_wen_to_same_gpr: assert #0 (~((wen0 & wen1 & (waddr0 == waddr1) & (waddr0 != 5'd0)) |
+                                                  (wen0 & wen2 & (waddr0 == waddr2) & (waddr0 != 5'd0)) |
+                                                  (wen1 & wen2 & (waddr1 == waddr2) & (waddr1 != 5'd0))));
+   assert_single_logical_bank: assert #0 (GPR_BANKS == 1);
 
 `endif
+
+   logic unused_compat;
+   assign unused_compat = &{1'b0, active_clk, scan_mode, wen_bank_id, wr_bank_id};
 
 endmodule

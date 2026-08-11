@@ -26,6 +26,7 @@ module soc_clock_bridge (
 );
    logic        req_toggle_q;
    logic        req_busy_q;
+   (* max_fanout = 32 *) logic core_req_ready_q;
    logic        req_write_q;
    logic [31:0] req_addr_q, req_wdata_q;
    logic [3:0]  req_wstrb_q;
@@ -47,7 +48,7 @@ module soc_clock_bridge (
    logic [3:0]  req_wstrb_meta_q, req_wstrb_sync_q;
    logic        req_write_meta_q, req_write_sync_q;
 
-   assign core_req_ready  = req_busy_q && (resp_toggle_sync_q == req_toggle_q);
+   assign core_req_ready  = core_req_ready_q;
    assign core_req_rdata  = resp_rdata_sync_q;
    assign core_req_error  = resp_error_sync_q;
 
@@ -62,6 +63,7 @@ module soc_clock_bridge (
       if (!core_rst_n) begin
          req_toggle_q       <= 1'b0;
          req_busy_q         <= 1'b0;
+         core_req_ready_q   <= 1'b0;
          req_write_q        <= 1'b0;
          req_addr_q         <= 32'b0;
          req_wdata_q        <= 32'b0;
@@ -87,8 +89,15 @@ module soc_clock_bridge (
             req_wstrb_q  <= core_req_wstrb;
             req_toggle_q <= ~req_toggle_q;
             req_busy_q   <= 1'b1;
-         end else if (req_busy_q && core_req_ready && core_req_valid) begin
-            req_busy_q <= 1'b0;
+            core_req_ready_q <= 1'b0;
+         end else if (req_busy_q && core_req_ready_q && core_req_valid) begin
+            req_busy_q       <= 1'b0;
+            core_req_ready_q <= 1'b0;
+         end else if (req_busy_q && !core_req_ready_q &&
+                      (resp_toggle_sync_q == req_toggle_q)) begin
+            // Register and hold completion until the core accepts it.  This
+            // removes the busy/toggle compare from the global core stall cone.
+            core_req_ready_q <= 1'b1;
          end
       end
    end

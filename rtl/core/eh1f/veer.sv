@@ -684,7 +684,6 @@ module veer
    logic        dec_i0_fstore_d;
    logic [31:0] dec_fpr_rs2_d;
 
-   logic [31:0]  lsu_result_dc3;
    logic [31:0]  lsu_result_corr_dc4;    // ECC corrected lsu load data
    lsu_error_pkt_t lsu_error_pkt_dc3;
    logic         lsu_single_ecc_error_incr;    // Increment the counter for Single ECC error
@@ -1007,6 +1006,7 @@ module veer
 
    exu exu (
       .clk_override(dec_tlu_exu_clk_override),
+      .lsu_result_dc4(lsu_result_corr_dc4),
       .rst_l(core_rst_l),
       .*
    );

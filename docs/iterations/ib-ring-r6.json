@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "kind": "rtl-optimization-iteration",
+  "tag": "ib-ring-r6",
+  "status": "REJECT",
+  "core_mhz": 125,
+  "vivado_stage": "synth",
+  "primary_hypothesis": "Replace physical instruction-buffer payload shifting with a circular queue so decode dequeue feedback only updates narrow head/count state.",
+  "functional": {
+    "static_gates": "PASS",
+    "verilator_build": "PASS",
+    "smoke": {
+      "status": "PASS",
+      "cycles": 156834,
+      "result_path": "build/result/soc/opt-ib-ring-r6-smoke.json"
+    },
+    "isa_current": {
+      "status": "PASS",
+      "tests": 40,
+      "failed": 0,
+      "result_path": "build/regression/isa/current/summary.json"
+    },
+    "coremark": {
+      "status": "PASS",
+      "checker_passed": true,
+      "cycles": 248666,
+      "commits": 299916,
+      "ipc": 1.206099748,
+      "result_path": "build/result/soc/opt-ib-ring-r6-coremark-1.json"
+    }
+  },
+  "hpm": {
+    "before_after_exact_match": true,
+    "main": {
+      "mcycle": 248539,
+      "minstret": 299872,
+      "fetch_stall": 102166,
+      "decode_stall": 43645,
+      "lsu_freeze": 0,
+      "dbus_stall": 0,
+      "result_path": "build/result/soc/hpm-ring-main-r6.json"
+    },
+    "front": {
+      "mcycle": 248401,
+      "minstret": 299872,
+      "aligner_stall": 39184,
+      "ibus_stall": 0,
+      "branch_error": 36,
+      "stbuf_wb_stall": 0,
+      "result_path": "build/result/soc/hpm-ring-front-r6.json"
+    }
+  },
+  "synthesis": {
+    "status": "TIMING_FAILED",
+    "run": "build/vivado/kintex7-rtthread-coremark-125mhz-ib-ring-r6",
+    "wns_ns": -3.197,
+    "tns_ns": -1558.202,
+    "setup_failing_endpoints": 1798,
+    "whs_ns": -0.144,
+    "ths_ns": -19.822,
+    "hold_failing_endpoints": 146,
+    "lut": 37505,
+    "ff": 27970,
+    "ramb36": 48,
+    "dsp": 6,
+    "decode_ibuf": {
+      "paths": 739,
+      "worst_slack_ns": -1.333,
+      "baseline_paths": 1860,
+      "baseline_worst_slack_ns": -1.900
+    }
+  },
+  "implementation": {
+    "status": "TIMING_FAILED",
+    "run": "build/vivado/kintex7-rtthread-coremark-125mhz-ib-ring-impl-r6",
+    "wns_ns": -0.975,
+    "tns_ns": -516.181,
+    "setup_failing_endpoints": 1419,
+    "whs_ns": 0.072,
+    "ths_ns": 0.0,
+    "hold_failing_endpoints": 0,
+    "unconstrained_register_pins": 0,
+    "lut": 37712,
+    "ff": 27987,
+    "ramb36": 48,
+    "dsp": 6,
+    "baseline": {
+      "run": "build/vivado/kintex7-rtthread-coremark-125mhz-impl-r4",
+      "wns_ns": -0.665,
+      "tns_ns": -403.760,
+      "setup_failing_endpoints": 1388,
+      "hold_failing_endpoints": 0,
+      "decode_ibuf_paths": 1138
+    },
+    "categories": {
+      "decode_ibuf": 592,
+      "exu_div": 194,
+      "lsu": 136,
+      "exu_mul": 99,
+      "ifu_bht_bp": 179,
+      "tlu_csr_trap": 59,
+      "fpu_other": 146
+    }
+  },
+  "decision": "Reject r6 as a global timing baseline: it halves DECODE_IBUF endpoints but worsens WNS, TNS and total failing endpoints after route. Retain the circular queue only as the parent of a corrective head-selector localization batch.",
+  "next_bottleneck": "Replicate and localize registered ib_head read selectors across payload/read-view consumers as one timing batch; keep conservative full-buffer admission or deeper elasticity as a separate IPC batch."
+}

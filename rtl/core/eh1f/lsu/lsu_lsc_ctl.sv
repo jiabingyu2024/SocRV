@@ -175,11 +175,11 @@ module lsu_lsc_ctl
    // Keep packet-valid control physically separate from packed packet data.
    // Valid feeds clock enables and TLU halt logic; sharing its muxes with
    // load-correction/address fields creates a long stbuf-to-flush cone.
-   (* keep = "true", max_fanout = "8" *) logic lsu_pkt_dc1_valid_d;
-   (* keep = "true", max_fanout = "8" *) logic lsu_pkt_dc2_valid_d;
-   (* keep = "true", max_fanout = "8" *) logic lsu_pkt_dc3_valid_d;
-   (* keep = "true", max_fanout = "8" *) logic lsu_pkt_dc4_valid_d;
-   (* keep = "true", max_fanout = "8" *) logic lsu_pkt_dc5_valid_d;
+   logic lsu_pkt_dc1_valid_d;
+   logic lsu_pkt_dc2_valid_d;
+   logic lsu_pkt_dc3_valid_d;
+   logic lsu_pkt_dc4_valid_d;
+   logic lsu_pkt_dc5_valid_d;
 
    // Premux the rs1/offset for dma
    assign lsu_rs1_d[31:0] = dma_dccm_req ? dma_mem_addr[31:0] : exu_lsu_rs1_d[31:0];
@@ -188,7 +188,9 @@ module lsu_lsc_ctl
    rvdffe #(32) rs1ff (.*, .din(lsu_rs1_d[31:0]), .dout(rs1_dc1_raw[31:0]), .en(lsu_freeze_c1_dc1_clken));
    rvdffe #(12) offsetff (.*, .din(lsu_offset_d[11:0]), .dout(offset_dc1[11:0]), .en(lsu_freeze_c1_dc1_clken));
 
-   assign rs1_dc1[31:0] = (lsu_pkt_dc1.load_ldst_bypass_c1) ? lsu_result_dc3[31:0] : rs1_dc1_raw[31:0];
+   // Dependent LSU operations are delayed until the producing load reaches
+   // DC3, then consume the registered DC4 result on their DC1 cycle.
+   assign rs1_dc1[31:0] = (lsu_pkt_dc1.load_ldst_bypass_c1) ? lsu_result_corr_dc4[31:0] : rs1_dc1_raw[31:0];
 
 
    // generate the ls address
@@ -278,18 +280,34 @@ module lsu_lsc_ctl
    assign lsu_ld_datafn_dc3[31:0] = addr_external_dc3 ? bus_read_data_dc3[31:0] : lsu_ld_data_dc3[31:0];
    assign lsu_ld_datafn_corr_dc3[31:0] = addr_external_dc3 ? bus_read_data_dc3[31:0] : lsu_ld_data_corr_dc3[31:0];
 
-   // this result must look at prior stores and merge them in
-   assign lsu_result_dc3[31:0] = ({32{ lsu_pkt_dc3.unsign & lsu_pkt_dc3.by  }} & {24'b0,lsu_ld_datafn_dc3[7:0]}) |
-                                 ({32{ lsu_pkt_dc3.unsign & lsu_pkt_dc3.half}} & {16'b0,lsu_ld_datafn_dc3[15:0]}) |
-                                 ({32{~lsu_pkt_dc3.unsign & lsu_pkt_dc3.by  }} & {{24{  lsu_ld_datafn_dc3[7]}}, lsu_ld_datafn_dc3[7:0]}) |
-                                 ({32{~lsu_pkt_dc3.unsign & lsu_pkt_dc3.half}} & {{16{  lsu_ld_datafn_dc3[15]}},lsu_ld_datafn_dc3[15:0]}) |
-                                 ({32{lsu_pkt_dc3.word}} &                       lsu_ld_datafn_dc3[31:0]);
-
-   assign lsu_result_corr_dc3[31:0] = ({32{ lsu_pkt_dc3.unsign & lsu_pkt_dc3.by  }} & {24'b0,lsu_ld_datafn_corr_dc3[7:0]}) |
-                                      ({32{ lsu_pkt_dc3.unsign & lsu_pkt_dc3.half}} & {16'b0,lsu_ld_datafn_corr_dc3[15:0]}) |
-                                      ({32{~lsu_pkt_dc3.unsign & lsu_pkt_dc3.by  }} & {{24{  lsu_ld_datafn_corr_dc3[7]}}, lsu_ld_datafn_corr_dc3[7:0]}) |
-                                      ({32{~lsu_pkt_dc3.unsign & lsu_pkt_dc3.half}} & {{16{  lsu_ld_datafn_corr_dc3[15]}},lsu_ld_datafn_corr_dc3[15:0]}) |
-                                      ({32{lsu_pkt_dc3.word}} &                       lsu_ld_datafn_corr_dc3[31:0]);
+   // The load result is a timing-critical bypass source for every execution
+   // unit.  Express the mutually-exclusive width/sign selection as one mux,
+   // instead of five 32-bit masked terms followed by an OR tree.  Store-buffer
+   // byte forwarding remains on the data input side of this single selector.
+   always_comb begin
+      unique case (1'b1)
+         lsu_pkt_dc3.word: begin
+            lsu_result_dc3      = lsu_ld_datafn_dc3;
+            lsu_result_corr_dc3 = lsu_ld_datafn_corr_dc3;
+         end
+         lsu_pkt_dc3.half: begin
+            lsu_result_dc3      = {{16{~lsu_pkt_dc3.unsign & lsu_ld_datafn_dc3[15]}},
+                                   lsu_ld_datafn_dc3[15:0]};
+            lsu_result_corr_dc3 = {{16{~lsu_pkt_dc3.unsign & lsu_ld_datafn_corr_dc3[15]}},
+                                   lsu_ld_datafn_corr_dc3[15:0]};
+         end
+         lsu_pkt_dc3.by: begin
+            lsu_result_dc3      = {{24{~lsu_pkt_dc3.unsign & lsu_ld_datafn_dc3[7]}},
+                                   lsu_ld_datafn_dc3[7:0]};
+            lsu_result_corr_dc3 = {{24{~lsu_pkt_dc3.unsign & lsu_ld_datafn_corr_dc3[7]}},
+                                   lsu_ld_datafn_corr_dc3[7:0]};
+         end
+         default: begin
+            lsu_result_dc3      = '0;
+            lsu_result_corr_dc3 = '0;
+         end
+      endcase
+   end
 
 
    // absence load/store all 0's
@@ -302,13 +320,12 @@ module lsu_lsc_ctl
    assign store_data_d[63:0] = dma_dccm_req ? dma_mem_wdata_shifted[63:0] : {32'b0,exu_lsu_rs2_d[31:0]};
 
    assign store_data_dc2_in[63:32] = store_data_dc1[63:32];
-   assign store_data_dc2_in[31:0] = (lsu_pkt_dc1.store_data_bypass_c1) ? lsu_result_dc3[31:0] :
+   assign store_data_dc2_in[31:0] = (lsu_pkt_dc1.store_data_bypass_c1) ? lsu_result_corr_dc4[31:0] :
                                     (lsu_pkt_dc1.store_data_bypass_e4_c1[1]) ? i1_result_e4_eff[31:0] :
                                     (lsu_pkt_dc1.store_data_bypass_e4_c1[0]) ? i0_result_e4_eff[31:0] : store_data_dc1[31:0];
 
    assign store_data_dc2[63:32] = store_data_pre_dc2[63:32];
    assign store_data_dc2[31:0] = (lsu_pkt_dc2.store_data_bypass_i0_e2_c2) ? i0_result_e2[31:0]     :
-                                 (lsu_pkt_dc2.store_data_bypass_c2)       ? lsu_result_dc3[31:0]   :
                                  (lsu_pkt_dc2.store_data_bypass_e4_c2[1]) ? i1_result_e4_eff[31:0] :
                                  (lsu_pkt_dc2.store_data_bypass_e4_c2[0]) ? i0_result_e4_eff[31:0] : store_data_pre_dc2[31:0];
 

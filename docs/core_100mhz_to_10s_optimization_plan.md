@@ -161,7 +161,7 @@ MMIO request/response、timer/software IRQ、test status/code、UART RX 和 GPIO
 
 ## 7. 单轮优化流程
 
-每轮只允许一个主要假设，或一组紧密相关的修改。例如：
+每轮只允许一个主要假设，或一组紧密相关的修改。这里的“一个主要假设”不等于只改一个小点：当全量违例显示多个 cluster 共享同一控制锥、高扇出源或流水边界时，应把能共同覆盖这些违例的 RTL 调整合并成一个有明确边界的较大批次。例如：
 
 ```text
 假设：DCCM bank-select 与 read-data mux 位于同一周期，构成 38% 的 top-100 negative paths。
@@ -169,7 +169,18 @@ MMIO request/response、timer/software IRQ、test status/code、UART RX 和 GPIO
 预测：关键路径降低 0.5～0.8 ns；load hit CPI 不变；资源增加少于 1%。
 ```
 
-没有路径报告依据，不开始修改。固定执行顺序：
+### 7.1 较大批次修改与并行纪律
+
+后续迭代默认采用“先聚类、成批修改、再统一验证”的节奏：
+
+1. 每轮先读取全量违例摘要和代表路径，列出本批次准备覆盖的 cluster、共同根因、预计改善幅度和风险边界。不能只盯 WNS 第一条路径。
+2. 优先选择能同时压缩一批已知违例的结构修改，例如共享控制锥拆分、源寄存器复制、分层局部 enable、公共 mux 重构或一组紧密相关的流水边界调整。除非违例已经高度孤立，否则不为单条路径反复做一行式微调。
+3. 在批次内部完成所有相互依赖的 RTL、valid/stall/flush、forwarding、异常顺序和接口调整后，再统一运行功能验证与 Vivado；不在每个中间小改动后启动一轮完整验证。
+4. 每个批次仍保持可审计：记录覆盖目标、修改清单、预期 WNS/TNS/失败 endpoint 变化、IPC 风险和回退边界。若批次失败，应能按子假设拆分定位，而不是继续叠加未知修改。
+5. Vivado 启动后冻结该 run 对应的源码快照和唯一 `run-tag`。等待综合、实现或布线期间，可并行做只读路径分析、HPM/IPC 归因、下一批次方案设计、脚本和文档整理；需要继续改 RTL 时必须使用独立 worktree/分支或等当前 run 完成，避免运行中的工程读取到变化中的源文件。
+6. 并行任务以“互不写同一产物、结果能独立验收”为边界。每轮主线只保留一个正在验证的 RTL 候选，其他工作产出分析结论或候选补丁，不把多个未验证版本混入同一 Vivado 目录。
+
+没有路径报告依据，不开始修改。一个批次完成后的固定执行顺序：
 
 1. 修改 RTL。
 2. 运行 Level 0 静态门禁和 Verilator build-only。
@@ -570,6 +581,16 @@ make iter-trend
 脚本自动记录命令和日志位置，但 `Primary hypothesis`、`Decision` 和 `Next bottleneck` 仍由优化者在看完 compact summary 后填写，不能由”命令运行成功”代替工程判断。
 
 ## 12. 最终交付门槛
+
+### 12.1 150 MHz 与 200 MHz 里程碑归档
+
+150 MHz 和 200 MHz 分别达到全量 Vivado post-route 无时序违例时，不直接进入下一轮小改动，先完成一次可复现的里程碑归档：
+
+1. 运行完整 implementation，确认所有 clock pair 的 setup/hold 均满足，且 unconstrained path 为 0；保存全量 setup/hold、CDC、DRC、methodology、clock interaction 和 utilization 摘要。
+2. 运行 Level 3 里程碑回归以及 RT-Thread + CoreMark，记录 CRC、cycles/iteration、IPC、按实际 core clock 换算的 10000 次时间和相对上一里程碑的变化。
+3. 生成 bitstream，并记录 `.bit`、软件镜像、Vivado 工程结果、Git revision、参数、命令和 SHA-256；即使最终 10 秒目标尚未达到，也保留该频率的可恢复交付点。
+4. 在 `docs/iterations/` 写一份人类可读汇总和机器可读 JSON，明确该里程碑的时序余量、资源、功能门禁、性能、bitstream 路径与下一阶段瓶颈。
+5. 只有以上材料齐全，才把该频率标记为“全量 Vivado 无时序违例 + bitstream 已归档”。综合估算无违例或只有 top-N 报告无违例均不能替代这一门槛。
 
 1. 固定 CoreMark 工作量在 FPGA 上连续运行三次，中位数不超过 10 秒。
 2. 三次 CRC 一致。

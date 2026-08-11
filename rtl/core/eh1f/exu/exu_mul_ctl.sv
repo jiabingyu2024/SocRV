@@ -26,7 +26,7 @@ module exu_mul_ctl
    input logic [31:0]  a,                // A operand
    input logic [31:0]  b,                // B operand
 
-   input logic [31:0]  lsu_result_dc3,   // Load result used in E1 bypass
+   input logic [31:0]  lsu_result_dc4,   // Registered load result used in E1 bypass
 
    input logic         freeze,           // Pipeline freeze
 
@@ -84,8 +84,8 @@ module exu_mul_ctl
 
    // --------------------------- E1 Logic Stage ----------------------------------
 
-   assign a_e1[31:0]             = (load_mul_rs1_bypass_e1)  ?  lsu_result_dc3[31:0]  :  a_ff_e1[31:0];
-   assign b_e1[31:0]             = (load_mul_rs2_bypass_e1)  ?  lsu_result_dc3[31:0]  :  b_ff_e1[31:0];
+   assign a_e1[31:0]             = (load_mul_rs1_bypass_e1)  ?  lsu_result_dc4[31:0]  :  a_ff_e1[31:0];
+   assign b_e1[31:0]             = (load_mul_rs2_bypass_e1)  ?  lsu_result_dc4[31:0]  :  b_ff_e1[31:0];
 
    assign rs1_neg_e1             =  rs1_sign_e1 & a_e1[31];
    assign rs2_neg_e1             =  rs2_sign_e1 & b_e1[31];
@@ -103,7 +103,10 @@ module exu_mul_ctl
    // ---------------------- E2 Logic Stage --------------------------
 
 
-   logic signed [65:0]  prod_e2;
+   // Keep the 33x33 signed multiply in the DSP cascade bounded by the E2/E3
+   // registers.  Vivado otherwise has latitude to dissolve part of the
+   // multiply into LUT carry logic when optimizing the high-half result.
+   (* use_dsp = "yes" *) logic signed [65:0]  prod_e2;
 
    assign prod_e2[65:0]          =  a_ff_e2  *  b_ff_e2;
 

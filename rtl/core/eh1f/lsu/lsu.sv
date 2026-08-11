@@ -55,7 +55,6 @@ module lsu
    input logic                             dec_i0_lsu_decode_d, // lsu is in i0
    input logic [31:0]                      dec_tlu_mrac_ff,     // CSR for memory region control
 
-   output logic [31:0]                     lsu_result_dc3,      // lsu load data
    output logic                            lsu_single_ecc_error_incr,     // Increment the counter for Single ECC error
    output logic [31:0]                     lsu_result_corr_dc4, // This is the ECC corrected data going to RF
    output logic                            lsu_freeze_dc3,      // lsu freeze due to load to external
@@ -211,6 +210,7 @@ module lsu
 
    logic [31:0] lsu_ld_data_dc3;
    logic [31:0] lsu_ld_data_corr_dc3;
+   logic [31:0] lsu_result_dc3;
    logic [31:0] picm_mask_data_dc3;
 
    logic [31:0] lsu_addr_dc1, lsu_addr_dc2, lsu_addr_dc3, lsu_addr_dc4, lsu_addr_dc5;
@@ -285,9 +285,9 @@ module lsu
    // Split the halt-idle cone into pipe and buffer portions. These signals
    // are consumed by decode and TLU; keeping the portions separate avoids
    // rebuilding the five-stage packet OR together with buffer reductions.
-   (* keep = "true", max_fanout = "8" *) logic lsu_halt_pipe_busy;
-   (* keep = "true", max_fanout = "8" *) logic lsu_halt_buffer_busy;
-   (* keep = "true", max_fanout = "8" *) logic lsu_halt_pipe_idle;
+   logic lsu_halt_pipe_busy;
+   logic lsu_halt_buffer_busy;
+   logic lsu_halt_pipe_idle;
 
 
    lsu_lsc_ctl lsu_lsc_ctl(.*);

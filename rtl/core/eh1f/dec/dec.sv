@@ -151,7 +151,6 @@ module dec
 
    input logic [31:0] exu_csr_rs1_e1,       // rs1 for csr instruction
 
-   input logic [31:0] lsu_result_dc3,       // load result
    input logic [31:0] lsu_result_corr_dc4, // corrected load result
 
    input logic        lsu_load_stall_any,   // This is for blocking loads
@@ -517,6 +516,10 @@ module dec
 
    br_pkt_t dec_i0_brp;
    br_pkt_t dec_i1_brp;
+   dec_pkt_t dec_i0_predecode_d;
+   dec_pkt_t dec_i1_predecode_d;
+   reg_pkt_t dec_i0_regs_d;
+   reg_pkt_t dec_i1_regs_d;
 
    assign clk_override = dec_tlu_dec_clk_override;
 

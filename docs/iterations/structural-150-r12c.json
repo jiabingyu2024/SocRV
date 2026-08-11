@@ -1,0 +1,40 @@
+{
+  "artifacts": {
+    "manifest": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r12c.json",
+    "markdown": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r12c.md",
+    "scratch_root": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12c"
+  },
+  "core_mhz": 150,
+  "error": "check_generated_tree failed with exit code 1; see E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12c/logs/check_generated_tree.log",
+  "git_revision": "eae3dd1d35324cc3a88c51425ae80a975d5d6af0",
+  "kind": "rtl-optimization-iteration",
+  "schema_version": 1,
+  "started_at": "2026-08-11T13:01:29.716340+00:00",
+  "status": "FAIL",
+  "steps": [
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_filelists.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12c/logs/check_filelists.log",
+      "name": "check_filelists",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_generated_tree.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12c/logs/check_generated_tree.log",
+      "name": "check_generated_tree",
+      "returncode": 1,
+      "status": "FAIL"
+    }
+  ],
+  "tag": "structural-150-r12c",
+  "vivado_stage": "impl"
+}

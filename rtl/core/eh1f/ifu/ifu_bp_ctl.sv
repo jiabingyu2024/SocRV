@@ -151,6 +151,9 @@ module ifu_bp_ctl
    logic [`RV_BTB_BTAG_SIZE-1:0] btb_wr_tag, fetch_rd_tag_f1, fetch_rd_tag_f2;
    logic [16+`RV_BTB_BTAG_SIZE:0]        btb_wr_data;
    logic [3:0]         btb_wr_en_way0, btb_wr_en_way1;
+   logic [`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] btb_wr_addr_q;
+   logic [16+`RV_BTB_BTAG_SIZE:0]          btb_wr_data_q;
+   logic [3:0]                              btb_wr_en_way0_q, btb_wr_en_way1_q;
 
 
    logic               dec_tlu_error_wb, dec_tlu_all_banks_error_wb, btb_valid, dec_tlu_br0_middle_wb, dec_tlu_br1_middle_wb;
@@ -160,7 +163,7 @@ module ifu_bp_ctl
 
    logic [6:0] fgmask_f2;
    logic [3:0] branch_error_bank_conflict_f1, branch_error_bank_conflict_f2;
-   (* keep = "true", max_fanout = "8" *) logic [`RV_BHT_GHR_RANGE] merged_ghr;
+   logic [`RV_BHT_GHR_RANGE] merged_ghr;
    logic [`RV_BHT_GHR_RANGE] fghr_ns, fghr;
    logic [3:0] num_valids;
    logic [LRU_SIZE-1:0] btb_lru_b0_f, btb_lru_b0_hold, btb_lru_b0_ns, btb_lru_b1_f, btb_lru_b1_hold, btb_lru_b1_ns,
@@ -169,20 +172,25 @@ module ifu_bp_ctl
                         mp_wrindex_dec, mp_wrlru_b0, mp_wrlru_b1, mp_wrlru_b2, mp_wrlru_b3;
    logic [3:0]          btb_lru_rd_f2, mp_bank_decoded, mp_bank_decoded_f, lru_update_valid_f2;
    logic [3:0] tag_match_way0_f2, tag_match_way1_f2;
+   logic [3:0] tag_match_way0_f1, tag_match_way1_f1;
+   logic [3:0] tag_match_way0_raw_f2, tag_match_way1_raw_f2;
    logic [7:0] way_raw, bht_dir_f2, btb_sel_f2, wayhit_f2;
    logic [7:0] btb_sel_mask_f2, bht_valid_f2, bht_force_taken_f2;
 
    logic leak_one_f1, leak_one_f2, ifc_fetch_req_f2_raw;
 
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank0_rd_data_way0_out ;
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank1_rd_data_way0_out ;
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank2_rd_data_way0_out ;
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank3_rd_data_way0_out ;
+   // Each bank/way is a true single-write asynchronous-read LUTRAM.  Keeping
+   // the existing F2 registers below preserves the predictor latency while
+   // removing the 64-entry flip-flop mux from the F1 timing cone.
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank0_rd_data_way0_out [0:LRU_SIZE-1];
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way0_out [0:LRU_SIZE-1];
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank2_rd_data_way0_out [0:LRU_SIZE-1];
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way0_out [0:LRU_SIZE-1];
 
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank0_rd_data_way1_out ;
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank1_rd_data_way1_out ;
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank2_rd_data_way1_out ;
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank3_rd_data_way1_out ;
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank0_rd_data_way1_out [0:LRU_SIZE-1];
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way1_out [0:LRU_SIZE-1];
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank2_rd_data_way1_out [0:LRU_SIZE-1];
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way1_out [0:LRU_SIZE-1];
 
    logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank0_rd_data_way0_f2_in ;
    logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way0_f2_in ;
@@ -195,15 +203,15 @@ module ifu_bp_ctl
    logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way1_f2_in ;
 
 
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank0_rd_data_way0_f2 ;
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way0_f2 ;
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank2_rd_data_way0_f2 ;
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way0_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank0_rd_data_way0_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way0_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank2_rd_data_way0_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way0_f2 ;
 
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank0_rd_data_way1_f2 ;
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way1_f2 ;
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank2_rd_data_way1_f2 ;
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way1_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank0_rd_data_way1_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way1_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank2_rd_data_way1_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way1_f2 ;
 
    logic                                         final_h;
    logic                                         btb_fg_crossing_f2;
@@ -215,15 +223,17 @@ module ifu_bp_ctl
    logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way2_f2_in ;
    logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank2_rd_data_way2_f2_in ;
    logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way2_f2_in ;
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank0_rd_data_way2_f2 ;
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way2_f2 ;
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank2_rd_data_way2_f2 ;
-   logic                [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way2_f2 ;
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank0_rd_data_way2_out ;
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank1_rd_data_way2_out ;
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank2_rd_data_way2_out ;
-   logic [LRU_SIZE-1:0][16+`RV_BTB_BTAG_SIZE:0]  btb_bank3_rd_data_way2_out ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank0_rd_data_way2_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way2_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank2_rd_data_way2_f2 ;
+   logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way2_f2 ;
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank0_rd_data_way2_out [0:LRU_SIZE-1];
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank1_rd_data_way2_out [0:LRU_SIZE-1];
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank2_rd_data_way2_out [0:LRU_SIZE-1];
+   (* ram_style = "distributed" *) logic [16+`RV_BTB_BTAG_SIZE:0] btb_bank3_rd_data_way2_out [0:LRU_SIZE-1];
    logic [3:0]                                   btb_wr_en_way2, tag_match_way2_f2, fetch_lru_bank_hit_f2;
+   logic [3:0]                                   btb_wr_en_way2_q;
+   logic [3:0]                                   tag_match_way2_f1, tag_match_way2_raw_f2;
    logic [7:0]                                   tag_match_way2_expanded_f2;
 
    logic [1:0] exu_mp_way, exu_mp_way_f, dec_tlu_br0_way_wb, dec_tlu_br1_way_wb, dec_tlu_way_wb, dec_tlu_way_wb_f;
@@ -531,41 +541,52 @@ assign btb_vmask_raw_f2[1] = (ifc_fetch_addr_f2[3] & ifc_fetch_addr_f2[2]
 `endif
                          .din({branch_error_bank_conflict_f1[3:0], fetch_mp_collision_f1, mp_bank_decoded[3:0], exu_mp_way, dec_tlu_way_wb, leak_one_f1, ifc_fetch_req_f1}),
                         .dout({branch_error_bank_conflict_f2[3:0], fetch_mp_collision_f2, mp_bank_decoded_f[3:0], exu_mp_way_f, dec_tlu_way_wb_f, leak_one_f2, ifc_fetch_req_f2_raw}));
+   // Compare the asynchronous LUTRAM tag in F1 and register only the hit bits
+   // beside the full BTB entry.  The old organization performed tag compare,
+   // way select, target select and prediction control after the F2 data
+   // register; its tag bit was the dominant source of 100 routed violations.
+   // This is a real cut at the existing F1/F2 boundary and adds no predictor
+   // latency or branch-IPC penalty.
+   assign tag_match_way0_f1[3:0] = {
+      btb_bank3_rd_data_way0_f2_in[BV] & (btb_bank3_rd_data_way0_f2_in[`TAG] == fetch_rd_tag_f1),
+      btb_bank2_rd_data_way0_f2_in[BV] & (btb_bank2_rd_data_way0_f2_in[`TAG] == fetch_rd_tag_f1),
+      btb_bank1_rd_data_way0_f2_in[BV] & (btb_bank1_rd_data_way0_f2_in[`TAG] == fetch_rd_tag_f1),
+      btb_bank0_rd_data_way0_f2_in[BV] & (btb_bank0_rd_data_way0_f2_in[`TAG] == fetch_rd_tag_f1)};
+   assign tag_match_way1_f1[3:0] = {
+      btb_bank3_rd_data_way1_f2_in[BV] & (btb_bank3_rd_data_way1_f2_in[`TAG] == fetch_rd_tag_f1),
+      btb_bank2_rd_data_way1_f2_in[BV] & (btb_bank2_rd_data_way1_f2_in[`TAG] == fetch_rd_tag_f1),
+      btb_bank1_rd_data_way1_f2_in[BV] & (btb_bank1_rd_data_way1_f2_in[`TAG] == fetch_rd_tag_f1),
+      btb_bank0_rd_data_way1_f2_in[BV] & (btb_bank0_rd_data_way1_f2_in[`TAG] == fetch_rd_tag_f1)};
+
+   rvdffe #(8) btb_tag_hit_f2_ff (.*, .en(ifc_fetch_req_f1),
+      .din({tag_match_way1_f1, tag_match_way0_f1}),
+      .dout({tag_match_way1_raw_f2, tag_match_way0_raw_f2}));
+
 `ifdef RV_BTB_48
+   assign tag_match_way2_f1[3:0] = {
+      btb_bank3_rd_data_way2_f2_in[BV] & (btb_bank3_rd_data_way2_f2_in[`TAG] == fetch_rd_tag_f1),
+      btb_bank2_rd_data_way2_f2_in[BV] & (btb_bank2_rd_data_way2_f2_in[`TAG] == fetch_rd_tag_f1),
+      btb_bank1_rd_data_way2_f2_in[BV] & (btb_bank1_rd_data_way2_f2_in[`TAG] == fetch_rd_tag_f1),
+      btb_bank0_rd_data_way2_f2_in[BV] & (btb_bank0_rd_data_way2_f2_in[`TAG] == fetch_rd_tag_f1)};
+   rvdffe #(4) btb_tag_hit_way2_f2_ff (.*, .en(ifc_fetch_req_f1),
+      .din(tag_match_way2_f1), .dout(tag_match_way2_raw_f2));
 
-   // 2 -way SA, figure out the way hit and mux accordingly
-   assign tag_match_way0_f2[3:0] = {btb_bank3_rd_data_way0_f2[BV] & (btb_bank3_rd_data_way0_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank2_rd_data_way0_f2[BV] & (btb_bank2_rd_data_way0_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank1_rd_data_way0_f2[BV] & (btb_bank1_rd_data_way0_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank0_rd_data_way0_f2[BV] & (btb_bank0_rd_data_way0_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0])} &
-                                   ~({4{dec_tlu_way_wb_f==2'b0}} & branch_error_bank_conflict_f2[3:0]) & {4{ifc_fetch_req_f2_raw & ~leak_one_f2}};
-
-   assign tag_match_way1_f2[3:0] = {btb_bank3_rd_data_way1_f2[BV] & (btb_bank3_rd_data_way1_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank2_rd_data_way1_f2[BV] & (btb_bank2_rd_data_way1_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank1_rd_data_way1_f2[BV] & (btb_bank1_rd_data_way1_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank0_rd_data_way1_f2[BV] & (btb_bank0_rd_data_way1_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0])} &
-                                   ~({4{dec_tlu_way_wb_f[0]}} & branch_error_bank_conflict_f2[3:0]) & {4{ifc_fetch_req_f2_raw & ~leak_one_f2}};
-
-   assign tag_match_way2_f2[3:0] = {btb_bank3_rd_data_way2_f2[BV] & (btb_bank3_rd_data_way2_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank2_rd_data_way2_f2[BV] & (btb_bank2_rd_data_way2_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank1_rd_data_way2_f2[BV] & (btb_bank1_rd_data_way2_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank0_rd_data_way2_f2[BV] & (btb_bank0_rd_data_way2_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0])} &
-                                   ~({4{dec_tlu_way_wb_f[1]}} & branch_error_bank_conflict_f2[3:0]) & {4{ifc_fetch_req_f2_raw & ~leak_one_f2}};
-
+   assign tag_match_way0_f2 = tag_match_way0_raw_f2 &
+      ~({4{dec_tlu_way_wb_f == 2'b00}} & branch_error_bank_conflict_f2) &
+      {4{ifc_fetch_req_f2_raw & ~leak_one_f2}};
+   assign tag_match_way1_f2 = tag_match_way1_raw_f2 &
+      ~({4{dec_tlu_way_wb_f == 2'b01}} & branch_error_bank_conflict_f2) &
+      {4{ifc_fetch_req_f2_raw & ~leak_one_f2}};
+   assign tag_match_way2_f2 = tag_match_way2_raw_f2 &
+      ~({4{dec_tlu_way_wb_f == 2'b10}} & branch_error_bank_conflict_f2) &
+      {4{ifc_fetch_req_f2_raw & ~leak_one_f2}};
 `else
-   // 2 -way SA, figure out the way hit and mux accordingly
-   assign tag_match_way0_f2[3:0] = {btb_bank3_rd_data_way0_f2[BV] & (btb_bank3_rd_data_way0_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank2_rd_data_way0_f2[BV] & (btb_bank2_rd_data_way0_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank1_rd_data_way0_f2[BV] & (btb_bank1_rd_data_way0_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank0_rd_data_way0_f2[BV] & (btb_bank0_rd_data_way0_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0])} &
-                                   ~({4{~dec_tlu_way_wb_f}} & branch_error_bank_conflict_f2[3:0]) & {4{ifc_fetch_req_f2_raw & ~leak_one_f2}};
-
-   assign tag_match_way1_f2[3:0] = {btb_bank3_rd_data_way1_f2[BV] & (btb_bank3_rd_data_way1_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank2_rd_data_way1_f2[BV] & (btb_bank2_rd_data_way1_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank1_rd_data_way1_f2[BV] & (btb_bank1_rd_data_way1_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0]),
-                                    btb_bank0_rd_data_way1_f2[BV] & (btb_bank0_rd_data_way1_f2[`TAG] == fetch_rd_tag_f2[`RV_BTB_BTAG_SIZE-1:0])} &
-                                   ~({4{dec_tlu_way_wb_f}} & branch_error_bank_conflict_f2[3:0]) & {4{ifc_fetch_req_f2_raw & ~leak_one_f2}};
-
+   assign tag_match_way0_f2 = tag_match_way0_raw_f2 &
+      ~({4{~dec_tlu_way_wb_f}} & branch_error_bank_conflict_f2) &
+      {4{ifc_fetch_req_f2_raw & ~leak_one_f2}};
+   assign tag_match_way1_f2 = tag_match_way1_raw_f2 &
+      ~({4{dec_tlu_way_wb_f}} & branch_error_bank_conflict_f2) &
+      {4{ifc_fetch_req_f2_raw & ~leak_one_f2}};
 `endif
 
    // Both ways could hit, use the offset bit to reorder
@@ -1400,6 +1421,20 @@ assign fgmask_f2[0] = (~ifc_fetch_addr_f2[3] & ~ifc_fetch_addr_f2[2]
 
    assign btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] = dec_tlu_error_wb ? btb_error_addr_wb[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] : exu_mp_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO];
 
+   // Predictor repair/training is deliberately one cycle behind resolution.
+   // The registered write packet cuts EXU/TLU decode and hash logic away from
+   // every LUTRAM write port; query collision handling above remains on the
+   // original resolution cycle, so architectural recovery is unchanged.
+   always_ff @(posedge clk) begin
+      btb_wr_addr_q    <= btb_wr_addr;
+      btb_wr_data_q    <= btb_wr_data;
+      btb_wr_en_way0_q <= btb_wr_en_way0;
+      btb_wr_en_way1_q <= btb_wr_en_way1;
+`ifdef RV_BTB_48
+      btb_wr_en_way2_q <= btb_wr_en_way2;
+`endif
+   end
+
    logic [1:0] bht_wr_data0, bht_wr_data1, bht_wr_data2;
    logic [7:0] bht_wr_en0, bht_wr_en1, bht_wr_en2;
 
@@ -1421,6 +1456,10 @@ assign fgmask_f2[0] = (~ifc_fetch_addr_f2[3] & ~ifc_fetch_addr_f2[2]
    rvbtb_ghr_hash mpghrhs  (.hashin(exu_mp_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO]), .ghr(exu_mp_eghr[`RV_BHT_GHR_RANGE]), .hash(mp_hashed[`RV_BHT_ADDR_HI:`RV_BHT_ADDR_LO]));
    rvbtb_ghr_hash br0ghrhs (.hashin(dec_tlu_br0_addr_wb[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO]), .ghr(dec_tlu_br0_fghr_wb[`RV_BHT_GHR_RANGE]), .hash(br0_hashed_wb[`RV_BHT_ADDR_HI:`RV_BHT_ADDR_LO]));
    rvbtb_ghr_hash br1ghrhs (.hashin(dec_tlu_br1_addr_wb[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO]), .ghr(dec_tlu_br1_fghr_wb[`RV_BHT_GHR_RANGE]), .hash(br1_hashed_wb[`RV_BHT_ADDR_HI:`RV_BHT_ADDR_LO]));
+   // Preserve speculative next-history lookup for IPC.  The FPGA table below
+   // is reduced to 128 entries per bank, so this feedback now crosses two
+   // RAM64M levels instead of the former four; retaining fghr_ns avoids the
+   // measured 7% CoreMark IPC loss of one-fetch-late history.
    rvbtb_ghr_hash fghrhs (.hashin(btb_rd_addr_f1[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO]), .ghr(fghr_ns[`RV_BHT_GHR_RANGE]), .hash(bht_rd_addr_hashed_f1[`RV_BHT_ADDR_HI:`RV_BHT_ADDR_LO]));
 
    assign bht_wr_addr0[`RV_BHT_ADDR_HI:`RV_BHT_ADDR_LO] = mp_hashed[`RV_BHT_ADDR_HI:`RV_BHT_ADDR_LO];
@@ -1430,77 +1469,47 @@ assign fgmask_f2[0] = (~ifc_fetch_addr_f2[3] & ~ifc_fetch_addr_f2[2]
 
 
    // ----------------------------------------------------------------------
-   // Structures. Using FLOPS
+   // FPGA-native predictor structures
    // ----------------------------------------------------------------------
    // BTB
    // Entry -> tag[`RV_BTB_BTAG_SIZE-1:0], toffset[11:0], pc4, boffset, call, ret, valid
 
 
-    for (j=0 ; j<LRU_SIZE ; j++) begin : BTB_FLOPS
-      // Way 0
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank0_way0 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way0[0])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank0_rd_data_way0_out[j]));
-
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank1_way0 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way0[1])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank1_rd_data_way0_out[j]));
-
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank2_way0 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way0[2])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank2_rd_data_way0_out[j]));
-
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank3_way0 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way0[3])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank3_rd_data_way0_out[j]));
-
-      // Way 1
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank0_way1 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way1[0])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank0_rd_data_way1_out[j]));
-
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank1_way1 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way1[1])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank1_rd_data_way1_out[j]));
-
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank2_way1 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way1[2])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank2_rd_data_way1_out[j]));
-
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank3_way1 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way1[3])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank3_rd_data_way1_out[j]));
+   initial begin : init_btb_lutram
+      for (int entry = 0; entry < LRU_SIZE; entry++) begin
+         btb_bank0_rd_data_way0_out[entry] = '0;
+         btb_bank1_rd_data_way0_out[entry] = '0;
+         btb_bank2_rd_data_way0_out[entry] = '0;
+         btb_bank3_rd_data_way0_out[entry] = '0;
+         btb_bank0_rd_data_way1_out[entry] = '0;
+         btb_bank1_rd_data_way1_out[entry] = '0;
+         btb_bank2_rd_data_way1_out[entry] = '0;
+         btb_bank3_rd_data_way1_out[entry] = '0;
 `ifdef RV_BTB_48
-      // Way 2
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank0_way2 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way2[0])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank0_rd_data_way2_out[j]));
-
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank1_way2 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way2[1])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank1_rd_data_way2_out[j]));
-
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank2_way2 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way2[2])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank2_rd_data_way2_out[j]));
-
-          rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank3_way2 (.*,
-                    .en(((btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == j) & btb_wr_en_way2[3])),
-                    .din        (btb_wr_data[16+`RV_BTB_BTAG_SIZE:0]),
-                    .dout       (btb_bank3_rd_data_way2_out[j]));
+         btb_bank0_rd_data_way2_out[entry] = '0;
+         btb_bank1_rd_data_way2_out[entry] = '0;
+         btb_bank2_rd_data_way2_out[entry] = '0;
+         btb_bank3_rd_data_way2_out[entry] = '0;
 `endif
-    end
+      end
+   end
+
+   always_ff @(posedge clk) begin : write_btb_lutram
+      if (btb_wr_en_way0_q[0]) btb_bank0_rd_data_way0_out[btb_wr_addr_q] <= btb_wr_data_q;
+      if (btb_wr_en_way0_q[1]) btb_bank1_rd_data_way0_out[btb_wr_addr_q] <= btb_wr_data_q;
+      if (btb_wr_en_way0_q[2]) btb_bank2_rd_data_way0_out[btb_wr_addr_q] <= btb_wr_data_q;
+      if (btb_wr_en_way0_q[3]) btb_bank3_rd_data_way0_out[btb_wr_addr_q] <= btb_wr_data_q;
+      if (btb_wr_en_way1_q[0]) btb_bank0_rd_data_way1_out[btb_wr_addr_q] <= btb_wr_data_q;
+      if (btb_wr_en_way1_q[1]) btb_bank1_rd_data_way1_out[btb_wr_addr_q] <= btb_wr_data_q;
+      if (btb_wr_en_way1_q[2]) btb_bank2_rd_data_way1_out[btb_wr_addr_q] <= btb_wr_data_q;
+      if (btb_wr_en_way1_q[3]) btb_bank3_rd_data_way1_out[btb_wr_addr_q] <= btb_wr_data_q;
+`ifdef RV_BTB_48
+      if (btb_wr_en_way2_q[0]) btb_bank0_rd_data_way2_out[btb_wr_addr_q] <= btb_wr_data_q;
+      if (btb_wr_en_way2_q[1]) btb_bank1_rd_data_way2_out[btb_wr_addr_q] <= btb_wr_data_q;
+      if (btb_wr_en_way2_q[2]) btb_bank2_rd_data_way2_out[btb_wr_addr_q] <= btb_wr_data_q;
+      if (btb_wr_en_way2_q[3]) btb_bank3_rd_data_way2_out[btb_wr_addr_q] <= btb_wr_data_q;
+`endif
+   end
 
    rvdffe #(17+`RV_BTB_BTAG_SIZE) btb_bank0_way0_data_out (.*,
                     .en(ifc_fetch_req_f1),
@@ -1564,46 +1573,20 @@ assign fgmask_f2[0] = (~ifc_fetch_addr_f2[3] & ~ifc_fetch_addr_f2[2]
                     .dout       (btb_bank3_rd_data_way2_f2   [16+`RV_BTB_BTAG_SIZE:0]));
 `endif //  `ifdef RV_BTB_48
 
-    always_comb begin : BTB_rd_mux
-        btb_bank0_rd_data_way0_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-        btb_bank1_rd_data_way0_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-        btb_bank2_rd_data_way0_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-        btb_bank3_rd_data_way0_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-
-        btb_bank0_rd_data_way1_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-        btb_bank1_rd_data_way1_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-        btb_bank2_rd_data_way1_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-        btb_bank3_rd_data_way1_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-
+   assign btb_bank0_rd_data_way0_f2_in = btb_bank0_rd_data_way0_out[btb_rd_addr_f1];
+   assign btb_bank1_rd_data_way0_f2_in = btb_bank1_rd_data_way0_out[btb_rd_addr_f1];
+   assign btb_bank2_rd_data_way0_f2_in = btb_bank2_rd_data_way0_out[btb_rd_addr_f1];
+   assign btb_bank3_rd_data_way0_f2_in = btb_bank3_rd_data_way0_out[btb_rd_addr_f1];
+   assign btb_bank0_rd_data_way1_f2_in = btb_bank0_rd_data_way1_out[btb_rd_addr_f1];
+   assign btb_bank1_rd_data_way1_f2_in = btb_bank1_rd_data_way1_out[btb_rd_addr_f1];
+   assign btb_bank2_rd_data_way1_f2_in = btb_bank2_rd_data_way1_out[btb_rd_addr_f1];
+   assign btb_bank3_rd_data_way1_f2_in = btb_bank3_rd_data_way1_out[btb_rd_addr_f1];
 `ifdef RV_BTB_48
-       btb_bank0_rd_data_way2_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-       btb_bank1_rd_data_way2_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-       btb_bank2_rd_data_way2_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
-       btb_bank3_rd_data_way2_f2_in[16+`RV_BTB_BTAG_SIZE:0] = '0 ;
+   assign btb_bank0_rd_data_way2_f2_in = btb_bank0_rd_data_way2_out[btb_rd_addr_f1];
+   assign btb_bank1_rd_data_way2_f2_in = btb_bank1_rd_data_way2_out[btb_rd_addr_f1];
+   assign btb_bank2_rd_data_way2_f2_in = btb_bank2_rd_data_way2_out[btb_rd_addr_f1];
+   assign btb_bank3_rd_data_way2_f2_in = btb_bank3_rd_data_way2_out[btb_rd_addr_f1];
 `endif
-        for (int j=0; j< LRU_SIZE; j++) begin
-          if (btb_rd_addr_f1[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] == (`RV_BTB_ADDR_HI-`RV_BTB_ADDR_LO+1)'(j)) begin
-
-           btb_bank0_rd_data_way0_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank0_rd_data_way0_out[j];
-           btb_bank1_rd_data_way0_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank1_rd_data_way0_out[j];
-           btb_bank2_rd_data_way0_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank2_rd_data_way0_out[j];
-           btb_bank3_rd_data_way0_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank3_rd_data_way0_out[j];
-
-           btb_bank0_rd_data_way1_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank0_rd_data_way1_out[j];
-           btb_bank1_rd_data_way1_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank1_rd_data_way1_out[j];
-           btb_bank2_rd_data_way1_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank2_rd_data_way1_out[j];
-           btb_bank3_rd_data_way1_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank3_rd_data_way1_out[j];
-
-`ifdef RV_BTB_48
-           btb_bank0_rd_data_way2_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank0_rd_data_way2_out[j];
-           btb_bank1_rd_data_way2_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank1_rd_data_way2_out[j];
-           btb_bank2_rd_data_way2_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank2_rd_data_way2_out[j];
-           btb_bank3_rd_data_way2_f2_in[16+`RV_BTB_BTAG_SIZE:0] =  btb_bank3_rd_data_way2_out[j];
-`endif
-
-          end
-        end
-    end
 
    //-----------------------------------------------------------------------------
    // BHT
@@ -1611,72 +1594,71 @@ assign fgmask_f2[0] = (~ifc_fetch_addr_f2[3] & ~ifc_fetch_addr_f2[2]
    //
    //-----------------------------------------------------------------------------
 
-   logic [7:0] [(`RV_BHT_ARRAY_DEPTH/NUM_BHT_LOOP)-1:0][NUM_BHT_LOOP-1:0][1:0]      bht_bank_wr_data ;
-   logic [7:0] [`RV_BHT_ARRAY_DEPTH-1:0] [1:0]                bht_bank_rd_data_out ;
-    (* keep = "true", max_fanout = "4" *) logic [1:0]         bht_bank0_rd_data_f2_in, bht_bank1_rd_data_f2_in, bht_bank2_rd_data_f2_in, bht_bank3_rd_data_f2_in;
-    (* keep = "true", max_fanout = "4" *) logic [1:0]         bht_bank4_rd_data_f2_in, bht_bank5_rd_data_f2_in, bht_bank6_rd_data_f2_in, bht_bank7_rd_data_f2_in;
-   logic [7:0] [(`RV_BHT_ARRAY_DEPTH/NUM_BHT_LOOP)-1:0]                 bht_bank_clken ;
-   logic [7:0] [(`RV_BHT_ARRAY_DEPTH/NUM_BHT_LOOP)-1:0]                 bht_bank_clk   ;
-   logic [7:0] [(`RV_BHT_ARRAY_DEPTH/NUM_BHT_LOOP)-1:0][NUM_BHT_LOOP-1:0]           bht_bank_sel   ;
+   // 8 x 128 counters (1024 total) is the FPGA timing point.  Aliasing the
+   // upper ASIC index bit reduces each asynchronous LUTRAM read from four
+   // RAM64M levels to two, trading modest predictor capacity for a shorter
+   // F1->F2 path without adding a fetch stage.
+   localparam int BHT_FPGA_ARRAY_DEPTH = 128;
+   localparam int BHT_FPGA_ADDR_HI = `RV_BHT_ADDR_LO + $clog2(BHT_FPGA_ARRAY_DEPTH) - 1;
+   (* ram_style = "distributed" *) logic [1:0] bht_bank_rd_data_out [0:7][0:BHT_FPGA_ARRAY_DEPTH-1];
+   logic [7:0] bht_train_en_d, bht_train_en_q;
+   logic [BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO] bht_train_addr_d [0:7];
+   logic [BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO] bht_train_addr_q [0:7];
+   logic [1:0] bht_train_data_d [0:7];
+   logic [1:0] bht_train_data_q [0:7];
+   logic [1:0] bht_bank0_rd_data_f2_in, bht_bank1_rd_data_f2_in, bht_bank2_rd_data_f2_in, bht_bank3_rd_data_f2_in;
+   logic [1:0] bht_bank4_rd_data_f2_in, bht_bank5_rd_data_f2_in, bht_bank6_rd_data_f2_in, bht_bank7_rd_data_f2_in;
 
-   for ( i=0; i<8; i++) begin : BANKS
-     for (genvar k=0 ; k < (`RV_BHT_ARRAY_DEPTH)/NUM_BHT_LOOP ; k++) begin : BHT_CLK_GROUP
-     assign bht_bank_clken[i][k]  = (bht_wr_en0[i] & ((bht_wr_addr0[`RV_BHT_ADDR_HI: NUM_BHT_LOOP_OUTER_LO]==k) |  BHT_NO_ADDR_MATCH)) |
-                                    (bht_wr_en1[i] & ((bht_wr_addr1[`RV_BHT_ADDR_HI: NUM_BHT_LOOP_OUTER_LO]==k) |  BHT_NO_ADDR_MATCH)) |
-                                    (bht_wr_en2[i] & ((bht_wr_addr2[`RV_BHT_ADDR_HI: NUM_BHT_LOOP_OUTER_LO]==k) |  BHT_NO_ADDR_MATCH));
-
-`ifndef RV_FPGA_OPTIMIZE
-     rvclkhdr bht_bank_grp_cgc ( .en(bht_bank_clken[i][k]), .l1clk(bht_bank_clk[i][k]), .* );  // ifndef RV_FPGA_OPTIMIZE
-`else
-     assign bht_bank_clk[i][k] = '0;
-`endif
-
-     for (j=0 ; j<NUM_BHT_LOOP ; j++) begin : BHT_FLOPS
-       assign   bht_bank_sel[i][k][j]    = (bht_wr_en0[i] & (bht_wr_addr0[NUM_BHT_LOOP_INNER_HI :`RV_BHT_ADDR_LO] == j) & ((bht_wr_addr0[`RV_BHT_ADDR_HI: NUM_BHT_LOOP_OUTER_LO]==k) | BHT_NO_ADDR_MATCH)) |
-                                           (bht_wr_en1[i] & (bht_wr_addr1[NUM_BHT_LOOP_INNER_HI :`RV_BHT_ADDR_LO] == j) & ((bht_wr_addr1[`RV_BHT_ADDR_HI: NUM_BHT_LOOP_OUTER_LO]==k) | BHT_NO_ADDR_MATCH)) |
-                                           (bht_wr_en2[i] & (bht_wr_addr2[NUM_BHT_LOOP_INNER_HI :`RV_BHT_ADDR_LO] == j) & ((bht_wr_addr2[`RV_BHT_ADDR_HI: NUM_BHT_LOOP_OUTER_LO]==k) | BHT_NO_ADDR_MATCH)) ;
-
-       assign bht_bank_wr_data[i][k][j]  = (bht_wr_en2[i] & (bht_wr_addr2[NUM_BHT_LOOP_INNER_HI:`RV_BHT_ADDR_LO] == j) & ((bht_wr_addr2[`RV_BHT_ADDR_HI: NUM_BHT_LOOP_OUTER_LO]==k) | BHT_NO_ADDR_MATCH)) ? bht_wr_data2[1:0] :
-                                           (bht_wr_en1[i] & (bht_wr_addr1[NUM_BHT_LOOP_INNER_HI:`RV_BHT_ADDR_LO] == j) & ((bht_wr_addr1[`RV_BHT_ADDR_HI: NUM_BHT_LOOP_OUTER_LO]==k) | BHT_NO_ADDR_MATCH)) ? bht_wr_data1[1:0] :
-                                                                                                                      bht_wr_data0[1:0]   ;
-
-          rvdffs_fpga #(2) bht_bank (.*,
-                    .clk        (bht_bank_clk[i][k]),
-                    .clken      (bht_bank_sel[i][k][j]),
-                    .rawclk     (clk),
-                    .en         (bht_bank_sel[i][k][j]),
-                    .din        (bht_bank_wr_data[i][k][j]),
-                    .dout       (bht_bank_rd_data_out[i][(16*k)+j]));
-
-      end // block: BHT_FLOPS
-   end // block: BHT_CLK_GROUP
- end // block: BANKS
-
-     // Keep the read-mux outputs local to the BHT data register bank. This
-     // prevents the collision/BTB update cone from being merged into every
-     // bank's data-select route.
-     always_comb begin : BHT_rd_mux
-     bht_bank0_rd_data_f2_in[1:0] = '0 ;
-     bht_bank1_rd_data_f2_in[1:0] = '0 ;
-     bht_bank2_rd_data_f2_in[1:0] = '0 ;
-     bht_bank3_rd_data_f2_in[1:0] = '0 ;
-     bht_bank4_rd_data_f2_in[1:0] = '0 ;
-     bht_bank5_rd_data_f2_in[1:0] = '0 ;
-     bht_bank6_rd_data_f2_in[1:0] = '0 ;
-     bht_bank7_rd_data_f2_in[1:0] = '0 ;
-     for (int j=0; j< `RV_BHT_ARRAY_DEPTH; j++) begin
-       if (bht_rd_addr_f1[`RV_BHT_ADDR_HI:`RV_BHT_ADDR_LO] == (`RV_BHT_ADDR_HI-`RV_BHT_ADDR_LO+1)'(j)) begin
-         bht_bank0_rd_data_f2_in[1:0] = bht_bank_rd_data_out[0][j];
-         bht_bank1_rd_data_f2_in[1:0] = bht_bank_rd_data_out[1][j];
-         bht_bank2_rd_data_f2_in[1:0] = bht_bank_rd_data_out[2][j];
-         bht_bank3_rd_data_f2_in[1:0] = bht_bank_rd_data_out[3][j];
-         bht_bank4_rd_data_f2_in[1:0] = bht_bank_rd_data_out[4][j];
-         bht_bank5_rd_data_f2_in[1:0] = bht_bank_rd_data_out[5][j];
-         bht_bank6_rd_data_f2_in[1:0] = bht_bank_rd_data_out[6][j];
-         bht_bank7_rd_data_f2_in[1:0] = bht_bank_rd_data_out[7][j];
-       end
+   // A prediction-table update is a performance hint, not architectural
+   // state.  Collapse the ASIC table's up-to-three same-bank write ports to a
+   // single FPGA RAM write with the existing priority (br0 > br1 > mp).  This
+   // preserves every update unless two branches target the same bank in one
+   // cycle; dropping the lower-priority hint is preferable to implementing a
+   // 4096-bit multiported flip-flop array on an FPGA.
+   always_comb begin
+      for (int bank = 0; bank < 8; bank++) begin
+         bht_train_en_d[bank]   = bht_wr_en2[bank] | bht_wr_en1[bank] | bht_wr_en0[bank];
+         bht_train_addr_d[bank] = bht_wr_addr0[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO];
+         bht_train_data_d[bank] = bht_wr_data0;
+         if (bht_wr_en1[bank]) begin
+            bht_train_addr_d[bank] = bht_wr_addr1[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO];
+            bht_train_data_d[bank] = bht_wr_data1;
+         end
+         if (bht_wr_en2[bank]) begin
+            bht_train_addr_d[bank] = bht_wr_addr2[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO];
+            bht_train_data_d[bank] = bht_wr_data2;
+         end
       end
-    end // block: BHT_rd_mux
+   end
+
+   always_ff @(posedge clk) begin
+      bht_train_en_q <= bht_train_en_d;
+      for (int bank = 0; bank < 8; bank++) begin
+         bht_train_addr_q[bank] <= bht_train_addr_d[bank];
+         bht_train_data_q[bank] <= bht_train_data_d[bank];
+      end
+   end
+
+   for (genvar bht_bank = 0; bht_bank < 8; bht_bank++) begin : BHT_LUTRAM_BANKS
+      initial begin
+         for (int entry = 0; entry < BHT_FPGA_ARRAY_DEPTH; entry++)
+            bht_bank_rd_data_out[bht_bank][entry] = 2'b00;
+      end
+
+      always_ff @(posedge clk) begin
+         if (bht_train_en_q[bht_bank])
+            bht_bank_rd_data_out[bht_bank][bht_train_addr_q[bht_bank]] <= bht_train_data_q[bht_bank];
+      end
+   end
+
+   assign bht_bank0_rd_data_f2_in = bht_bank_rd_data_out[0][bht_rd_addr_f1[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO]];
+   assign bht_bank1_rd_data_f2_in = bht_bank_rd_data_out[1][bht_rd_addr_f1[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO]];
+   assign bht_bank2_rd_data_f2_in = bht_bank_rd_data_out[2][bht_rd_addr_f1[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO]];
+   assign bht_bank3_rd_data_f2_in = bht_bank_rd_data_out[3][bht_rd_addr_f1[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO]];
+   assign bht_bank4_rd_data_f2_in = bht_bank_rd_data_out[4][bht_rd_addr_f1[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO]];
+   assign bht_bank5_rd_data_f2_in = bht_bank_rd_data_out[5][bht_rd_addr_f1[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO]];
+   assign bht_bank6_rd_data_f2_in = bht_bank_rd_data_out[6][bht_rd_addr_f1[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO]];
+   assign bht_bank7_rd_data_f2_in = bht_bank_rd_data_out[7][bht_rd_addr_f1[BHT_FPGA_ADDR_HI:`RV_BHT_ADDR_LO]];
 
 
 

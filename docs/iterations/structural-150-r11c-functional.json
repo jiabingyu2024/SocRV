@@ -1,0 +1,79 @@
+{
+  "artifacts": {
+    "manifest": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r11c-functional.json",
+    "markdown": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r11c-functional.md",
+    "scratch_root": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r11c-functional"
+  },
+  "core_mhz": 125,
+  "git_revision": "eae3dd1d35324cc3a88c51425ae80a975d5d6af0",
+  "kind": "rtl-optimization-iteration",
+  "schema_version": 1,
+  "simulation": {
+    "checker_passed": true,
+    "commits": 2242951,
+    "cycles": 10072458,
+    "ipc": 0.222681594,
+    "perf_commits": 299916,
+    "perf_cycles": 254792,
+    "perf_ipc": 1.177101322,
+    "reproduce": "python -B scripts/run_verilator.py --profile rtthread-coremark --test opt-structural-150-r11c-functional-coremark-1 --max-cycles 25000000 --no-rtl-build --no-software-build --benchmark-iterations 1 --uart-command \"coremark 1\" --uart-prompt \"msh >\" --uart-prompt-timeout 5000000 --checker uart-command-coremark-crc-test-status-and-perf-window --uart-expect \"SocRV RT-Thread ready\" --uart-expect \"msh >\" --uart-reject \"ERROR! list crc\" --uart-reject \"ERROR! matrix crc\" --uart-reject \"ERROR! state crc\" --uart-reject \"Cannot validate operation\" --uart-reject \"SocRV CoreMark CRC check FAIL\"",
+    "result_path": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/result/soc/opt-structural-150-r11c-functional-coremark-1.json",
+    "status": "PASS"
+  },
+  "started_at": "2026-08-11T10:38:55.733123+00:00",
+  "status": "PASS",
+  "steps": [
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "smoke",
+        "--no-rtl-build",
+        "--no-software-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r11c-functional/logs/sim-smoke.log",
+      "name": "sim-smoke",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_isa_tests.py",
+        "--gate",
+        "final",
+        "--no-rtl-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r11c-functional/logs/sim-isa.log",
+      "name": "sim-isa",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "rtthread-coremark",
+        "--test",
+        "opt-structural-150-r11c-functional-coremark-1",
+        "--benchmark-iterations",
+        "1",
+        "--uart-command",
+        "coremark 1",
+        "--no-rtl-build",
+        "--no-software-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r11c-functional/logs/sim-coremark.log",
+      "name": "sim-coremark",
+      "returncode": 0,
+      "status": "PASS"
+    }
+  ],
+  "tag": "structural-150-r11c-functional",
+  "vivado_stage": "synth"
+}

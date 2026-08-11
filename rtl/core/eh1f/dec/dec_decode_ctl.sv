@@ -100,7 +100,6 @@ module dec_decode_ctl
 
    input logic [31:0] exu_csr_rs1_e1,      // rs1 for csr instr
 
-   input logic [31:0] lsu_result_dc3,      // load result
    input logic [31:0] lsu_result_corr_dc4, // corrected load result
 
    input logic exu_i0_flush_final,         // lower flush or i0 flush at e2
@@ -111,6 +110,10 @@ module dec_decode_ctl
 
    input logic [31:0] dec_i0_instr_d,      // inst at decode
    input logic [31:0] dec_i1_instr_d,
+   input dec_pkt_t    dec_i0_predecode_d,  // registered decode metadata from IBUF
+   input dec_pkt_t    dec_i1_predecode_d,
+   input reg_pkt_t    dec_i0_regs_d,       // registered register-address metadata
+   input reg_pkt_t    dec_i1_regs_d,
    input logic [31:0] gpr_i0_rs1_d,
    input logic [2:0]  dec_tlu_frm,
    input logic        dec_tlu_fp_enabled,
@@ -1115,9 +1118,11 @@ end : cam_array
 
 // end pmu
 
-   dec_dec_ctl i0_dec (.inst(i0[31:0]),.out(i0_dp_raw));
-
-   dec_dec_ctl i1_dec (.inst(i1[31:0]),.out(i1_dp_raw));
+   // The generated boolean decoder now runs before the instruction enters
+   // IBUF.  Consuming its registered packet here removes raw instruction
+   // opcode/funct bits from the high-fanout issue-control cone.
+   assign i0_dp_raw = dec_i0_predecode_d;
+   assign i1_dp_raw = dec_i1_predecode_d;
 
    rvdff #(1) lsu_idle_ff (.*, .clk(active_clk), .din(lsu_halt_idle_any), .dout(lsu_idle));
 
@@ -1243,13 +1248,11 @@ end : cam_array
 
 
 
-   assign i0r.rs1[4:0] = i0[19:15];
-   assign i0r.rs2[4:0] = i0[24:20];
-   assign i0r.rd[4:0] = i0[11:7];
-
-   assign i1r.rs1[4:0] = i1[19:15];
-   assign i1r.rs2[4:0] = i1[24:20];
-   assign i1r.rd[4:0] = i1[11:7];
+   // Register addresses are captured when the instruction enters IBUF.  In
+   // particular, instr[19] no longer fans directly into the scoreboard, CAM,
+   // dual-issue dependency and load-bypass comparators in the decode cycle.
+   assign i0r = dec_i0_regs_d;
+   assign i1r = dec_i1_regs_d;
 
 
    assign dec_i0_rs1_en_d = i0_dp.rs1 & (i0r.rs1[4:0] != 5'd0);  // if rs1_en=0 then read will be all 0's
@@ -1785,12 +1788,12 @@ end : cam_array
 
    assign i1rs1_intra[2:0] = {   i1_dp.alu & i0_dp.alu  & i1_rs1_depend_i0_d,
                                  i1_dp.alu & i0_dp.mul  & i1_rs1_depend_i0_d,
-                                 i1_dp.alu & i0_dp.load & i1_rs1_depend_i0_d
+                                 1'b0
                                  };
 
    assign i1rs2_intra[2:0] = {   i1_dp.alu & i0_dp.alu  & i1_rs2_depend_i0_d,
                                  i1_dp.alu & i0_dp.mul  & i1_rs2_depend_i0_d,
-                                 i1_dp.alu & i0_dp.load & i1_rs2_depend_i0_d
+                                 1'b0
                                  };
 
    assign i1_rs1_intra_bypass = |i1rs1_intra[2:0];
@@ -1843,7 +1846,6 @@ end : cam_array
 
    assign i1_rs1_bypass_data_e3[31:0] = ({32{e3d.i1rs1bype3[6]}} & i0_result_e3[31:0]) |
                                         ({32{e3d.i1rs1bype3[5]}} & exu_mul_result_e3[31:0]) |
-                                        ({32{e3d.i1rs1bype3[4]}} & lsu_result_dc3[31:0]) |
                                         ({32{e3d.i1rs1bype3[3]}} & i1_result_e4_eff[31:0]) |
                                         ({32{e3d.i1rs1bype3[2]}} & i0_result_e4_eff[31:0]) |
                                         ({32{e3d.i1rs1bype3[1]}} & i1_result_wb_eff[31:0]) |
@@ -1852,7 +1854,6 @@ end : cam_array
 
    assign i1_rs2_bypass_data_e3[31:0] = ({32{e3d.i1rs2bype3[6]}} & i0_result_e3[31:0]) |
                                         ({32{e3d.i1rs2bype3[5]}} & exu_mul_result_e3[31:0]) |
-                                        ({32{e3d.i1rs2bype3[4]}} & lsu_result_dc3[31:0]) |
                                         ({32{e3d.i1rs2bype3[3]}} & i1_result_e4_eff[31:0]) |
                                         ({32{e3d.i1rs2bype3[2]}} & i0_result_e4_eff[31:0]) |
                                         ({32{e3d.i1rs2bype3[1]}} & i1_result_wb_eff[31:0]) |
@@ -1989,38 +1990,34 @@ end : cam_array
 
    assign store_data_bypass_i0_e2_c2 = i0_dp.alu & ~i0_secondary_d & i1_rs2_depend_i0_d & ~i1_rs1_depend_i0_d & i1_dp.store;
 
-   assign non_block_case_d = (  // (i1_dp.alu & i0_dp.alu & ~i0_secondary_d) | - not a good idea, bad for performance
-                                (i1_dp.alu & i0_dp.load) |
+   assign non_block_case_d = (  // load->i1 now waits for the registered DC4 return
                                 (i1_dp.alu & i0_dp.mul)
                                 ) & ~disable_secondary;
 
 
 
 
-   assign store_data_bypass_c2 =  ((             i0_dp.store & i0_rs2_depth_d[3:0] == 4'd1 & i0_rs2_class_d.load) |
-                              (             i0_dp.store & i0_rs2_depth_d[3:0] == 4'd2 & i0_rs2_class_d.load) |
-                              (~i0_dp.lsu & i1_dp.store & i1_rs2_depth_d[3:0] == 4'd1 & i1_rs2_class_d.load) |
-                              (~i0_dp.lsu & i1_dp.store & i1_rs2_depth_d[3:0] == 4'd2 & i1_rs2_class_d.load));
+   assign store_data_bypass_c2 = 1'b0;
 
-   assign store_data_bypass_c1 =  ((             i0_dp.store & i0_rs2_depth_d[3:0] == 4'd3 & i0_rs2_class_d.load) |
-                              (             i0_dp.store & i0_rs2_depth_d[3:0] == 4'd4 & i0_rs2_class_d.load) |
-                              (~i0_dp.lsu & i1_dp.store & i1_rs2_depth_d[3:0] == 4'd3 & i1_rs2_class_d.load) |
-                              (~i0_dp.lsu & i1_dp.store & i1_rs2_depth_d[3:0] == 4'd4 & i1_rs2_class_d.load));
+   assign store_data_bypass_c1 =  ((             i0_dp.store & i0_rs2_depth_d[3:0] == 4'd5 & i0_rs2_class_d.load) |
+                              (             i0_dp.store & i0_rs2_depth_d[3:0] == 4'd6 & i0_rs2_class_d.load) |
+                              (~i0_dp.lsu & i1_dp.store & i1_rs2_depth_d[3:0] == 4'd5 & i1_rs2_class_d.load) |
+                              (~i0_dp.lsu & i1_dp.store & i1_rs2_depth_d[3:0] == 4'd6 & i1_rs2_class_d.load));
 
-   assign load_ldst_bypass_c1 =  ((         (i0_dp.load | i0_dp.store) & i0_rs1_depth_d[3:0] == 4'd3 & i0_rs1_class_d.load) |
-                              (             (i0_dp.load | i0_dp.store) & i0_rs1_depth_d[3:0] == 4'd4 & i0_rs1_class_d.load) |
-                              (~i0_dp.lsu & (i1_dp.load | i1_dp.store) & i1_rs1_depth_d[3:0] == 4'd3 & i1_rs1_class_d.load) |
-                              (~i0_dp.lsu & (i1_dp.load | i1_dp.store) & i1_rs1_depth_d[3:0] == 4'd4 & i1_rs1_class_d.load));
+   assign load_ldst_bypass_c1 =  ((         (i0_dp.load | i0_dp.store) & i0_rs1_depth_d[3:0] == 4'd5 & i0_rs1_class_d.load) |
+                              (             (i0_dp.load | i0_dp.store) & i0_rs1_depth_d[3:0] == 4'd6 & i0_rs1_class_d.load) |
+                              (~i0_dp.lsu & (i1_dp.load | i1_dp.store) & i1_rs1_depth_d[3:0] == 4'd5 & i1_rs1_class_d.load) |
+                              (~i0_dp.lsu & (i1_dp.load | i1_dp.store) & i1_rs1_depth_d[3:0] == 4'd6 & i1_rs1_class_d.load));
 
-   assign load_mul_rs1_bypass_e1 =  ((             (i0_dp.mul) & i0_rs1_depth_d[3:0] == 4'd3 & i0_rs1_class_d.load) |
-                                     (             (i0_dp.mul) & i0_rs1_depth_d[3:0] == 4'd4 & i0_rs1_class_d.load) |
-                                     (~i0_dp.mul & (i1_dp.mul) & i1_rs1_depth_d[3:0] == 4'd3 & i1_rs1_class_d.load) |
-                                     (~i0_dp.mul & (i1_dp.mul) & i1_rs1_depth_d[3:0] == 4'd4 & i1_rs1_class_d.load));
+   assign load_mul_rs1_bypass_e1 =  ((             (i0_dp.mul) & i0_rs1_depth_d[3:0] == 4'd5 & i0_rs1_class_d.load) |
+                                     (             (i0_dp.mul) & i0_rs1_depth_d[3:0] == 4'd6 & i0_rs1_class_d.load) |
+                                     (~i0_dp.mul & (i1_dp.mul) & i1_rs1_depth_d[3:0] == 4'd5 & i1_rs1_class_d.load) |
+                                     (~i0_dp.mul & (i1_dp.mul) & i1_rs1_depth_d[3:0] == 4'd6 & i1_rs1_class_d.load));
 
-   assign load_mul_rs2_bypass_e1 =  ((             (i0_dp.mul) & i0_rs2_depth_d[3:0] == 4'd3 & i0_rs2_class_d.load) |
-                                     (             (i0_dp.mul) & i0_rs2_depth_d[3:0] == 4'd4 & i0_rs2_class_d.load) |
-                                     (~i0_dp.mul & (i1_dp.mul) & i1_rs2_depth_d[3:0] == 4'd3 & i1_rs2_class_d.load) |
-                                     (~i0_dp.mul & (i1_dp.mul) & i1_rs2_depth_d[3:0] == 4'd4 & i1_rs2_class_d.load));
+   assign load_mul_rs2_bypass_e1 =  ((             (i0_dp.mul) & i0_rs2_depth_d[3:0] == 4'd5 & i0_rs2_class_d.load) |
+                                     (             (i0_dp.mul) & i0_rs2_depth_d[3:0] == 4'd6 & i0_rs2_class_d.load) |
+                                     (~i0_dp.mul & (i1_dp.mul) & i1_rs2_depth_d[3:0] == 4'd5 & i1_rs2_class_d.load) |
+                                     (~i0_dp.mul & (i1_dp.mul) & i1_rs2_depth_d[3:0] == 4'd6 & i1_rs2_class_d.load));
 
 
    assign store_data_bypass_e4_c3[1:0] = {
@@ -2054,15 +2051,23 @@ end : cam_array
    assign i1_not_alu_eff = (~i1_dp.alu | disable_secondary);
 
 // stores will bypass load data in the lsu pipe
-   assign i0_load_block_d = (i0_not_alu_eff & i0_rs1_class_d.load & i0_rs1_match_e1) |
-                            (i0_not_alu_eff & i0_rs1_class_d.load & i0_rs1_match_e2 & ~i0_dp.load & ~i0_dp.store & ~i0_dp.mul) | // can bypass load to address of load/store
-                            (i0_not_alu_eff & i0_rs2_class_d.load & i0_rs2_match_e1 & ~i0_dp.store) |
-                            (i0_not_alu_eff & i0_rs2_class_d.load & i0_rs2_match_e2 & ~i0_dp.store & ~i0_dp.mul);
+   assign i0_load_block_d = (i0_dp.alu & ((i0_rs1_class_d.load & i0_rs1_match_e3) |
+                                          (i0_rs2_class_d.load & i0_rs2_match_e3))) |
+                            (i0_not_alu_eff & i0_rs1_class_d.load &
+                             (i0_rs1_match_e1 | i0_rs1_match_e2 |
+                              (i0_rs1_match_e3 & ~(i0_dp.load | i0_dp.store | i0_dp.mul)))) |
+                            (i0_not_alu_eff & i0_rs2_class_d.load &
+                             (i0_rs2_match_e1 | i0_rs2_match_e2 |
+                              (i0_rs2_match_e3 & ~(i0_dp.store | i0_dp.mul))));
 
-   assign i1_load_block_d = (i1_not_alu_eff & i1_rs1_class_d.load & i1_rs1_match_e1) |
-                            (i1_not_alu_eff & i1_rs1_class_d.load & i1_rs1_match_e2 & ~i1_dp.load & ~i1_dp.store & ~i1_dp.mul) |
-                            (i1_not_alu_eff & i1_rs2_class_d.load & i1_rs2_match_e1 & ~i1_dp.store) |
-                            (i1_not_alu_eff & i1_rs2_class_d.load & i1_rs2_match_e2 & ~i1_dp.store & ~i1_dp.mul);
+   assign i1_load_block_d = (i1_dp.alu & ((i1_rs1_class_d.load & i1_rs1_match_e3) |
+                                          (i1_rs2_class_d.load & i1_rs2_match_e3))) |
+                            (i1_not_alu_eff & i1_rs1_class_d.load &
+                             (i1_rs1_match_e1 | i1_rs1_match_e2 |
+                              (i1_rs1_match_e3 & ~(i1_dp.load | i1_dp.store | i1_dp.mul)))) |
+                            (i1_not_alu_eff & i1_rs2_class_d.load &
+                             (i1_rs2_match_e1 | i1_rs2_match_e2 |
+                              (i1_rs2_match_e3 & ~(i1_dp.store | i1_dp.mul))));
 
    assign i0_mul_block_d = (i0_not_alu_eff & i0_rs1_class_d.mul & i0_rs1_match_e1_e2) |
                            (i0_not_alu_eff & i0_rs2_class_d.mul & i0_rs2_match_e1_e2);
@@ -2089,6 +2094,20 @@ end : cam_array
 
 
    assign dt.legal     =  i0_legal_decode_d                ;
+   assign dt.i0_ebreak = i0_dp.ebreak & i0_legal_decode_d;
+   assign dt.i0_ecall  = i0_dp.ecall  & i0_legal_decode_d;
+   assign dt.i0_mret   = i0_dp.mret   & i0_legal_decode_d;
+   assign dt.i0_sync_exc = ~i0_legal_decode_d |
+                           (i0_icaf_d & i0_legal_decode_d) |
+                           ((i0_dp.ebreak | i0_dp.ecall) & i0_legal_decode_d);
+   always_comb begin
+      // Decode exceptions are mutually exclusive by construction.  Access
+      // fault is gated by legal decode, so illegal remains the default class.
+      dt.i0_sync_cause = 5'h02;
+      if (i0_icaf_d & i0_legal_decode_d) dt.i0_sync_cause = 5'h01;
+      if (i0_dp.ebreak & i0_legal_decode_d) dt.i0_sync_cause = 5'h03;
+      if (i0_dp.ecall  & i0_legal_decode_d) dt.i0_sync_cause = 5'h0b;
+   end
    assign dt.icaf      =  i0_icaf_d & i0_legal_decode_d;            // dbecc is icaf exception
    assign dt.icaf_second   =  dec_i0_icaf_second_d & i0_legal_decode_d;     // this includes icaf and dbecc
    assign dt.perr      =   dec_i0_perr_d & i0_legal_decode_d;
@@ -2483,9 +2502,9 @@ end : cam_array
 
 
 
-   assign i0_result_e3_final[31:0] = ((e3d.i0v | fload_e3) & e3d.i0load) ? lsu_result_dc3[31:0] : (e3d.i0v & e3d.i0mul) ? exu_mul_result_e3[31:0] : i0_result_e3[31:0];
+   assign i0_result_e3_final[31:0] = (e3d.i0v & e3d.i0mul) ? exu_mul_result_e3[31:0] : i0_result_e3[31:0];
 
-   assign i1_result_e3_final[31:0] = (e3d.i1v & e3d.i1load) ? lsu_result_dc3[31:0] : (e3d.i1v & e3d.i1mul) ? exu_mul_result_e3[31:0] : i1_result_e3[31:0];
+   assign i1_result_e3_final[31:0] = (e3d.i1v & e3d.i1mul) ? exu_mul_result_e3[31:0] : i1_result_e3[31:0];
 
 
 
@@ -2651,51 +2670,53 @@ end : cam_array
 
 
 
-   assign i0_rs1_bypass_data_d[31:0] = ({32{i0_rs1bypass[9]}} & i1_result_e1[31:0]) |
-                                       ({32{i0_rs1bypass[8]}} & i0_result_e1[31:0]) |
-                                       ({32{i0_rs1bypass[7]}} & i1_result_e2[31:0]) |
-                                       ({32{i0_rs1bypass[6]}} & i0_result_e2[31:0]) |
-                                       ({32{i0_rs1bypass[5]}} & i1_result_e3_final[31:0]) |
-                                       ({32{i0_rs1bypass[4]}} & i0_result_e3_final[31:0]) |
-                                       ({32{i0_rs1bypass[3]}} & i1_result_e4_final[31:0]) |
-                                       ({32{i0_rs1bypass[2]}} & i0_result_e4_final[31:0]) |
-                                       ({32{i0_rs1bypass[1]}} & i1_result_wb[31:0]) |
-                                       ({32{i0_rs1bypass[0]}} & i0_result_wb[31:0]);
+   // Build the ten-source decode bypass as a balanced two-level tree.  The
+   // source match is one-hot: first select i0/i1 locally within each pipeline
+   // age, then select one of five ages.  This avoids four replicated 10-way
+   // AND/OR fabrics spanning all execution stages.
+   logic [9:0][31:0] decode_bypass_sources;
+   assign decode_bypass_sources = {i1_result_e1, i0_result_e1,
+                                   i1_result_e2, i0_result_e2,
+                                   i1_result_e3_final, i0_result_e3_final,
+                                   i1_result_e4_final, i0_result_e4_final,
+                                   i1_result_wb, i0_result_wb};
+
+   function automatic logic [31:0] balanced_decode_bypass(
+      input logic [9:0]       select,
+      input logic [9:0][31:0] source
+   );
+      logic [4:0][31:0] age_data;
+      begin
+         // Preserve the original one-hot AND/OR semantics exactly.  A
+         // priority/ternary form is not equivalent while the dependency
+         // depth is changing around a back-to-back producer and JALR: more
+         // than one age bit can transiently participate in the decode cone.
+         // Pair locally by pipeline age, then reduce the five short branches.
+         age_data[4] = ({32{select[9]}} & source[9]) |
+                       ({32{select[8]}} & source[8]);
+         age_data[3] = ({32{select[7]}} & source[7]) |
+                       ({32{select[6]}} & source[6]);
+         age_data[2] = ({32{select[5]}} & source[5]) |
+                       ({32{select[4]}} & source[4]);
+         age_data[1] = ({32{select[3]}} & source[3]) |
+                       ({32{select[2]}} & source[2]);
+         age_data[0] = ({32{select[1]}} & source[1]) |
+                       ({32{select[0]}} & source[0]);
+         balanced_decode_bypass = age_data[4] | age_data[3] |
+                                  age_data[2] | age_data[1] |
+                                  age_data[0];
+      end
+   endfunction
+
+   assign i0_rs1_bypass_data_d = balanced_decode_bypass(i0_rs1bypass, decode_bypass_sources);
 
 
-   assign i0_rs2_bypass_data_d[31:0] = ({32{i0_rs2bypass[9]}} & i1_result_e1[31:0]) |
-                                       ({32{i0_rs2bypass[8]}} & i0_result_e1[31:0]) |
-                                       ({32{i0_rs2bypass[7]}} & i1_result_e2[31:0]) |
-                                       ({32{i0_rs2bypass[6]}} & i0_result_e2[31:0]) |
-                                       ({32{i0_rs2bypass[5]}} & i1_result_e3_final[31:0]) |
-                                       ({32{i0_rs2bypass[4]}} & i0_result_e3_final[31:0]) |
-                                       ({32{i0_rs2bypass[3]}} & i1_result_e4_final[31:0]) |
-                                       ({32{i0_rs2bypass[2]}} & i0_result_e4_final[31:0]) |
-                                       ({32{i0_rs2bypass[1]}} & i1_result_wb[31:0]) |
-                                       ({32{i0_rs2bypass[0]}} & i0_result_wb[31:0]);
+   assign i0_rs2_bypass_data_d = balanced_decode_bypass(i0_rs2bypass, decode_bypass_sources);
 
-   assign i1_rs1_bypass_data_d[31:0] = ({32{i1_rs1bypass[9]}} & i1_result_e1[31:0]) |
-                                       ({32{i1_rs1bypass[8]}} & i0_result_e1[31:0]) |
-                                       ({32{i1_rs1bypass[7]}} & i1_result_e2[31:0]) |
-                                       ({32{i1_rs1bypass[6]}} & i0_result_e2[31:0]) |
-                                       ({32{i1_rs1bypass[5]}} & i1_result_e3_final[31:0]) |
-                                       ({32{i1_rs1bypass[4]}} & i0_result_e3_final[31:0]) |
-                                       ({32{i1_rs1bypass[3]}} & i1_result_e4_final[31:0]) |
-                                       ({32{i1_rs1bypass[2]}} & i0_result_e4_final[31:0]) |
-                                       ({32{i1_rs1bypass[1]}} & i1_result_wb[31:0]) |
-                                       ({32{i1_rs1bypass[0]}} & i0_result_wb[31:0]);
+   assign i1_rs1_bypass_data_d = balanced_decode_bypass(i1_rs1bypass, decode_bypass_sources);
 
 
-   assign i1_rs2_bypass_data_d[31:0] = ({32{i1_rs2bypass[9]}} & i1_result_e1[31:0]) |
-                                       ({32{i1_rs2bypass[8]}} & i0_result_e1[31:0]) |
-                                       ({32{i1_rs2bypass[7]}} & i1_result_e2[31:0]) |
-                                       ({32{i1_rs2bypass[6]}} & i0_result_e2[31:0]) |
-                                       ({32{i1_rs2bypass[5]}} & i1_result_e3_final[31:0]) |
-                                       ({32{i1_rs2bypass[4]}} & i0_result_e3_final[31:0]) |
-                                       ({32{i1_rs2bypass[3]}} & i1_result_e4_final[31:0]) |
-                                       ({32{i1_rs2bypass[2]}} & i0_result_e4_final[31:0]) |
-                                       ({32{i1_rs2bypass[1]}} & i1_result_wb[31:0]) |
-                                       ({32{i1_rs2bypass[0]}} & i0_result_wb[31:0]);
+   assign i1_rs2_bypass_data_d = balanced_decode_bypass(i1_rs2bypass, decode_bypass_sources);
 
 
 

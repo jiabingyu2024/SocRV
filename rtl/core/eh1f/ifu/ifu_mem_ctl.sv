@@ -199,10 +199,18 @@ module ifu_mem_ctl
    logic       tcm_iccm_access_f2;
    logic       tcm_access_fault_f2;
    logic [2:0] tcm_vaddr_f2;
+   logic       tcm_fetch_req_f3;
+   logic       tcm_iccm_access_f3;
+   logic       tcm_access_fault_f3;
+   logic [2:0] tcm_vaddr_f3;
+   logic [7:1] tcm_bp_inst_mask_f3;
+   logic       tcm_fetch_resp_valid;
    logic       tcm_dma_grant_f1;
    logic       tcm_dma_read_f1;
    logic       tcm_dma_read_f2;
    logic       tcm_dma_upper_f2;
+   logic       tcm_dma_read_f3;
+   logic       tcm_dma_upper_f3;
    logic [63:0] tcm_dma_read_data;
 
    rvdff #(6) tcm_fetch_f1_f2_ff (.*,
@@ -212,6 +220,22 @@ module ifu_mem_ctl
                                    .dout({tcm_fetch_req_f2, tcm_iccm_access_f2,
                                           tcm_access_fault_f2, tcm_vaddr_f2[2:0]}));
 
+   // ICCM BRAMs use their optional output register.  Carry the complete fetch
+   // response token across the same boundary; a flush in either response
+   // cycle invalidates the token without delaying the predictor redirect.
+   rvdff #(13) tcm_fetch_f2_f3_ff (.*,
+                                    .clk(active_clk),
+                                    .din({tcm_fetch_req_f2 & ~exu_flush_final,
+                                          tcm_iccm_access_f2,
+                                          tcm_access_fault_f2,
+                                          tcm_vaddr_f2[2:0],
+                                          ifu_bp_inst_mask_f2[7:1]}),
+                                    .dout({tcm_fetch_req_f3,
+                                           tcm_iccm_access_f3,
+                                           tcm_access_fault_f3,
+                                           tcm_vaddr_f3[2:0],
+                                           tcm_bp_inst_mask_f3[7:1]}));
+
    assign tcm_dma_grant_f1 = dma_iccm_req & ifc_dma_access_ok;
    assign tcm_dma_read_f1  = tcm_dma_grant_f1 & ~dma_mem_write;
 
@@ -220,12 +244,17 @@ module ifu_mem_ctl
                                   .din({tcm_dma_read_f1, dma_mem_addr[3]}),
                                   .dout({tcm_dma_read_f2, tcm_dma_upper_f2}));
 
-   assign tcm_dma_read_data[63:0] = tcm_dma_upper_f2 ?
+   rvdff #(2) tcm_dma_req_f3_ff (.*,
+                                  .clk(free_clk),
+                                  .din({tcm_dma_read_f2, tcm_dma_upper_f2}),
+                                  .dout({tcm_dma_read_f3, tcm_dma_upper_f3}));
+
+   assign tcm_dma_read_data[63:0] = tcm_dma_upper_f3 ?
                                       iccm_rd_data[127:64] : iccm_rd_data[63:0];
 
    rvdff #(65) tcm_dma_response_ff (.*,
                                      .clk(free_clk),
-                                     .din({tcm_dma_read_f2, tcm_dma_read_data[63:0]}),
+                                     .din({tcm_dma_read_f3, tcm_dma_read_data[63:0]}),
                                      .dout({iccm_dma_rvalid, iccm_dma_rdata[63:0]}));
 
    assign iccm_rw_addr[`RV_ICCM_BITS-1:2] = tcm_dma_grant_f1 ?
@@ -238,29 +267,34 @@ module ifu_mem_ctl
    assign iccm_wr_data[63:0] = dma_mem_wdata[63:0];
    assign iccm_ready        = ifc_dma_access_ok;
 
-   assign ic_hit_f2 = tcm_fetch_req_f2 & ~exu_flush_final;
+   // `ic_hit_f2` is the request-accept indication consumed by IFC/BP; ICCM
+   // remains hit-always and must not make the fetch controller wait for the
+   // new BRAM response stage.  The separate response-valid token below owns
+   // aligner delivery one cycle later.
+   assign ic_hit_f2 = 1'b1;
+   assign tcm_fetch_resp_valid = tcm_fetch_req_f3 & ~exu_flush_final;
    assign ic_data_f2[127:0] = iccm_rd_data[127:0];
-   assign ic_access_fault_f2[7:0] = {8{tcm_fetch_req_f2 &
-                                          tcm_access_fault_f2 &
+   assign ic_access_fault_f2[7:0] = {8{tcm_fetch_req_f3 &
+                                          tcm_access_fault_f3 &
                                           ~exu_flush_final}};
 
    // Preserve EH1's right-justified fetch-valid convention while removing all
    // cache hit/refill selection.  Each bit represents one 16-bit position in
    // the 128-bit line; Stage B consumes them only in 32-bit pairs.
-   assign ic_fetch_val_f2[7] = ic_hit_f2 & ifu_bp_inst_mask_f2[7] &
-                               ~tcm_vaddr_f2[2] & ~tcm_vaddr_f2[1] & ~tcm_vaddr_f2[0];
-   assign ic_fetch_val_f2[6] = ic_hit_f2 & ifu_bp_inst_mask_f2[6] &
-                               ~tcm_vaddr_f2[2] & ~tcm_vaddr_f2[1];
-   assign ic_fetch_val_f2[5] = ic_hit_f2 & ifu_bp_inst_mask_f2[5] &
-                               ~tcm_vaddr_f2[2] & (~tcm_vaddr_f2[0] | ~tcm_vaddr_f2[1]);
-   assign ic_fetch_val_f2[4] = ic_hit_f2 & ifu_bp_inst_mask_f2[4] & ~tcm_vaddr_f2[2];
-   assign ic_fetch_val_f2[3] = ic_hit_f2 & ifu_bp_inst_mask_f2[3] &
-                               (~tcm_vaddr_f2[1] & ~tcm_vaddr_f2[0] | ~tcm_vaddr_f2[2]);
-   assign ic_fetch_val_f2[2] = ic_hit_f2 & ifu_bp_inst_mask_f2[2] &
-                               (~tcm_vaddr_f2[1] | ~tcm_vaddr_f2[2]);
-   assign ic_fetch_val_f2[1] = ic_hit_f2 & ifu_bp_inst_mask_f2[1] &
-                               (~tcm_vaddr_f2[0] | ~tcm_vaddr_f2[1] | ~tcm_vaddr_f2[2]);
-   assign ic_fetch_val_f2[0] = ic_hit_f2;
+   assign ic_fetch_val_f2[7] = tcm_fetch_resp_valid & tcm_bp_inst_mask_f3[7] &
+                               ~tcm_vaddr_f3[2] & ~tcm_vaddr_f3[1] & ~tcm_vaddr_f3[0];
+   assign ic_fetch_val_f2[6] = tcm_fetch_resp_valid & tcm_bp_inst_mask_f3[6] &
+                               ~tcm_vaddr_f3[2] & ~tcm_vaddr_f3[1];
+   assign ic_fetch_val_f2[5] = tcm_fetch_resp_valid & tcm_bp_inst_mask_f3[5] &
+                               ~tcm_vaddr_f3[2] & (~tcm_vaddr_f3[0] | ~tcm_vaddr_f3[1]);
+   assign ic_fetch_val_f2[4] = tcm_fetch_resp_valid & tcm_bp_inst_mask_f3[4] & ~tcm_vaddr_f3[2];
+   assign ic_fetch_val_f2[3] = tcm_fetch_resp_valid & tcm_bp_inst_mask_f3[3] &
+                               (~tcm_vaddr_f3[1] & ~tcm_vaddr_f3[0] | ~tcm_vaddr_f3[2]);
+   assign ic_fetch_val_f2[2] = tcm_fetch_resp_valid & tcm_bp_inst_mask_f3[2] &
+                               (~tcm_vaddr_f3[1] | ~tcm_vaddr_f3[2]);
+   assign ic_fetch_val_f2[1] = tcm_fetch_resp_valid & tcm_bp_inst_mask_f3[1] &
+                               (~tcm_vaddr_f3[0] | ~tcm_vaddr_f3[1] | ~tcm_vaddr_f3[2]);
+   assign ic_fetch_val_f2[0] = tcm_fetch_resp_valid;
 
    assign ifu_miss_state_idle = 1'b1;
    assign ifu_ic_mb_empty     = 1'b1;
@@ -269,7 +303,7 @@ module ifu_mem_ctl
    assign ic_crit_wd_rdy      = 1'b0;
 
    assign ifu_pmu_ic_miss   = 1'b0;
-   assign ifu_pmu_ic_hit    = tcm_fetch_req_f2 & tcm_iccm_access_f2 & ~exu_flush_final;
+   assign ifu_pmu_ic_hit    = tcm_fetch_req_f3 & tcm_iccm_access_f3 & ~exu_flush_final;
    assign ifu_pmu_bus_error = 1'b0;
    assign ifu_pmu_bus_busy  = 1'b0;
    assign ifu_pmu_bus_trxn  = 1'b0;
@@ -328,4 +362,3 @@ module ifu_mem_ctl
    assign ic_sel_premux_data      = 1'b0;
 
 endmodule  // ifu_mem_ctl
-

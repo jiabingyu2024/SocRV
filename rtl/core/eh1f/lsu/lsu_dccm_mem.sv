@@ -42,7 +42,9 @@ module lsu_dccm_mem
    localparam int ROW_COUNT  = `RV_DCCM_ROWS;
 
    logic [BANK_BITS-1:0] rd_bank_lo_q, rd_bank_hi_q;
+   logic [BANK_BITS-1:0] rd_bank_lo_out_q, rd_bank_hi_out_q;
    logic [31:0] bank_dout [0:BANK_COUNT-1];
+   logic [31:0] bank_out_q [0:BANK_COUNT-1];
 
    for (genvar bank = 0; bank < BANK_COUNT; bank++) begin: dccm_bank_gen
       localparam string INIT_FILE =
@@ -87,6 +89,10 @@ module lsu_dccm_mem
 
       always_ff @(posedge clk) begin
          if (!lsu_freeze_dc3) begin
+            // This second stage maps to the RAMB36 optional output register.
+            // It is intentionally before the bank-select mux; the old
+            // post-mux DC3 register is removed in lsu_dccm_ctl.
+            bank_out_q[bank] <= bank_dout[bank];
             if (bank_read)
                bank_dout[bank] <= bank_mem[read_row];
             if (bank_write)
@@ -96,14 +102,18 @@ module lsu_dccm_mem
    end
 
    always_ff @(posedge clk) begin
+      if (!lsu_freeze_dc3) begin
+         rd_bank_lo_out_q <= rd_bank_lo_q;
+         rd_bank_hi_out_q <= rd_bank_hi_q;
+      end
       if (!lsu_freeze_dc3 && dccm_rden) begin
          rd_bank_lo_q <= dccm_rd_addr_lo[2+:BANK_BITS];
          rd_bank_hi_q <= dccm_rd_addr_hi[2+:BANK_BITS];
       end
    end
 
-   assign dccm_rd_data_lo[31:0] = bank_dout[rd_bank_lo_q];
-   assign dccm_rd_data_hi[31:0] = bank_dout[rd_bank_hi_q];
+   assign dccm_rd_data_lo[31:0] = bank_out_q[rd_bank_lo_out_q];
+   assign dccm_rd_data_hi[31:0] = bank_out_q[rd_bank_hi_out_q];
 
    // free_clk, rst_l, clk_override and scan_mode are retained only on the
    // temporary compatibility boundary and do not alter BRAM contents.

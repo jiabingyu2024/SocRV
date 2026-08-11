@@ -38,6 +38,7 @@ module ifu_iccm_mem
    logic [1:0]                     word_sel;
    logic                           write_doubleword;
    logic [31:0]                    lane_q [0:3];
+   logic [31:0]                    lane_out_q [0:3];
 
    (* ram_style = "block" *) logic [31:0] lane0 [0:ICCM_LINE_DEPTH-1];
    (* ram_style = "block" *) logic [31:0] lane1 [0:ICCM_LINE_DEPTH-1];
@@ -83,6 +84,14 @@ module ifu_iccm_mem
    assign write_doubleword = (iccm_wr_size[1:0] == 2'b11);
 
    always_ff @(posedge clk) begin
+      // Keep a real register immediately behind each BRAM output.  Xilinx can
+      // absorb this stage into the RAMB36 output register; the IFU response
+      // protocol deliberately accounts for the additional cycle.
+      lane_out_q[0] <= lane_q[0];
+      lane_out_q[1] <= lane_q[1];
+      lane_out_q[2] <= lane_q[2];
+      lane_out_q[3] <= lane_q[3];
+
       if (iccm_rden) begin
          lane_q[0] <= lane0[line_addr];
          lane_q[1] <= lane1[line_addr];
@@ -100,7 +109,7 @@ module ifu_iccm_mem
          lane3[line_addr] <= (word_sel == 2'd3) ? iccm_wr_data[31:0] : iccm_wr_data[63:32];
    end
 
-   assign iccm_rd_data[127:0] = {lane_q[3], lane_q[2], lane_q[1], lane_q[0]};
+   assign iccm_rd_data[127:0] = {lane_out_q[3], lane_out_q[2], lane_out_q[1], lane_out_q[0]};
 
    // free_clk, rst_l, clk_override and scan_mode intentionally do not affect
    // the BRAM array.  Keeping them on the compatibility boundary avoids

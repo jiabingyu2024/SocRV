@@ -22,7 +22,12 @@ package defs_div_sqrt_mvp;
    localparam C_PC                  = 6; // Precision Control
    localparam C_FS                  = 2; // Format Selection
    localparam C_IUNC                = 2; // Iteration Unit Number Control
-   localparam Iteration_unit_num_S  = 2'b10;
+   // FPGA timing mode: execute one radix-2 recurrence step per cycle.  The
+   // upstream version chained three 58-bit add/sub iteration cells in one
+   // cycle (28 CARRY4 levels at 150 MHz).  One cell triples DIV/SQRT latency,
+   // but cuts the recurrence path at every quotient bit and leaves integer
+   // issue/CoreMark unaffected.
+   localparam Iteration_unit_num_S  = 2'b00;
 
    // FP64
    localparam C_OP_FP64             = 64;

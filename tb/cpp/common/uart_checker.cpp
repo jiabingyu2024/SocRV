@@ -52,6 +52,16 @@ std::uint64_t UartChecker::prompt_count() const {
 }
 
 bool UartChecker::command_complete() const {
+    // RT-Thread may render the final prompt as "msh \n>" when timer output
+    // interleaves with UART transmission, so an exact second prompt is not a
+    // reliable completion token.  The CoreMark command emits its CRC PASS
+    // marker only after all result/CRC lines; accepting that marker lets the
+    // simulation finish immediately without weakening any content checks.
+    if (command_sent_ &&
+        config_.checker.find("uart-command-coremark") != std::string::npos &&
+        contains(transcript_, "SocRV CoreMark CRC check PASS")) {
+        return true;
+    }
     return command_sent_ &&
            prompt_count_ >= 2 + config_.uart_followup_commands.size();
 }

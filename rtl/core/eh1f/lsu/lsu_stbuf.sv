@@ -177,6 +177,18 @@ module lsu_stbuf
    logic [BYTE_WIDTH-1:0]            stbuf_fwdbyteen_hi_dc2, stbuf_fwdbyteen_lo_dc2;
    logic [BYTE_WIDTH-1:0]            stbuf_fwdbyteen_hi_fn_dc2, stbuf_fwdbyteen_lo_fn_dc2;
    logic                             stbuf_load_repair_dc5;
+
+   typedef struct packed {
+      logic                  drain;
+      logic                  flush;
+      logic                  addr_in_pic;
+      logic [BYTE_WIDTH-1:0] byteen;
+      logic [LSU_SB_BITS-1:0] addr;
+      logic [DATA_WIDTH-1:0] data;
+   } stbuf_head_pkt_t;
+
+   stbuf_head_pkt_t head_cur, head_next, head_issue_q;
+   logic            head_issue_present, head_issue_consume;
    //----------------------------------------
    // Logic starts here
    //----------------------------------------
@@ -248,13 +260,45 @@ module lsu_stbuf
    rvdff #(.WIDTH(1)) ldst_reqvld_dc4ff (.din(ldst_stbuf_reqvld_dc3), .dout(ldst_stbuf_reqvld_dc4), .clk(lsu_c2_dc4_clk), .*);
    rvdff #(.WIDTH(1)) ldst_reqvld_dc5ff (.din(ldst_stbuf_reqvld_dc4), .dout(ldst_stbuf_reqvld_dc5), .clk(lsu_c2_dc5_clk), .*);
 
-   // Store Buffer drain logic
-   assign stbuf_reqvld_flushed_any = stbuf_flush_vld[RdPtr];
-   assign stbuf_reqvld_any = stbuf_drain_vld[RdPtr];
-   assign stbuf_addr_in_pic_any = stbuf_addr_in_pic[RdPtr];
-   assign stbuf_addr_any[LSU_SB_BITS-1:0] = stbuf_addr[RdPtr][LSU_SB_BITS-1:0];
-   assign stbuf_byteen_any[BYTE_WIDTH-1:0] = stbuf_byteen[RdPtr][BYTE_WIDTH-1:0];    // Not needed as we always write all the bytes
-   assign stbuf_data_any[DATA_WIDTH-1:0] = stbuf_data[RdPtr][DATA_WIDTH-1:0];
+   // Store Buffer drain protocol.  A single issue packet separates the queue
+   // arrays/pointer mux from DCCM and PIC arbitration.  It is not a copy for
+   // fanout: this is the ownership boundary of the drain transaction, and the
+   // packet remains stable until the memory side explicitly commits it.
+   always_comb begin
+      head_cur.drain       = stbuf_drain_vld[RdPtr];
+      head_cur.flush       = stbuf_flush_vld[RdPtr];
+      head_cur.addr_in_pic = stbuf_addr_in_pic[RdPtr];
+      head_cur.byteen      = stbuf_byteen[RdPtr];
+      head_cur.addr        = stbuf_addr[RdPtr];
+      head_cur.data        = stbuf_data[RdPtr];
+
+      head_next.drain       = stbuf_drain_vld[RdPtrPlus1];
+      head_next.flush       = stbuf_flush_vld[RdPtrPlus1];
+      head_next.addr_in_pic = stbuf_addr_in_pic[RdPtrPlus1];
+      head_next.byteen      = stbuf_byteen[RdPtrPlus1];
+      head_next.addr        = stbuf_addr[RdPtrPlus1];
+      head_next.data        = stbuf_data[RdPtrPlus1];
+   end
+
+   assign head_issue_present = head_issue_q.drain | head_issue_q.flush;
+   assign head_issue_consume = (head_issue_q.drain & lsu_stbuf_commit_any) |
+                               head_issue_q.flush;
+
+   always_ff @(posedge clk) begin
+      if (!rst_l)
+         head_issue_q <= '0;
+      else if (head_issue_consume)
+         head_issue_q <= head_next;
+      else if (!head_issue_present)
+         head_issue_q <= head_cur;
+   end
+
+   assign stbuf_reqvld_flushed_any = head_issue_q.flush;
+   assign stbuf_reqvld_any         = head_issue_q.drain;
+   assign stbuf_addr_in_pic_any    = head_issue_q.addr_in_pic;
+   assign stbuf_addr_any           = head_issue_q.addr;
+   assign stbuf_byteen_any         = head_issue_q.byteen;
+   assign stbuf_data_any           = head_issue_q.data;
 
    // Update the RdPtr/WrPtr logic
    // Need to revert the WrPtr for flush cases. Also revert the pipe WrPtrs

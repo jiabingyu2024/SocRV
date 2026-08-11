@@ -21,14 +21,15 @@ module eh1_fpu (
    import fpnew_pkg::*;
 
    localparam fpu_implementation_t EH1F_PIPELINED = '{
-      // ADDMUL=4: fpnew_fma.sv splits DISTRIBUTED four ways (pre-add / post-add+LZA /
-      // post-normalize / post-round), so depth 4 puts one register on each cut.  At depth 3 the
-      // rounding+classification cone shares a stage with LZC and the normalization shift, which
-      // measured as the WNS owner at -2.656 ns.
-      PipeRegs:   '{'{default: 4},
-                    '{default: 1},
-                    '{default: 1},
-                    '{default: 4}},
+      // The serialized wrapper tolerates deeper FP latency without reducing
+      // integer CoreMark IPC.  Keep real boundaries in every fpnew operation
+      // group so FMA alignment/normalization, cast rounding, non-computational
+      // classification and the shortened div/sqrt recurrence cannot form a
+      // single 150 MHz combinational region.
+      PipeRegs:   '{'{default: 7},
+                    '{default: 3},
+                    '{default: 2},
+                    '{default: 6}},
       UnitTypes:  '{'{default: PARALLEL},
                     '{default: MERGED},
                     '{default: PARALLEL},

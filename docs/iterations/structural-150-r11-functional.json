@@ -1,0 +1,47 @@
+{
+  "artifacts": {
+    "manifest": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r11-functional.json",
+    "markdown": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r11-functional.md",
+    "scratch_root": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r11-functional"
+  },
+  "core_mhz": 125,
+  "error": "sim-isa failed with exit code 1; see E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r11-functional/logs/sim-isa.log",
+  "git_revision": "eae3dd1d35324cc3a88c51425ae80a975d5d6af0",
+  "kind": "rtl-optimization-iteration",
+  "schema_version": 1,
+  "started_at": "2026-08-11T10:28:17.580294+00:00",
+  "status": "FAIL",
+  "steps": [
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "smoke",
+        "--no-rtl-build",
+        "--no-software-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r11-functional/logs/sim-smoke.log",
+      "name": "sim-smoke",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_isa_tests.py",
+        "--gate",
+        "final",
+        "--no-rtl-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r11-functional/logs/sim-isa.log",
+      "name": "sim-isa",
+      "returncode": 1,
+      "status": "FAIL"
+    }
+  ],
+  "tag": "structural-150-r11-functional",
+  "vivado_stage": "synth"
+}

@@ -1,0 +1,67 @@
+{
+  "artifacts": {
+    "manifest": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r10-vivado.json",
+    "markdown": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r10-vivado.md",
+    "scratch_root": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r10-vivado"
+  },
+  "core_mhz": 150,
+  "git_revision": "eae3dd1d35324cc3a88c51425ae80a975d5d6af0",
+  "kind": "rtl-optimization-iteration",
+  "schema_version": 1,
+  "started_at": "2026-08-11T09:06:10.799412+00:00",
+  "status": "PASS",
+  "steps": [
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_vivado.py",
+        "--profile",
+        "rtthread-coremark",
+        "--jobs",
+        "4",
+        "--core-mhz",
+        "150",
+        "--stage",
+        "impl",
+        "--run-tag",
+        "structural-150-r10-vivado",
+        "--no-software-build",
+        "--no-analyze",
+        "--all-violations"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r10-vivado/logs/vivado.log",
+      "name": "vivado",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\analyze_vivado_reports.py",
+        "--build-root",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\build\\vivado\\kintex7-rtthread-coremark-150mhz-structural-150-r10-vivado",
+        "--stage",
+        "impl",
+        "--compare",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\build\\vivado\\kintex7-rtthread-coremark-150mhz-structural-150-r9-vivado\\analysis\\timing_summary.json"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r10-vivado/logs/vivado-analysis.log",
+      "name": "vivado-analysis",
+      "returncode": 0,
+      "status": "PASS"
+    }
+  ],
+  "tag": "structural-150-r10-vivado",
+  "vivado": {
+    "summary_json": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark-150mhz-structural-150-r10-vivado/analysis/timing_summary.json",
+    "summary_markdown": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark-150mhz-structural-150-r10-vivado/analysis/timing_summary.md",
+    "ths_ns": 0.0,
+    "tns_ns": -2634.916,
+    "top_setup_cluster": "EXU_DIV | dec/instbuff/gen_ib_slot[*].ib_entry_ff -> exu/div_e/miscf | clk_core_unbuffered->clk_core_unbuffered",
+    "whs_ns": 0.065,
+    "wns_ns": -1.615
+  },
+  "vivado_stage": "impl"
+}

@@ -1,0 +1,102 @@
+{
+  "artifacts": {
+    "manifest": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r12a.json",
+    "markdown": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r12a.md",
+    "scratch_root": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12a"
+  },
+  "core_mhz": 150,
+  "error": "sim-smoke failed with exit code 2; see E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12a/logs/sim-smoke.log",
+  "git_revision": "eae3dd1d35324cc3a88c51425ae80a975d5d6af0",
+  "kind": "rtl-optimization-iteration",
+  "schema_version": 1,
+  "started_at": "2026-08-11T12:53:14.284703+00:00",
+  "status": "FAIL",
+  "steps": [
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_filelists.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12a/logs/check_filelists.log",
+      "name": "check_filelists",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_generated_tree.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12a/logs/check_generated_tree.log",
+      "name": "check_generated_tree",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_memory_map.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12a/logs/check_memory_map.log",
+      "name": "check_memory_map",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\validate_schemas.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12a/logs/validate_schemas.log",
+      "name": "validate_schemas",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\lint_rtl.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12a/logs/lint_rtl.log",
+      "name": "lint_rtl",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "smoke",
+        "--build-only"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12a/logs/verilator-build.log",
+      "name": "verilator-build",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "smoke",
+        "--no-rtl-build",
+        "--no-software-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12a/logs/sim-smoke.log",
+      "name": "sim-smoke",
+      "returncode": 2,
+      "status": "FAIL"
+    }
+  ],
+  "tag": "structural-150-r12a",
+  "vivado_stage": "impl"
+}

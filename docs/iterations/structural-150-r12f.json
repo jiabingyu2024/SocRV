@@ -1,0 +1,198 @@
+{
+  "artifacts": {
+    "manifest": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r12f.json",
+    "markdown": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r12f.md",
+    "scratch_root": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f"
+  },
+  "core_mhz": 150,
+  "git_revision": "eae3dd1d35324cc3a88c51425ae80a975d5d6af0",
+  "kind": "rtl-optimization-iteration",
+  "schema_version": 1,
+  "simulation": {
+    "checker_passed": true,
+    "commits": 2233981,
+    "cycles": 10112852,
+    "ipc": 0.220905141,
+    "perf_commits": 299916,
+    "perf_cycles": 293172,
+    "perf_ipc": 1.023003561,
+    "reproduce": "python -B scripts/run_verilator.py --profile rtthread-coremark --test opt-structural-150-r12f-coremark-1 --max-cycles 25000000 --no-rtl-build --no-software-build --benchmark-iterations 1 --uart-command \"coremark 1\" --uart-prompt \"msh >\" --uart-prompt-timeout 5000000 --checker uart-command-coremark-crc-test-status-and-perf-window --uart-expect \"SocRV RT-Thread ready\" --uart-expect \"msh >\" --uart-reject \"ERROR! list crc\" --uart-reject \"ERROR! matrix crc\" --uart-reject \"ERROR! state crc\" --uart-reject \"Cannot validate operation\" --uart-reject \"SocRV CoreMark CRC check FAIL\"",
+    "result_path": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/result/soc/opt-structural-150-r12f-coremark-1.json",
+    "status": "PASS"
+  },
+  "started_at": "2026-08-11T13:16:25.139443+00:00",
+  "status": "PASS",
+  "steps": [
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_filelists.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/check_filelists.log",
+      "name": "check_filelists",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_generated_tree.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/check_generated_tree.log",
+      "name": "check_generated_tree",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\check_memory_map.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/check_memory_map.log",
+      "name": "check_memory_map",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\validate_schemas.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/validate_schemas.log",
+      "name": "validate_schemas",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\lint_rtl.py"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/lint_rtl.log",
+      "name": "lint_rtl",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "smoke",
+        "--build-only"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/verilator-build.log",
+      "name": "verilator-build",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "smoke",
+        "--no-rtl-build",
+        "--no-software-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/sim-smoke.log",
+      "name": "sim-smoke",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_isa_tests.py",
+        "--gate",
+        "final",
+        "--no-rtl-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/sim-isa.log",
+      "name": "sim-isa",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "rtthread-coremark",
+        "--test",
+        "opt-structural-150-r12f-coremark-1",
+        "--benchmark-iterations",
+        "1",
+        "--uart-command",
+        "coremark 1",
+        "--no-rtl-build",
+        "--no-software-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/sim-coremark.log",
+      "name": "sim-coremark",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_vivado.py",
+        "--profile",
+        "rtthread-coremark",
+        "--jobs",
+        "12",
+        "--core-mhz",
+        "150",
+        "--stage",
+        "impl",
+        "--run-tag",
+        "structural-150-r12f",
+        "--no-software-build",
+        "--no-analyze",
+        "--all-violations"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/vivado.log",
+      "name": "vivado",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\analyze_vivado_reports.py",
+        "--build-root",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\build\\vivado\\kintex7-rtthread-coremark-150mhz-structural-150-r12f",
+        "--stage",
+        "impl",
+        "--compare",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\build\\vivado\\kintex7-rtthread-coremark-150mhz-structural-150-r11c-vivado\\analysis\\timing_summary.json"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r12f/logs/vivado-analysis.log",
+      "name": "vivado-analysis",
+      "returncode": 0,
+      "status": "PASS"
+    }
+  ],
+  "tag": "structural-150-r12f",
+  "vivado": {
+    "summary_json": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark-150mhz-structural-150-r12f/analysis/timing_summary.json",
+    "summary_markdown": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/vivado/kintex7-rtthread-coremark-150mhz-structural-150-r12f/analysis/timing_summary.md",
+    "ths_ns": 0.0,
+    "tns_ns": -1528.911,
+    "top_setup_cluster": "DECODE_IBUF | dec/instbuff/ib_front0_ff -> dec/instbuff/ib_front0_ff | clk_core_unbuffered->clk_core_unbuffered",
+    "whs_ns": 0.077,
+    "wns_ns": -1.322
+  },
+  "vivado_stage": "impl"
+}

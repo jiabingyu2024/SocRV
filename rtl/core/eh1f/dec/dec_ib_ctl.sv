@@ -73,6 +73,10 @@ module dec_ib_ctl
 
    output logic [31:0] dec_i0_instr_d,         // i0 inst at decode
    output logic [31:0] dec_i1_instr_d,         // i1 inst at decode
+   output dec_pkt_t    dec_i0_predecode_d,     // registered one-hot decode metadata
+   output dec_pkt_t    dec_i1_predecode_d,
+   output reg_pkt_t    dec_i0_regs_d,          // registered rs1/rs2/rd metadata
+   output reg_pkt_t    dec_i1_regs_d,
 
    output logic [31:1] dec_i0_pc_d,            // i0 pc at decode
    output logic [31:1] dec_i1_pc_d,
@@ -110,27 +114,33 @@ module dec_ib_ctl
 
    logic         flush_final;
 
-   logic [3:0]   ibval_in, ibval;
+   typedef struct packed {
+      logic [31:0] instr;
+      logic [36:0] pcdata;
+      logic [15:0] cinst;
+      br_pkt_t     brp;
+      dec_pkt_t    predecode;
+      reg_pkt_t    regs;
+   } ib_payload_t;
 
-   logic [31:0]  ib3_in, ib2_in, ib1_in, ib0_in;
-   logic [31:0]  ib3, ib2, ib1, ib0;
+   logic [2:0]   ib_count, ib_count_in;
+   logic [1:0]   ib_head, ib_head_in, ib_tail;
+   logic [1:0]   dequeue_count, enqueue_count;
+   logic         enqueue_i0, enqueue_i1, enqueue_debug;
+   ib_payload_t  enqueue_payload [0:1];
+   ib_payload_t  ib_entry [0:3];
+   ib_payload_t  ib_entry_write_data [0:3];
+   logic [3:0]   ib_entry_write_en;
+   ib_payload_t  ib_front [0:1];
+   ib_payload_t  ib_front_in [0:1];
 
-   logic [36:0]  pc3_in, pc2_in, pc1_in, pc0_in;
-   logic [36:0]  pc3, pc2, pc1, pc0;
-
-   logic [15:0]  cinst3_in, cinst2_in, cinst1_in, cinst0_in;
-   logic [15:0]  cinst3, cinst2, cinst1, cinst0;
-
-   logic         write_i1_ib3, write_i0_ib3;
-   logic         write_i1_ib2, write_i0_ib2;
-   logic         write_i1_ib1, write_i0_ib1;
-   logic         write_i0_ib0;
-
-   logic         shift2, shift1, shift0;
-
-   logic         shift_ib1_ib0, shift_ib2_ib1, shift_ib3_ib2;
-   logic         shift_ib2_ib0;
-   logic         shift_ib3_ib1;
+   logic [31:0]  ib0, ib1;
+   logic [36:0]  pc0, pc1;
+   logic [15:0]  cinst0, cinst1;
+   br_pkt_t      bp0, bp1;
+   dec_pkt_t     predecode0, predecode1;
+   dec_pkt_t     enqueue_predecode [0:1];
+   reg_pkt_t     regs0, regs1;
 
 
    logic         ifu_i0_val, ifu_i1_val;
@@ -150,27 +160,16 @@ module dec_ib_ctl
 
 
 
-   rvdff #(1) flush_upperff (.*, .clk(free_clk), .din(exu_flush_final), .dout(flush_final));
+   rvdff #(1) flush_upperff (.*, .clk(free_clk),
+                             .din(exu_flush_final), .dout(flush_final));
 
-   logic [3:0]   ibvalid;
+   wire [2:0] total_count = ib_count;
 
-   logic [3:0]   i0_wen;
-   logic [3:1]   i1_wen;
-   logic [3:0]   shift_ibval;
-   logic [3:0]   ibwrite;
-
-   assign ibvalid[3:0] = ibval[3:0] | i0_wen[3:0] | {i1_wen[3:1],1'b0};
-
-   assign ibval_in[3:0] = (({4{shift0}} & ibvalid[3:0]) |
-                           ({4{shift1}} & {1'b0, ibvalid[3:1]}) |
-                           ({4{shift2}} & {2'b0, ibvalid[3:2]})) & ~{4{flush_final}};
-
-   rvdff #(4) ibvalff (.*, .clk(active_clk), .din(ibval_in[3:0]), .dout(ibval[3:0]));
-
-// only valid if there is room
+   // Keep the original conservative admission contract: space freed by a
+   // same-cycle dequeue is visible to the aligner on the following cycle.
    if (DEC_INSTBUF_DEPTH==4) begin
-      assign ifu_i0_val = ifu_i0_valid & ~ibval[3] & ~flush_final;
-      assign ifu_i1_val = ifu_i1_valid & ~ibval[2] & ~flush_final;
+      assign ifu_i0_val = ifu_i0_valid & (total_count < 3'd4) & ~flush_final;
+      assign ifu_i1_val = ifu_i1_valid & (total_count < 3'd3) & ~flush_final;
    end
    else begin
       assign ifu_i0_val = ifu_i0_valid & (~dec_ib0_valid_eff_d | ~dec_ib1_valid_eff_d) & ~flush_final;
@@ -178,64 +177,11 @@ module dec_ib_ctl
    end
 
 
-   assign i0_wen[0] = ~ibval[0]             & (ifu_i0_val | debug_valid);
-   assign i0_wen[1] =  ibval[0] & ~ibval[1] & ifu_i0_val;
-   assign i0_wen[2] =  ibval[1] & ~ibval[2] & ifu_i0_val;
-   assign i0_wen[3] =  ibval[2] & ~ibval[3] & ifu_i0_val;
-
-   assign i1_wen[1] = ~ibval[0]             & ifu_i1_val;
-   assign i1_wen[2] =  ibval[0] & ~ibval[1] & ifu_i1_val;
-   assign i1_wen[3] =  ibval[1] & ~ibval[2] & ifu_i1_val;
-
-
-   // start trace
-
-   if (DEC_INSTBUF_DEPTH==4) begin
-      assign cinst3_in[15:0] = ({16{write_i0_ib3}} & ifu_i0_cinst[15:0]) |
-                               ({16{write_i1_ib3}} & ifu_i1_cinst[15:0]);
-
-      rvdffe #(16) cinst3ff (.*, .en(ibwrite[3]), .din(cinst3_in[15:0]), .dout(cinst3[15:0]));
-
-      assign cinst2_in[15:0] = ({16{write_i0_ib2}} & ifu_i0_cinst[15:0]) |
-                               ({16{write_i1_ib2}} & ifu_i1_cinst[15:0]) |
-                               ({16{shift_ib3_ib2}} & cinst3[15:0]);
-
-      rvdffe #(16) cinst2ff (.*, .en(ibwrite[2]), .din(cinst2_in[15:0]), .dout(cinst2[15:0]));
-   end // if (DEC_INSTBUF_DEPTH==4)
-   else begin
-      assign cinst3 = '0;
-      assign cinst2 = '0;
-   end
-
-   assign cinst1_in[15:0] = ({16{write_i0_ib1}} & ifu_i0_cinst[15:0]) |
-                            ({16{write_i1_ib1}} & ifu_i1_cinst[15:0]) |
-                            ({16{shift_ib2_ib1}} & cinst2[15:0]) |
-                            ({16{shift_ib3_ib1}} & cinst3[15:0]);
-
-   rvdffe #(16) cinst1ff (.*, .en(ibwrite[1]), .din(cinst1_in[15:0]), .dout(cinst1[15:0]));
-
-
-   assign cinst0_in[15:0] = ({16{write_i0_ib0}} & ifu_i0_cinst[15:0]) |
-                            ({16{shift_ib1_ib0}} & cinst1[15:0]) |
-                            ({16{shift_ib2_ib0}} & cinst2[15:0]);
-
-   rvdffe #(16) cinst0ff (.*, .en(ibwrite[0]), .din(cinst0_in[15:0]), .dout(cinst0[15:0]));
-
-   assign dec_i0_cinst_d[15:0] = cinst0[15:0];
-
-   assign dec_i1_cinst_d[15:0] = cinst1[15:0];
-
-   // end trace
-
-
-   // pc tracking
-
-
-   assign ibwrite[3:0] = {  write_i0_ib3 | write_i1_ib3,
-                            write_i0_ib2 | write_i1_ib2 | shift_ib3_ib2,
-                            write_i0_ib1 | write_i1_ib1 | shift_ib2_ib1 | shift_ib3_ib1,
-                            write_i0_ib0 | shift_ib1_ib0 | shift_ib2_ib0
-                            };
+   assign enqueue_debug = debug_valid & (total_count == 3'd0) & ~flush_final;
+   assign enqueue_i0 = ifu_i0_val | enqueue_debug;
+   assign enqueue_i1 = ifu_i1_val & ~enqueue_debug;
+   assign enqueue_count = {1'b0, enqueue_i0} + {1'b0, enqueue_i1};
+   assign dequeue_count = {1'b0, dec_i0_decode_d} + {1'b0, dec_i1_decode_d};
 
    logic [36:0]  ifu_i1_pcdata, ifu_i0_pcdata;
 
@@ -243,37 +189,6 @@ module dec_ib_ctl
                                   ifu_i1_pc[31:1], ifu_i1_pc4 };
    assign ifu_i0_pcdata[36:0] = { ifu_i0_icaf_second, ifu_i0_dbecc, ifu_i0_sbecc, ifu_i0_perr, ifu_i0_icaf,
                                   ifu_i0_pc[31:1], ifu_i0_pc4 };
-
-   if (DEC_INSTBUF_DEPTH==4) begin
-      assign pc3_in[36:0] = ({37{write_i0_ib3}} & ifu_i0_pcdata[36:0]) |
-                            ({37{write_i1_ib3}} & ifu_i1_pcdata[36:0]);
-
-      rvdffe #(37) pc3ff (.*, .en(ibwrite[3]), .din(pc3_in[36:0]), .dout(pc3[36:0]));
-
-      assign pc2_in[36:0] = ({37{write_i0_ib2}} & ifu_i0_pcdata[36:0]) |
-                            ({37{write_i1_ib2}} & ifu_i1_pcdata[36:0]) |
-                            ({37{shift_ib3_ib2}} & pc3[36:0]);
-
-      rvdffe #(37) pc2ff (.*, .en(ibwrite[2]), .din(pc2_in[36:0]), .dout(pc2[36:0]));
-   end // if (DEC_INSTBUF_DEPTH==4)
-   else begin
-      assign pc3 = '0;
-      assign pc2 = '0;
-   end
-
-   assign pc1_in[36:0] = ({37{write_i0_ib1}} & ifu_i0_pcdata[36:0]) |
-                         ({37{write_i1_ib1}} & ifu_i1_pcdata[36:0]) |
-                         ({37{shift_ib2_ib1}} & pc2[36:0]) |
-                         ({37{shift_ib3_ib1}} & pc3[36:0]);
-
-   rvdffe #(37) pc1ff (.*, .en(ibwrite[1]), .din(pc1_in[36:0]), .dout(pc1[36:0]));
-
-
-   assign pc0_in[36:0] = ({37{write_i0_ib0}} & ifu_i0_pcdata[36:0]) |
-                         ({37{shift_ib1_ib0}} & pc1[36:0]) |
-                         ({37{shift_ib2_ib0}} & pc2[36:0]);
-
-   rvdffe #(37) pc0ff (.*, .en(ibwrite[0]), .din(pc0_in[36:0]), .dout(pc0[36:0]));
 
    assign dec_i0_icaf_second_d = pc0[36];   // icaf's can only decode as i0
 
@@ -294,69 +209,6 @@ module dec_ib_ctl
 
    assign dec_i1_pc4_d = pc1[0];
    assign dec_i0_pc4_d = pc0[0];
-
-   // branch prediction
-
-   logic [$bits(br_pkt_t)-1:0] bp3_in,bp3,bp2_in,bp2,bp1_in,bp1,bp0_in,bp0;
-
-   if (DEC_INSTBUF_DEPTH==4) begin
-      assign bp3_in = ({$bits(br_pkt_t){write_i0_ib3}} & i0_brp) |
-                      ({$bits(br_pkt_t){write_i1_ib3}} & i1_brp);
-
-      rvdffe #($bits(br_pkt_t)) bp3ff (.*, .en(ibwrite[3]), .din(bp3_in), .dout(bp3));
-
-      assign bp2_in = ({$bits(br_pkt_t){write_i0_ib2}} & i0_brp) |
-                      ({$bits(br_pkt_t){write_i1_ib2}} & i1_brp) |
-                      ({$bits(br_pkt_t){shift_ib3_ib2}} & bp3);
-
-      rvdffe #($bits(br_pkt_t)) bp2ff (.*, .en(ibwrite[2]), .din(bp2_in), .dout(bp2));
-   end // if (DEC_INSTBUF_DEPTH==4)
-   else begin
-      assign bp3 = '0;
-      assign bp2 = '0;
-   end
-
-   assign bp1_in = ({$bits(br_pkt_t){write_i0_ib1}} & i0_brp) |
-                   ({$bits(br_pkt_t){write_i1_ib1}} & i1_brp) |
-                   ({$bits(br_pkt_t){shift_ib2_ib1}} & bp2) |
-                   ({$bits(br_pkt_t){shift_ib3_ib1}} & bp3);
-
-   rvdffe #($bits(br_pkt_t)) bp1ff (.*, .en(ibwrite[1]), .din(bp1_in), .dout(bp1));
-
-
-
-   assign bp0_in = ({$bits(br_pkt_t){write_i0_ib0}} & i0_brp) |
-                   ({$bits(br_pkt_t){shift_ib1_ib0}} & bp1) |
-                   ({$bits(br_pkt_t){shift_ib2_ib0}} & bp2);
-
-   rvdffe #($bits(br_pkt_t)) bp0ff (.*, .en(ibwrite[0]), .din(bp0_in), .dout(bp0));
-
-   // instruction buffers
-
-   if (DEC_INSTBUF_DEPTH==4) begin
-      assign ib3_in[31:0] = ({32{write_i0_ib3}} & ifu_i0_instr[31:0]) |
-                            ({32{write_i1_ib3}} & ifu_i1_instr[31:0]);
-
-      rvdffe #(32) ib3ff (.*, .en(ibwrite[3]), .din(ib3_in[31:0]), .dout(ib3[31:0]));
-
-      assign ib2_in[31:0] = ({32{write_i0_ib2}} & ifu_i0_instr[31:0]) |
-                            ({32{write_i1_ib2}} & ifu_i1_instr[31:0]) |
-                            ({32{shift_ib3_ib2}} & ib3[31:0]);
-
-      rvdffe #(32) ib2ff (.*, .en(ibwrite[2]), .din(ib2_in[31:0]), .dout(ib2[31:0]));
-   end // if (DEC_INSTBUF_DEPTH==4)
-   else begin
-      assign ib3 = '0;
-      assign ib2 = '0;
-   end
-
-   assign ib1_in[31:0] = ({32{write_i0_ib1}} & ifu_i0_instr[31:0]) |
-                         ({32{write_i1_ib1}} & ifu_i1_instr[31:0]) |
-                         ({32{shift_ib2_ib1}} & ib2[31:0]) |
-                         ({32{shift_ib3_ib1}} & ib3[31:0]);
-
-   rvdffe #(32) ib1ff (.*, .en(ibwrite[1]), .din(ib1_in[31:0]), .dout(ib1[31:0]));
-
 
 // GPR accesses
 
@@ -410,54 +262,119 @@ module dec_ib_ctl
    rvdff #(1) debug_fence_ff (.*,  .clk(free_clk), .din(debug_fence_in),  .dout(dec_debug_fence_d));
 
 
-   assign ib0_in[31:0] = ({32{write_i0_ib0}} & ((debug_valid) ? ib0_debug_in[31:0] : ifu_i0_instr[31:0])) |
-                         ({32{shift_ib1_ib0}} & ib1[31:0]) |
-                         ({32{shift_ib2_ib0}} & ib2[31:0]);
+   assign ib_tail = ib_head + ib_count[1:0];
+   assign ib_head_in = flush_final ? 2'd0 : ib_head + dequeue_count;
+   assign ib_count_in = flush_final ? 3'd0 :
+                        ib_count - {1'b0, dequeue_count} + {1'b0, enqueue_count};
+   rvdff #(2) ib_head_ff (.*, .clk(active_clk), .din(ib_head_in), .dout(ib_head));
+   rvdff #(3) ib_count_ff (.*, .clk(active_clk), .din(ib_count_in), .dout(ib_count));
 
-   rvdffe #(32) ib0ff (.*, .en(ibwrite[0]), .din(ib0_in[31:0]), .dout(ib0[31:0]));
+   assign enqueue_payload[0].instr = enqueue_debug ? ib0_debug_in : ifu_i0_instr;
+   assign enqueue_payload[0].pcdata = ifu_i0_pcdata;
+   assign enqueue_payload[0].cinst = ifu_i0_cinst;
+   assign enqueue_payload[0].brp = i0_brp;
+   assign enqueue_payload[1].instr = ifu_i1_instr;
+   assign enqueue_payload[1].pcdata = ifu_i1_pcdata;
+   assign enqueue_payload[1].cinst = ifu_i1_cinst;
+   assign enqueue_payload[1].brp = i1_brp;
+   assign enqueue_payload[0].predecode = enqueue_predecode[0];
+   assign enqueue_payload[1].predecode = enqueue_predecode[1];
+   assign enqueue_payload[0].regs.rs1 = enqueue_payload[0].instr[19:15];
+   assign enqueue_payload[0].regs.rs2 = enqueue_payload[0].instr[24:20];
+   assign enqueue_payload[0].regs.rd  = enqueue_payload[0].instr[11:7];
+   assign enqueue_payload[1].regs.rs1 = enqueue_payload[1].instr[19:15];
+   assign enqueue_payload[1].regs.rs2 = enqueue_payload[1].instr[24:20];
+   assign enqueue_payload[1].regs.rd  = enqueue_payload[1].instr[11:7];
 
-   assign dec_ib3_valid_d = ibval[3];
-   assign dec_ib2_valid_d = ibval[2];
-   assign dec_ib1_valid_d = ibval[1];
-   assign dec_ib0_valid_d = ibval[0];
+   // Move the large generated instruction decoder to the enqueue side of the
+   // queue.  Its one-hot result is stored with the instruction and becomes a
+   // registered micro-op at the decode boundary.  Raw opcode/funct bits no
+   // longer drive dual-issue, LSU, multiply and divide control in one cycle.
+   dec_dec_ctl enqueue_i0_decoder (
+      .inst(enqueue_debug ? ib0_debug_in : ifu_i0_instr),
+      .out (enqueue_predecode[0])
+   );
+   dec_dec_ctl enqueue_i1_decoder (
+      .inst(ifu_i1_instr),
+      .out (enqueue_predecode[1])
+   );
 
-   assign dec_i0_instr_d[31:0] = ib0[31:0];
+   // Ring storage never moves resident payloads.  Dequeue changes only the
+   // two-bit head pointer; enqueue writes one or two free slots at the tail.
+   // This removes the LSU/decode-stall compaction cone from all payload D pins.
+   always_comb begin
+      for (int slot = 0; slot < 4; slot++) begin
+         ib_entry_write_en[slot] = 1'b0;
+         ib_entry_write_data[slot] = '0;
+         if (enqueue_i0 && (ib_tail == 2'(slot))) begin
+            ib_entry_write_en[slot] = 1'b1;
+            ib_entry_write_data[slot] = enqueue_payload[0];
+         end
+         if (enqueue_i1 && ((ib_tail + 2'd1) == 2'(slot))) begin
+            ib_entry_write_en[slot] = 1'b1;
+            ib_entry_write_data[slot] = enqueue_payload[1];
+         end
+      end
+      if (flush_final)
+         ib_entry_write_en = 4'b0;
+   end
 
-   assign dec_i1_instr_d[31:0] = ib1[31:0];
+   for (genvar slot = 0; slot < 4; slot++) begin : gen_ib_slot
+      rvdffe #($bits(ib_payload_t)) ib_entry_ff (.*, .clk(active_clk),
+         .en(ib_entry_write_en[slot]),
+         .din(ib_entry_write_data[slot]), .dout(ib_entry[slot]));
+   end
+
+   // Keep the two decode-visible payloads in a registered front window.  The
+   // ring still avoids moving resident entries, while decode no longer sees a
+   // four-way payload mux followed by its high-fanout control cone.  Write
+   // bypasses preserve zero-extra-latency visibility when an empty queue is
+   // filled or a dequeue and enqueue land on the same physical slot.
+   always_comb begin
+      ib_front_in[0] = flush_final ? '0 : ib_entry[ib_head_in];
+      ib_front_in[1] = flush_final ? '0 : ib_entry[ib_head_in + 2'd1];
+      for (int slot = 0; slot < 4; slot++) begin
+         if (ib_entry_write_en[slot] && (ib_head_in == 2'(slot)))
+            ib_front_in[0] = ib_entry_write_data[slot];
+         if (ib_entry_write_en[slot] && ((ib_head_in + 2'd1) == 2'(slot)))
+            ib_front_in[1] = ib_entry_write_data[slot];
+      end
+   end
+
+   rvdff #($bits(ib_payload_t)) ib_front0_ff (.*, .clk(active_clk),
+      .din(ib_front_in[0]), .dout(ib_front[0]));
+   rvdff #($bits(ib_payload_t)) ib_front1_ff (.*, .clk(active_clk),
+      .din(ib_front_in[1]), .dout(ib_front[1]));
+
+   assign ib0 = ib_front[0].instr;
+   assign ib1 = ib_front[1].instr;
+   assign pc0 = ib_front[0].pcdata;
+   assign pc1 = ib_front[1].pcdata;
+   assign cinst0 = ib_front[0].cinst;
+   assign cinst1 = ib_front[1].cinst;
+   assign bp0 = ib_front[0].brp;
+   assign bp1 = ib_front[1].brp;
+   assign predecode0 = ib_front[0].predecode;
+   assign predecode1 = ib_front[1].predecode;
+   assign regs0 = ib_front[0].regs;
+   assign regs1 = ib_front[1].regs;
+
+   assign dec_ib3_valid_d = (total_count > 3'd3) & ~flush_final;
+   assign dec_ib2_valid_d = (total_count > 3'd2) & ~flush_final;
+   assign dec_ib1_valid_d = (total_count > 3'd1) & ~flush_final;
+   assign dec_ib0_valid_d = (total_count > 3'd0) & ~flush_final;
+
+   assign dec_i0_instr_d = ib0;
+   assign dec_i1_instr_d = ib1;
+   assign dec_i0_cinst_d = cinst0;
+   assign dec_i1_cinst_d = cinst1;
+   assign dec_i0_predecode_d = predecode0;
+   assign dec_i1_predecode_d = predecode1;
+   assign dec_i0_regs_d = regs0;
+   assign dec_i1_regs_d = regs1;
 
    assign dec_i0_brp = bp0;
    assign dec_i1_brp = bp1;
-
-
-   assign shift1 = dec_i0_decode_d & ~dec_i1_decode_d;
-
-   assign shift2 = dec_i0_decode_d & dec_i1_decode_d;
-
-   assign shift0 = ~dec_i0_decode_d;
-
-
-   // compute shifted ib valids to determine where to write
-   assign shift_ibval[3:0] = ({4{shift1}} & {1'b0, ibval[3:1] }) |
-                             ({4{shift2}} & {2'b0, ibval[3:2]}) |
-                             ({4{shift0}} & ibval[3:0]);
-
-   assign write_i0_ib0 = ~shift_ibval[0]                & (ifu_i0_val | debug_valid);
-   assign write_i0_ib1 =  shift_ibval[0] & ~shift_ibval[1] & ifu_i0_val;
-   assign write_i0_ib2 =  shift_ibval[1] & ~shift_ibval[2] & ifu_i0_val;
-   assign write_i0_ib3 =  shift_ibval[2] & ~shift_ibval[3] & ifu_i0_val;
-
-   assign write_i1_ib1 = ~shift_ibval[0]                & ifu_i1_val;
-   assign write_i1_ib2 =  shift_ibval[0] & ~shift_ibval[1] & ifu_i1_val;
-   assign write_i1_ib3 =  shift_ibval[1] & ~shift_ibval[2] & ifu_i1_val;
-
-
-   assign shift_ib1_ib0 = shift1 & ibval[1];
-   assign shift_ib2_ib1 = shift1 & ibval[2];
-   assign shift_ib3_ib2 = shift1 & ibval[3];
-
-   assign shift_ib2_ib0 = shift2 & ibval[2];
-   assign shift_ib3_ib1 = shift2 & ibval[3];
-
 
 
 endmodule

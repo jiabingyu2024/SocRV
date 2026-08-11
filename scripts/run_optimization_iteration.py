@@ -238,7 +238,10 @@ def main() -> int:
             step("vivado", python_script("run_vivado.py", *vivado_args))
             compare_args = []
             if args.compare_vivado:
-                compare_args = ["--compare", str(args.compare_vivado.resolve())]
+                compare_path = args.compare_vivado.resolve()
+                if compare_path.is_dir():
+                    compare_path = compare_path / "analysis" / "timing_summary.json"
+                compare_args = ["--compare", str(compare_path)]
             step(
                 "vivado-analysis",
                 python_script(

@@ -129,6 +129,14 @@ typedef struct packed {
 
 typedef struct packed {
                        logic legal;
+                       // Decode-time trap/redirect class.  These fields keep
+                       // wide instruction-type compares and cause generation
+                       // out of the E4 global flush cone.
+                       logic i0_sync_exc;
+                       logic [4:0] i0_sync_cause;
+                       logic i0_ebreak;
+                       logic i0_ecall;
+                       logic i0_mret;
                        logic icaf;
                        logic icaf_second;
                        logic perr;

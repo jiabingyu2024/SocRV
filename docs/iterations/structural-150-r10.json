@@ -1,0 +1,68 @@
+{
+  "artifacts": {
+    "manifest": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r10.json",
+    "markdown": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/docs/iterations/structural-150-r10.md",
+    "scratch_root": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r10"
+  },
+  "core_mhz": 150,
+  "error": "sim-coremark failed with exit code 2; see E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r10/logs/sim-coremark.log",
+  "git_revision": "eae3dd1d35324cc3a88c51425ae80a975d5d6af0",
+  "kind": "rtl-optimization-iteration",
+  "schema_version": 1,
+  "started_at": "2026-08-11T08:55:05.932282+00:00",
+  "status": "FAIL",
+  "steps": [
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "smoke",
+        "--no-rtl-build",
+        "--no-software-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r10/logs/sim-smoke.log",
+      "name": "sim-smoke",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_isa_tests.py",
+        "--gate",
+        "final",
+        "--no-rtl-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r10/logs/sim-isa.log",
+      "name": "sim-isa",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "D:\\AppMajor\\miniconda3\\python.exe",
+        "-B",
+        "E:\\Resources\\03_competitions\\26_03_jcs\\2608round\\SocRV\\scripts\\run_verilator.py",
+        "--profile",
+        "rtthread-coremark",
+        "--test",
+        "opt-structural-150-r10-coremark-1",
+        "--benchmark-iterations",
+        "1",
+        "--uart-command",
+        "coremark 1",
+        "--no-rtl-build",
+        "--no-software-build"
+      ],
+      "log": "E:/Resources/03_competitions/26_03_jcs/2608round/SocRV/build/iterations/structural-150-r10/logs/sim-coremark.log",
+      "name": "sim-coremark",
+      "returncode": 2,
+      "status": "FAIL"
+    }
+  ],
+  "tag": "structural-150-r10",
+  "vivado_stage": "synth"
+}

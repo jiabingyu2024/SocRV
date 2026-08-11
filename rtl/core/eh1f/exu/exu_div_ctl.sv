@@ -65,6 +65,11 @@ module exu_div_ctl
    logic         rem_correct;
    logic         flush_lower_ff;
    logic         valid_e1;
+   logic         launch_valid_q;
+   logic [31:0]  launch_dividend_q, launch_divisor_q;
+   logic         launch_unsign_q, launch_rem_q;
+   logic         launch_accept;
+   logic         start_div;
 
    logic         smallnum_case, smallnum_case_ff;
    logic [3:0]   smallnum, smallnum_ff;
@@ -73,12 +78,25 @@ module exu_div_ctl
 
 
    rvdff  #(1)  flush_any_ff      (.*, .clk(active_clk), .din(flush_lower),                                .dout(flush_lower_ff));
-   rvdff  #(1)  e1val_ff          (.*, .clk(active_clk), .din(dp.valid & ~flush_lower_ff),                 .dout(valid_ff_e1));
+
+   // Register a complete divide request before it enters the iterative
+   // recurrence.  The old launch path decoded the instruction, selected both
+   // operands, complemented signs and drove q/a/m in one cycle.  A one-entry
+   // launch stage cuts that path while the global divide stall preserves the
+   // existing serialized architectural contract.
+   assign launch_accept = dp.valid & ~launch_valid_q & ~run_state & ~flush_lower_ff;
+   rvdff  #(1)  launch_valid_ff   (.*, .clk(active_clk), .din(launch_accept),                              .dout(launch_valid_q));
+   rvdffe #(32) launch_dividend_ff(.*, .clk(active_clk), .en(launch_accept), .din(dividend),               .dout(launch_dividend_q));
+   rvdffe #(32) launch_divisor_ff (.*, .clk(active_clk), .en(launch_accept), .din(divisor),                .dout(launch_divisor_q));
+   rvdffs #(2)  launch_ctl_ff     (.*, .clk(active_clk), .en(launch_accept), .din({dp.unsign, dp.rem}),    .dout({launch_unsign_q, launch_rem_q}));
+   assign start_div = launch_valid_q & ~flush_lower_ff;
+
+   rvdff  #(1)  e1val_ff          (.*, .clk(active_clk), .din(start_div),                                  .dout(valid_ff_e1));
    rvdff  #(1)  runff             (.*, .clk(active_clk), .din(run_in),                                     .dout(run_state));
    rvdff  #(6)  countff           (.*, .clk(active_clk), .din(count_in[5:0]),                              .dout(count[5:0]));
-   rvdffs #(4)  miscf             (.*, .clk(active_clk), .din({dividend[31],divisor[31],sign_eff,dp.rem}), .dout({dividend_neg_ff,divisor_neg_ff,sign_ff,rem_ff}), .en(dp.valid));
+   rvdffs #(4)  miscf             (.*, .clk(active_clk), .din({launch_dividend_q[31],launch_divisor_q[31],sign_eff,launch_rem_q}), .dout({dividend_neg_ff,divisor_neg_ff,sign_ff,rem_ff}), .en(start_div));
    rvdff  #(5)  smallnumff        (.*, .clk(active_clk), .din({smallnum_case,smallnum[3:0]}),              .dout({smallnum_case_ff,smallnum_ff[3:0]}));
-   rvdffe #(33) mff               (.*, .en(dp.valid),    .din({ ~dp.unsign & divisor[31], divisor[31:0]}), .dout(m_ff[32:0]));
+   rvdffe #(33) mff               (.*, .en(start_div),   .din({ ~launch_unsign_q & launch_divisor_q[31], launch_divisor_q}), .dout(m_ff[32:0]));
    rvdffe #(33) qff               (.*, .en(qff_enable),  .din(q_in[32:0]),                                 .dout(q_ff[32:0]));
    rvdffe #(33) aff               (.*, .en(aff_enable),  .din(a_in[32:0]),                                 .dout(a_ff[32:0]));
 
@@ -253,9 +271,12 @@ module exu_div_ctl
 
 
 
-   assign div_stall               =  run_state;
+   // Launch is captured at the decode edge; stall starts from the registered
+   // ownership token on the following cycle.  Feeding dp.valid directly back
+   // into decode stall forms a decode-valid/stall combinational loop.
+   assign div_stall               =  launch_valid_q | run_state;
 
-   assign run_in                  = (dp.valid | run_state) & ~finish & ~flush_lower_ff;
+   assign run_in                  = (start_div | run_state) & ~finish & ~flush_lower_ff;
 
    assign count_in[5:0]           = {6{run_state & ~finish & ~flush_lower_ff & ~shortq_enable}} & (count[5:0] + shortq_shift_ff[5:0] + 6'd1);
 
@@ -264,14 +285,14 @@ module exu_div_ctl
 
    assign finish                  = (smallnum_case | ((~rem_ff) ? (count[5:0] == 6'd32) : (count[5:0] == 6'd33))) & ~flush_lower & ~flush_lower_ff;
 
-   assign sign_eff                = ~dp.unsign & (divisor[31:0] != 32'b0);
+   assign sign_eff                = ~launch_unsign_q & (launch_divisor_q != 32'b0);
 
 
-   assign q_in[32:0]              = ({33{~run_state                                   }} &  {1'b0,dividend[31:0]}) |
+   assign q_in[32:0]              = ({33{~run_state                                   }} &  {1'b0,launch_dividend_q}) |
                                     ({33{ run_state &  (valid_ff_e1 | shortq_enable_ff)}} &  ({dividend_eff[31:0], ~a_in[32]} << shortq_shift_ff[5:0])) |
                                     ({33{ run_state & ~(valid_ff_e1 | shortq_enable_ff)}} &  {q_ff[31:0], ~a_in[32]});
 
-   assign qff_enable              =  dp.valid | (run_state & ~shortq_enable);
+   assign qff_enable              =  start_div | (run_state & ~shortq_enable);
 
 
 
@@ -291,7 +312,7 @@ module exu_div_ctl
 
    assign a_in[32:0]              = {33{run_state}} & (a_shift[32:0] + m_eff[32:0] + {32'b0,~add});
 
-   assign aff_enable              =  dp.valid | (run_state & ~shortq_enable & (count[5:0]!=6'd33)) | rem_correct;
+   assign aff_enable              =  start_div | (run_state & ~shortq_enable & (count[5:0]!=6'd33)) | rem_correct;
 
 
    assign m_already_comp          = (divisor_neg_ff & sign_ff);

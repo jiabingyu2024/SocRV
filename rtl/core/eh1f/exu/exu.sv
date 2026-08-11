@@ -36,7 +36,7 @@ module exu
 
    input logic [31:0] dbg_cmd_wrdata,                                  // Debug data   to primary I0 RS1
 
-   input logic [31:0] lsu_result_dc3,                                  // Load result
+   input logic [31:0] lsu_result_dc4,                                  // registered load result
 
    input predict_pkt_t  i0_predict_p_d,                                // DEC branch predict packet
    input predict_pkt_t  i1_predict_p_d,                                // DEC branch predict packet
@@ -897,7 +897,7 @@ module exu
                                              ((i0_pred_correct_e4_eff) ? pred_correct_npc_e4[31:1] : i0_flush_path_e4_eff[31:1]);
 
 
-   assign exu_npc_e4[31:1] = (div_finish_early) ? exu_i0_flush_path_e1[31:1] :
+   assign exu_npc_e4[31:1] = (div_finish_early) ? div_npc[31:1]              :
                              (exu_div_finish)   ? div_npc[31:1]              :
                                                   npc_e4[31:1];
 

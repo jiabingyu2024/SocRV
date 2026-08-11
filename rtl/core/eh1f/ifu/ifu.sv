@@ -275,6 +275,18 @@ module ifu
    logic [7:0]  ifu_bp_valid_f2; // branch valid, right justified
    logic [`RV_BHT_GHR_RANGE] ifu_bp_fghr_f2;
 
+`ifdef RV_BTB_48
+   logic [7:0][1:0] ifu_bp_way_resp;
+`else
+   logic [7:0]      ifu_bp_way_resp;
+`endif
+   logic [31:1] ifu_bp_btb_target_resp;
+   logic [7:0]  ifu_bp_hist1_resp, ifu_bp_hist0_resp;
+   logic [11:0] ifu_bp_poffset_resp;
+   logic [7:0]  ifu_bp_ret_resp, ifu_bp_pc4_resp, ifu_bp_valid_resp;
+   logic [`RV_BHT_GHR_RANGE] ifu_bp_fghr_resp;
+   logic [31:1] ifu_fetch_pc_resp;
+
    logic [7:0]   ic_fetch_val_f2;
    logic [127:0] ic_data_f2;
    logic [127:0] ifu_fetch_data;
@@ -292,14 +304,45 @@ module ifu
 
    assign ifu_fetch_data[127:0] = ic_data_f2[127:0];
    assign ifu_fetch_val[7:0] = ic_fetch_val_f2[7:0];
-   assign ifu_fetch_pc[31:1] = ifc_fetch_addr_f2[31:1];
+   // The predictor still redirects the next fetch in F2.  Only the metadata
+   // consumed with the registered ICCM response is carried into the aligner.
+   localparam int IFU_BP_RESP_WIDTH = 62 + 8 + 8 + 12 + 8 + 8 + 8 + `RV_BHT_GHR_SIZE
+`ifdef RV_BTB_48
+                                      + 16
+`else
+                                      + 8
+`endif
+                                      ;
+   rvdff #(IFU_BP_RESP_WIDTH) ifu_bp_response_ff (.*,
+      .clk(active_clk),
+      .din({ifc_fetch_addr_f2[31:1], ifu_bp_btb_target_f2[31:1],
+            ifu_bp_hist1_f2[7:0], ifu_bp_hist0_f2[7:0],
+            ifu_bp_poffset_f2[11:0], ifu_bp_ret_f2[7:0],
+            ifu_bp_pc4_f2[7:0], ifu_bp_valid_f2[7:0],
+            ifu_bp_fghr_f2[`RV_BHT_GHR_RANGE], ifu_bp_way_f2}),
+      .dout({ifu_fetch_pc_resp[31:1], ifu_bp_btb_target_resp[31:1],
+             ifu_bp_hist1_resp[7:0], ifu_bp_hist0_resp[7:0],
+             ifu_bp_poffset_resp[11:0], ifu_bp_ret_resp[7:0],
+             ifu_bp_pc4_resp[7:0], ifu_bp_valid_resp[7:0],
+             ifu_bp_fghr_resp[`RV_BHT_GHR_RANGE], ifu_bp_way_resp}));
+
+   assign ifu_fetch_pc[31:1] = ifu_fetch_pc_resp[31:1];
 
    // fetch control
    ifu_ifc_ctl ifc (.*
                     );
 
    // aligner
-   ifu_aln_ctl aln (.*
+   ifu_aln_ctl aln (.*,
+                    .ifu_bp_fghr_f2(ifu_bp_fghr_resp),
+                    .ifu_bp_btb_target_f2(ifu_bp_btb_target_resp),
+                    .ifu_bp_poffset_f2(ifu_bp_poffset_resp),
+                    .ifu_bp_hist0_f2(ifu_bp_hist0_resp),
+                    .ifu_bp_hist1_f2(ifu_bp_hist1_resp),
+                    .ifu_bp_pc4_f2(ifu_bp_pc4_resp),
+                    .ifu_bp_way_f2(ifu_bp_way_resp),
+                    .ifu_bp_valid_f2(ifu_bp_valid_resp),
+                    .ifu_bp_ret_f2(ifu_bp_ret_resp)
                     );
 
    // branch predictor

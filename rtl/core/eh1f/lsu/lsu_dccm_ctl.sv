@@ -168,6 +168,10 @@ module lsu_dccm_ctl
 
    assign dccm_data_lo_dc2[31:0] = dccm_rd_data_lo[31:0];
    assign dccm_data_hi_dc2[31:0] = dccm_rd_data_hi[31:0];
+   // The DC3 data boundary now lives inside each DCCM BRAM bank, ahead of
+   // the bank-select mux.  Keep the external stage name/protocol unchanged.
+   assign dccm_data_lo_dc3[31:0] = dccm_rd_data_lo[31:0];
+   assign dccm_data_hi_dc3[31:0] = dccm_rd_data_hi[31:0];
 
    assign picm_wren = lsu_stbuf_commit_any & stbuf_addr_in_pic_any;
    assign picm_rden = lsu_pkt_dc1.valid & lsu_pkt_dc1.load & addr_in_pic_dc1;
@@ -195,19 +199,6 @@ module lsu_dccm_ctl
                                      .clk(lsu_freeze_c2_dc3_clk),
                                      .clken(lsu_freeze_c2_dc3_clken),
                                      .rawclk(clk));
-   rvdff_fpga #(32) dccm_data_hi_ff (.*,
-                                      .din(dccm_data_hi_dc2),
-                                      .dout(dccm_data_hi_dc3),
-                                      .clk(lsu_dccm_c1_dc3_clk),
-                                      .clken(lsu_dccm_c1_dc3_clken),
-                                      .rawclk(clk));
-   rvdff_fpga #(32) dccm_data_lo_ff (.*,
-                                      .din(dccm_data_lo_dc2),
-                                      .dout(dccm_data_lo_dc3),
-                                      .clk(lsu_dccm_c1_dc3_clk),
-                                      .clken(lsu_dccm_c1_dc3_clken),
-                                      .rawclk(clk));
-
    assign dccm_data_ecc_hi_dc3 = '0;
    assign dccm_data_ecc_lo_dc3 = '0;
 

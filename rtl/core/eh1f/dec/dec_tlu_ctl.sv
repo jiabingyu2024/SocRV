@@ -377,8 +377,8 @@ module dec_tlu_ctl
    // cycle-equivalent to the input; separating them prevents the registered
    // halt state and the combinational core-empty check from sharing a long
    // route back through the LSU packet/forwarding cone.
-   (* keep = "true", max_fanout = "8" *) logic lsu_halt_idle_any_halt_d;
-   (* keep = "true", max_fanout = "8" *) logic lsu_halt_idle_any_empty_d;
+   logic lsu_halt_idle_any_halt_d;
+   logic lsu_halt_idle_any_empty_d;
    assign lsu_halt_idle_any_halt_d  = lsu_halt_idle_any;
    assign lsu_halt_idle_any_empty_d = lsu_halt_idle_any;
 
@@ -957,10 +957,10 @@ module dec_tlu_ctl
                                   dec_tlu_br1_wb_pkt.index[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO]}));
 
    // only expect these in pipe 0
-   assign       ebreak_e4    =  (dec_tlu_packet_e4.pmu_i0_itype == EBREAK)  & dec_tlu_i0_valid_e4 & ~i0_trigger_hit_e4 & ~dcsr[`DCSR_EBREAKM];
-   assign       ecall_e4     =  (dec_tlu_packet_e4.pmu_i0_itype == ECALL)   & dec_tlu_i0_valid_e4 & ~i0_trigger_hit_e4;
+   assign       ebreak_e4    =  dec_tlu_packet_e4.i0_ebreak & dec_tlu_i0_valid_e4 & ~i0_trigger_hit_e4 & ~dcsr[`DCSR_EBREAKM];
+   assign       ecall_e4     =  dec_tlu_packet_e4.i0_ecall  & dec_tlu_i0_valid_e4 & ~i0_trigger_hit_e4;
    assign       illegal_e4   =  ~dec_tlu_packet_e4.legal   & dec_tlu_i0_valid_e4 & ~i0_trigger_hit_e4;
-   assign       mret_e4      =  (dec_tlu_packet_e4.pmu_i0_itype == MRET)    & dec_tlu_i0_valid_e4 & ~i0_trigger_hit_e4;
+   assign       mret_e4      =  dec_tlu_packet_e4.i0_mret   & dec_tlu_i0_valid_e4 & ~i0_trigger_hit_e4;
    // fence_i includes debug only fence_i's
    assign       fence_i_e4   =  (dec_tlu_packet_e4.fence_i & dec_tlu_i0_valid_e4 & ~i0_trigger_hit_e4); //| csr_fence_i_wb;
 `ifdef RV_TCM_ONLY
@@ -974,7 +974,7 @@ module dec_tlu_ctl
    assign       inst_acc_e4 = inst_acc_e4_raw & ~rfpc_i0_e4 & ~i0_trigger_hit_e4;
    assign       inst_acc_second_e4 = dec_tlu_packet_e4.icaf_second;
 
-   assign       ebreak_to_debug_mode_e4 = (dec_tlu_packet_e4.pmu_i0_itype == EBREAK)  & dec_tlu_i0_valid_e4 & ~i0_trigger_hit_e4 & dcsr[`DCSR_EBREAKM];
+   assign       ebreak_to_debug_mode_e4 = dec_tlu_packet_e4.i0_ebreak & dec_tlu_i0_valid_e4 & ~i0_trigger_hit_e4 & dcsr[`DCSR_EBREAKM];
 
    assign illegal_e4_qual = illegal_e4 & ~dec_tlu_dbg_halted;
 
@@ -1015,10 +1015,9 @@ module dec_tlu_ctl
                                  ({5{take_int_timer1_int}} & 5'h1c) |
                                  ({5{take_ce_int}}         & 5'h1e) |
                                  ({5{inst_misaligned_e4}}  & 5'h00) |
-                                 ({5{illegal_e4}}          & 5'h02) |
-                                ({5{ecall_e4}}            & 5'h0b) |
-                                ({5{inst_acc_e4}}         & 5'h01) |
-                                ({5{ebreak_e4 | trigger_hit_e4}}        & 5'h03) |
+                                 ({5{illegal_e4 | ecall_e4 | inst_acc_e4 | ebreak_e4}} &
+                                      dec_tlu_packet_e4.i0_sync_cause[4:0]) |
+                                ({5{trigger_hit_e4}}                       & 5'h03) |
                                 ({5{lsu_exc_ma_dc4 & ~lsu_exc_st_dc4}}  & 5'h04) |
                                 ({5{lsu_exc_acc_dc4 & ~lsu_exc_st_dc4}} & 5'h05) |
                                 ({5{lsu_exc_ma_dc4 & lsu_exc_st_dc4}}   & 5'h06) |

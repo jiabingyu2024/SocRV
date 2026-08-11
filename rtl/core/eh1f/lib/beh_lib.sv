@@ -51,7 +51,16 @@ module rvdffs #( parameter WIDTH=1 )
      output logic [WIDTH-1:0] dout
      );
 
-   rvdff #(WIDTH) dffs (.din((en) ? din[WIDTH-1:0] : dout[WIDTH-1:0]), .*);
+   // Describe the hold condition as a native clock enable.  The feedback-mux
+   // form used by the ASIC library is functionally equivalent, but on FPGA it
+   // can leave a deep global enable cone on every register D input instead of
+   // using the dedicated CE pin.
+   always_ff @(posedge clk or negedge rst_l) begin
+      if (!rst_l)
+         dout <= '0;
+      else if (en)
+         dout <= din;
+   end
 
 endmodule
 
@@ -66,9 +75,16 @@ module rvdffsc #( parameter WIDTH=1 )
      output logic [WIDTH-1:0] dout
      );
 
-   logic [WIDTH-1:0]          din_new;
-   assign din_new = {WIDTH{~clear}} & (en ? din[WIDTH-1:0] : dout[WIDTH-1:0]);
-   rvdff #(WIDTH) dffsc (.din(din_new[WIDTH-1:0]), .*);
+   // Clear has priority and both clear/enable map to the flip-flop control
+   // pins; no self-feedback data mux is required.
+   always_ff @(posedge clk or negedge rst_l) begin
+      if (!rst_l)
+         dout <= '0;
+      else if (clear)
+         dout <= '0;
+      else if (en)
+         dout <= din;
+   end
 
 endmodule
 
