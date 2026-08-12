@@ -369,7 +369,8 @@ module dec_tlu_ctl
 
    logic request_debug_mode_e4, request_debug_mode_wb, request_debug_mode_done, request_debug_mode_done_f;
    logic take_halt, take_halt_f, halt_taken, halt_taken_f, internal_dbg_halt_mode, dbg_tlu_halted_f, take_reset,
-         dbg_tlu_halted, core_empty, lsu_halt_idle_any_f, ifu_miss_state_idle_f, resume_ack_ns,
+         dbg_tlu_halted, core_empty, lsu_halt_idle_any_f, lsu_halt_idle_any_ff,
+         ifu_miss_state_idle_f, ifu_miss_state_idle_ff, resume_ack_ns,
           debug_halt_req_f, debug_resume_req_f_raw, debug_resume_req_f, enter_debug_halt_req, dcsr_single_step_done, dcsr_single_step_done_f,
           debug_halt_req_d1, debug_halt_req_ns, dcsr_single_step_running, dcsr_single_step_running_f, internal_dbg_halt_timers;
 
@@ -546,7 +547,12 @@ module dec_tlu_ctl
 
    // After doing halt flush (RFNPC) wait until core is idle before asserting a particular halt mode
    // It takes a cycle for mb_empty to assert after a fetch, take_halt covers that cycle
-   assign core_empty = lsu_halt_idle_any & lsu_halt_idle_any_f & ifu_miss_state_idle & ifu_miss_state_idle_f & ~debug_halt_req & ~debug_halt_req_d1;
+   // Halt entry is outside normal execution, so an extra cycle of latency is
+   // harmless.  Use two registered idle samples to keep the live LSU/IFU idle
+   // cones out of core_empty and the flush/debug-halt control paths.
+   assign core_empty = lsu_halt_idle_any_f & lsu_halt_idle_any_ff &
+                       ifu_miss_state_idle_f & ifu_miss_state_idle_ff &
+                       ~debug_halt_req & ~debug_halt_req_d1;
 
 //--------------------------------------------------------------------------------
 // Debug start
@@ -586,6 +592,10 @@ module dec_tlu_ctl
                                   dec_tlu_resume_ack, dec_dbg_cmd_done, debug_halt_req_f, debug_resume_req_f_raw, trigger_hit_dmode_wb,
                                   dcsr_single_step_done_f, debug_halt_req_d1, update_hit_bit_wb[3:0], dec_tlu_wr_pause_wb_f, dec_pause_state_f,
                                   request_debug_mode_wb, request_debug_mode_done_f, dcsr_single_step_running_f, dcsr_single_step_running_ff}));
+
+   rvdff #(2) halt_idle_ff (.*, .clk(free_clk),
+                            .din({lsu_halt_idle_any_f, ifu_miss_state_idle_f}),
+                            .dout({lsu_halt_idle_any_ff, ifu_miss_state_idle_ff}));
 
    // MPC run collides with DBG halt, fix it here
    assign debug_resume_req_f = debug_resume_req_f_raw & ~dbg_halt_req;

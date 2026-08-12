@@ -104,6 +104,7 @@ module ifu_bp_ctl
    localparam NUM_BHT_LOOP_INNER_HI =  (`RV_BHT_ARRAY_DEPTH > 16 ) ?`RV_BHT_ADDR_LO+3 : `RV_BHT_ADDR_HI;
    localparam NUM_BHT_LOOP_OUTER_LO =  (`RV_BHT_ARRAY_DEPTH > 16 ) ?`RV_BHT_ADDR_LO+4 : `RV_BHT_ADDR_LO;
    localparam BHT_NO_ADDR_MATCH  = ( `RV_BHT_ARRAY_DEPTH <= 16 );
+   localparam BTB_ADDR_WIDTH = `RV_BTB_ADDR_HI-`RV_BTB_ADDR_LO+1;
 
    logic exu_mp_valid_write;
    logic exu_mp_ataken;
@@ -156,6 +157,13 @@ module ifu_bp_ctl
    logic               dec_tlu_error_wb, dec_tlu_all_banks_error_wb, btb_valid, dec_tlu_br0_middle_wb, dec_tlu_br1_middle_wb;
    logic [`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO]        btb_error_addr_wb;
    logic [1:0]         dec_tlu_error_bank_wb;
+   logic               btb_error_pending;
+   logic [`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] btb_error_addr_q;
+   logic [3:0]         btb_error_wr_en_way0_d, btb_error_wr_en_way0_q;
+   logic [3:0]         btb_error_wr_en_way1_d, btb_error_wr_en_way1_q;
+`ifdef RV_BTB_48
+   logic [3:0]         btb_error_wr_en_way2_d, btb_error_wr_en_way2_q;
+`endif
    logic branch_error_collision_f1, fetch_mp_collision_f1, fetch_mp_collision_f2;
 
    logic [6:0] fgmask_f2;
@@ -1363,7 +1371,40 @@ assign fgmask_f2[0] = (~ifc_fetch_addr_f2[3] & ~ifc_fetch_addr_f2[2]
 
    assign dec_tlu_way_wb = (dec_tlu_br0_error_wb | dec_tlu_br0_start_error_wb) ? dec_tlu_br0_way_wb : dec_tlu_br1_way_wb;
 
-   assign btb_valid = exu_mp_valid & ~dec_tlu_error_wb;
+   // Branch-start errors repair one BTB entry (or all banks of one entry) and
+   // are not on the architectural redirect path.  Predecode and register that
+   // rare repair before broadcasting it to every flop-based BTB entry.  This
+   // turns the former TLU error-bit -> thousands-of-BTB-endpoints cone into a
+   // short local address/one-hot write path.  Normal mispredict and BHT updates
+   // keep their original latency; a queued repair retains priority for its one
+   // write cycle.
+`ifdef RV_BTB_48
+   assign btb_error_wr_en_way0_d[3:0] = {4{dec_tlu_error_wb & (dec_tlu_way_wb == 2'b00)}} &
+                                         (dec_tlu_all_banks_error_wb ? 4'b1111 : decode2_4(dec_tlu_error_bank_wb[1:0]));
+   assign btb_error_wr_en_way1_d[3:0] = {4{dec_tlu_error_wb & (dec_tlu_way_wb == 2'b01)}} &
+                                         (dec_tlu_all_banks_error_wb ? 4'b1111 : decode2_4(dec_tlu_error_bank_wb[1:0]));
+   assign btb_error_wr_en_way2_d[3:0] = {4{dec_tlu_error_wb & dec_tlu_way_wb[1]}} &
+                                         (dec_tlu_all_banks_error_wb ? 4'b1111 : decode2_4(dec_tlu_error_bank_wb[1:0]));
+
+   rvdff #(1+BTB_ADDR_WIDTH+12) btb_error_pipe_ff (.*, .clk(active_clk),
+      .din({dec_tlu_error_wb, btb_error_addr_wb, btb_error_wr_en_way0_d,
+            btb_error_wr_en_way1_d, btb_error_wr_en_way2_d}),
+      .dout({btb_error_pending, btb_error_addr_q, btb_error_wr_en_way0_q,
+             btb_error_wr_en_way1_q, btb_error_wr_en_way2_q}));
+`else
+   assign btb_error_wr_en_way0_d[3:0] = {4{dec_tlu_error_wb & ~dec_tlu_way_wb}} &
+                                         (dec_tlu_all_banks_error_wb ? 4'b1111 : decode2_4(dec_tlu_error_bank_wb[1:0]));
+   assign btb_error_wr_en_way1_d[3:0] = {4{dec_tlu_error_wb & dec_tlu_way_wb}} &
+                                         (dec_tlu_all_banks_error_wb ? 4'b1111 : decode2_4(dec_tlu_error_bank_wb[1:0]));
+
+   rvdff #(1+BTB_ADDR_WIDTH+8) btb_error_pipe_ff (.*, .clk(active_clk),
+      .din({dec_tlu_error_wb, btb_error_addr_wb, btb_error_wr_en_way0_d,
+            btb_error_wr_en_way1_d}),
+      .dout({btb_error_pending, btb_error_addr_q, btb_error_wr_en_way0_q,
+             btb_error_wr_en_way1_q}));
+`endif
+
+   assign btb_valid = exu_mp_valid & ~btb_error_pending;
 
    assign btb_wr_tag[`RV_BTB_BTAG_SIZE-1:0] = exu_mp_btag[`RV_BTB_BTAG_SIZE-1:0];
    rvbtb_tag_hash rdtagf1(.hash(fetch_rd_tag_f1[`RV_BTB_BTAG_SIZE-1:0]), .pc({ifc_fetch_addr_f1[31:4], 3'b0}));
@@ -1374,30 +1415,25 @@ assign fgmask_f2[0] = (~ifc_fetch_addr_f2[3] & ~ifc_fetch_addr_f2[2]
    assign exu_mp_valid_write = exu_mp_valid & exu_mp_ataken;
 `ifdef RV_BTB_48
 
-   assign btb_wr_en_way0[3:0] = ( ({4{(exu_mp_way==2'b0) & exu_mp_valid_write & ~dec_tlu_error_wb}} & decode2_4(exu_mp_bank[1:0])) |
-                                  ({4{(dec_tlu_way_wb==2'b0) & dec_tlu_error_wb & ~dec_tlu_all_banks_error_wb}} & decode2_4(dec_tlu_error_bank_wb[1:0])) |
-                                  ({4{(dec_tlu_way_wb==2'b0) & dec_tlu_all_banks_error_wb}}));
+   assign btb_wr_en_way0[3:0] = ({4{(exu_mp_way==2'b0) & exu_mp_valid_write & ~btb_error_pending}} & decode2_4(exu_mp_bank[1:0])) |
+                                  btb_error_wr_en_way0_q[3:0];
 
-   assign btb_wr_en_way1[3:0] = ( ({4{exu_mp_way[0] & exu_mp_valid_write & ~dec_tlu_error_wb}} & decode2_4(exu_mp_bank[1:0])) |
-                                  ({4{dec_tlu_way_wb[0] & dec_tlu_error_wb & ~dec_tlu_all_banks_error_wb}} & decode2_4(dec_tlu_error_bank_wb[1:0])) |
-                                  ({4{dec_tlu_way_wb[0] & dec_tlu_all_banks_error_wb}}));
+   assign btb_wr_en_way1[3:0] = ({4{exu_mp_way[0] & exu_mp_valid_write & ~btb_error_pending}} & decode2_4(exu_mp_bank[1:0])) |
+                                  btb_error_wr_en_way1_q[3:0];
 
-   assign btb_wr_en_way2[3:0] = ( ({4{exu_mp_way[1] & exu_mp_valid_write & ~dec_tlu_error_wb}} & decode2_4(exu_mp_bank[1:0])) |
-                                  ({4{dec_tlu_way_wb[1] & dec_tlu_error_wb & ~dec_tlu_all_banks_error_wb}} & decode2_4(dec_tlu_error_bank_wb[1:0])) |
-                                  ({4{dec_tlu_way_wb[1] & dec_tlu_all_banks_error_wb}}));
+   assign btb_wr_en_way2[3:0] = ({4{exu_mp_way[1] & exu_mp_valid_write & ~btb_error_pending}} & decode2_4(exu_mp_bank[1:0])) |
+                                  btb_error_wr_en_way2_q[3:0];
 `else // !`ifdef RV_BTB_48
-   assign btb_wr_en_way0[3:0] = ( ({4{~exu_mp_way & exu_mp_valid_write & ~dec_tlu_error_wb}} & decode2_4(exu_mp_bank[1:0])) |
-                                  ({4{~dec_tlu_way_wb & dec_tlu_error_wb & ~dec_tlu_all_banks_error_wb}} & decode2_4(dec_tlu_error_bank_wb[1:0])) |
-                                  ({4{~dec_tlu_way_wb & dec_tlu_all_banks_error_wb}}));
+   assign btb_wr_en_way0[3:0] = ({4{~exu_mp_way & exu_mp_valid_write & ~btb_error_pending}} & decode2_4(exu_mp_bank[1:0])) |
+                                  btb_error_wr_en_way0_q[3:0];
 
-   assign btb_wr_en_way1[3:0] = ( ({4{exu_mp_way & exu_mp_valid_write & ~dec_tlu_error_wb}} & decode2_4(exu_mp_bank[1:0])) |
-                                  ({4{dec_tlu_way_wb & dec_tlu_error_wb & ~dec_tlu_all_banks_error_wb}} & decode2_4(dec_tlu_error_bank_wb[1:0])) |
-                                  ({4{dec_tlu_way_wb & dec_tlu_all_banks_error_wb}}));
+   assign btb_wr_en_way1[3:0] = ({4{exu_mp_way & exu_mp_valid_write & ~btb_error_pending}} & decode2_4(exu_mp_bank[1:0])) |
+                                  btb_error_wr_en_way1_q[3:0];
 
 
 `endif
 
-   assign btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] = dec_tlu_error_wb ? btb_error_addr_wb[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] : exu_mp_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO];
+   assign btb_wr_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] = btb_error_pending ? btb_error_addr_q[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO] : exu_mp_addr[`RV_BTB_ADDR_HI:`RV_BTB_ADDR_LO];
 
    logic [1:0] bht_wr_data0, bht_wr_data1, bht_wr_data2;
    logic [7:0] bht_wr_en0, bht_wr_en1, bht_wr_en2;

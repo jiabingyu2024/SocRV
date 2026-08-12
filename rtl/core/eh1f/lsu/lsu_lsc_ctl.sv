@@ -304,7 +304,11 @@ module lsu_lsc_ctl
 
    rvdff #(32) lsu_result_corr_dc4ff (.*, .din(lsu_result_corr_dc3[31:0]), .dout(lsu_result_corr_dc4[31:0]), .clk(lsu_c1_dc4_clk));
 
-   rvdffe #(64) sddc1ff (.*, .din(store_data_d[63:0]),  .dout(store_data_dc1[63:0]), .en(lsu_store_c1_dc1_clken));
+   // The store-only enable is fed by the same-cycle decode/issue cone and was
+   // the final v5.2 WNS path into all 64 CE pins.  Capturing data on every
+   // non-frozen cycle is functionally safe: the aligned LSU packet still
+   // decides whether this value is consumed as store data.
+   rvdffe #(64) sddc1ff (.*, .din(store_data_d[63:0]),  .dout(store_data_dc1[63:0]), .en(~lsu_freeze_dc3));
    rvdffe #(64) sddc2ff (.*, .din(store_data_dc2_in[63:0]), .dout(store_data_pre_dc2[63:0]), .en(lsu_store_c1_dc2_clken));
    rvdffe #(64) sddc3ff (.*, .din(store_data_dc2[63:0]), .dout(store_data_pre_dc3[63:0]), .en(~lsu_freeze_dc3 & lsu_store_c1_dc3_clken) );
 

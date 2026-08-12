@@ -32,8 +32,8 @@ def main() -> int:
     )
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument(
-        "--core-mhz", type=int, choices=(100, 125, 150, 250), default=100,
-        help="EH1 TCM SoC target clock (100, 125, 150 or 250 MHz)",
+        "--core-mhz", type=int, choices=(100, 125, 150, 200, 250), default=100,
+        help="EH1 TCM SoC target clock (100, 125, 150, 200 or 250 MHz)",
     )
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
@@ -68,9 +68,9 @@ def main() -> int:
         str(image_dir),
         str(args.jobs),
     ]
-    clock_mult = {100: "5.0", 125: "5.0", 150: "6.0", 250: "5.0"}[args.core_mhz]
-    divide = {100: "10.0", 125: "8.0", 150: "8.0", 250: "4.0"}[args.core_mhz]
-    peripheral_divide = {100: "20", 125: "20", 150: "24", 250: "20"}[args.core_mhz]
+    clock_mult = {100: "5.0", 125: "5.0", 150: "6.0", 200: "5.0", 250: "5.0"}[args.core_mhz]
+    divide = {100: "10.0", 125: "8.0", 150: "8.0", 200: "5.0", 250: "4.0"}[args.core_mhz]
+    peripheral_divide = {100: "20", 125: "20", 150: "24", 200: "20", 250: "20"}[args.core_mhz]
     env = dict(os.environ)
     env["SOCRV_CLOCK_MULT"] = clock_mult
     env["SOCRV_CORE_DIVIDE"] = divide
