@@ -1,6 +1,8 @@
 PYTHON ?= python
 JOBS ?= 4
-PROFILE ?= rtthread-coremark
+BOARD ?= kintex7_competition
+CORE_MHZ ?=
+PROFILE ?= $(if $(filter pynq_z2,$(BOARD)),rtthread,rtthread-coremark)
 SUITE ?= smoke
 TRACE ?= 0
 ISA_GATE ?= current
@@ -180,15 +182,18 @@ regression: deps-check
 
 # Vivado is only invoked when the user explicitly runs fpga-build/program.
 fpga-build: deps-check
-	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --jobs $(JOBS)
+	@$(PYTHON) scripts/run_vivado.py --board $(BOARD) --profile $(PROFILE) --jobs $(JOBS) \
+		$(if $(CORE_MHZ),--core-mhz $(CORE_MHZ),)
 
 fpga-bitstream: fpga-build
 
 fpga-check:
-	@$(PYTHON) scripts/run_vivado.py --profile $(PROFILE) --check-only
+	@$(PYTHON) scripts/run_vivado.py --board $(BOARD) --profile $(PROFILE) --check-only \
+		$(if $(CORE_MHZ),--core-mhz $(CORE_MHZ),)
 
 fpga-program:
-	@$(PYTHON) scripts/program_board.py --profile $(PROFILE)
+	@$(PYTHON) scripts/program_board.py --board $(BOARD) --profile $(PROFILE) \
+		$(if $(CORE_MHZ),--core-mhz $(CORE_MHZ),)
 
 check-images:
 	@$(PYTHON) scripts/check_images.py

@@ -27,6 +27,10 @@
           "max_wall_seconds": {"type": "integer", "minimum": 1},
           "seed": {"type": "integer", "minimum": 0},
           "uart_command": {"type": "string", "minLength": 1},
+          "uart_followup_commands": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1}
+          },
           "uart_prompt": {"type": "string", "minLength": 1},
           "uart_prompt_timeout": {"type": "integer", "minimum": 1},
           "uart_expect": {

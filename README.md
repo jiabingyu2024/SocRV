@@ -1,6 +1,7 @@
 # SocRV
 
-SocRV 是面向自研 RV32 CPU、HXI SoC、Verilator 和 Kintex-7 FPGA 的统一工程框架。
+SocRV 是面向自研 RV32 CPU、HXI SoC、Verilator、Kintex-7 和 PYNQ-Z2 FPGA
+的统一工程框架。
 最终目标是在 FPGA 上启动 RT-Thread，在 FinSH/MSH 中输入：
 
 ```text
@@ -49,8 +50,22 @@ make fpga-check
 make fpga-program
 ```
 
+默认目标仍是 100 MHz 的 `kintex7_competition`，原有命令无需增加参数。
+PYNQ-Z2 用于 50 MHz RT-Thread 功能正确性验证，通过 `BOARD` 选择；其
+默认 profile 是 `rtthread`：
+
+```text
+make fpga-build BOARD=pynq_z2
+make fpga-check BOARD=pynq_z2
+make fpga-program BOARD=pynq_z2
+```
+
 完整操作说明见
 [`docs/cpu_iteration_sim_software_fpga_guide.md`](docs/cpu_iteration_sim_software_fpga_guide.md)。
+比赛收尾、PYNQ 赛前验证和 Kintex 现场流程见
+[`docs/competition_final_workflow.md`](docs/competition_final_workflow.md)。
+赛事 C 程序与 RT-Thread/MSH/CoreMark 软件链路的对应关系见
+[`docs/competition_software_integration.md`](docs/competition_software_integration.md)。
 
 ## 目录边界
 
@@ -61,6 +76,7 @@ make fpga-program
 - `fpga/`：板级 RTL、XDC 和 Vivado Tcl；
 - `data/`：Memory Map、软件合同、测试清单和 ISA 镜像；
 - `scripts/`：构建、运行、检查和结果收集；
+- `competition_runs/`：每次赛事输入、软件、镜像、仿真和 Vivado 结果；
 - `build/`：全部可重新生成的产物。
 
 ## 结果位置
@@ -74,6 +90,16 @@ build/wave/          可选 VCD
 build/regression/    ISA/测试套件汇总
 build/vivado/        Vivado 工程、报告、result.json 和 bitstream
 ```
+
+比赛入口不经过 `make` 调用 Vivado。赛事文件职责等同 `core_main.c` 时：
+
+```powershell
+python scripts/prepare_competition_run.py --source "D:/competition_input/core_main.c"
+python scripts/build_software.py --profile contest-rtthread-coremark --run-dir "competition_runs/<run-id>"
+python scripts/run_verilator.py --profile contest-rtthread-coremark --run-dir "competition_runs/<run-id>"
+```
+
+随后在 Vivado GUI 的 Tcl Console source 本次 run 自动生成的板卡 Tcl。
 
 当前参考 core 的软件 ISA 是 `rv32i_zicsr/ilp32`。最终整数目标是
 RV32IM + Zicsr + Zicntr + Zifencei，并通过 RV32UI/RV32MI/RV32UM；浮点在

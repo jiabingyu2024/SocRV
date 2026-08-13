@@ -1,6 +1,8 @@
 # Generated build products
 /build/*
 !/build/.gitkeep
+/competition_runs/*
+!/competition_runs/.gitkeep
 
 # Reproducibly fetched external sources (pinned by dependency.lock.json)
 /software/rt-thread/upstream/

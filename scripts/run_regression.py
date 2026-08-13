@@ -43,6 +43,12 @@ def main() -> int:
     parser.add_argument("--suite", default="smoke")
     parser.add_argument("--no-rtl-build", action="store_true")
     parser.add_argument("--trace", action="store_true")
+    parser.add_argument(
+        "--run-dir",
+        type=Path,
+        help="required for the competition suite; archives outputs in one run",
+    )
+    parser.add_argument("--competition-config", type=Path)
     difftest_group = parser.add_mutually_exclusive_group()
     difftest_group.add_argument("--difftest", action="store_true")
     difftest_group.add_argument("--no-difftest", action="store_true")
@@ -51,6 +57,15 @@ def main() -> int:
     tests = [test for test in document["tests"] if args.suite in test["suite"]]
     if not tests:
         parser.error(f"no tests selected for suite {args.suite}")
+    competition_tests = [
+        test
+        for test in tests
+        if test.get("image") == "contest-rtthread-coremark"
+    ]
+    if competition_tests and args.run_dir is None:
+        parser.error("competition tests require --run-dir")
+    if args.run_dir is not None and len(competition_tests) != len(tests):
+        parser.error("--run-dir can only be used with competition tests")
 
     results = []
     performance_results = []
@@ -75,6 +90,9 @@ def main() -> int:
             wall_timeout=test.get("max_wall_seconds", 600),
             require_pass=False,
             uart_command=test.get("uart_command", ""),
+            uart_followup_commands=tuple(
+                test.get("uart_followup_commands", [])
+            ),
             uart_prompt=test.get("uart_prompt", "msh >"),
             uart_prompt_timeout=test.get(
                 "uart_prompt_timeout",
@@ -90,6 +108,8 @@ def main() -> int:
                 else "ram-strict",
             ),
             difftest_isa=difftest_config.get("isa", ""),
+            run_dir=args.run_dir,
+            competition_config=args.competition_config,
         )
         result = json.loads(result_path.read_text(encoding="utf-8"))
         results.append(result)
@@ -104,7 +124,11 @@ def main() -> int:
             print(f"Performance {result['test']}: {line}")
 
     passed = all(result["status"] == "PASS" for result in results)
-    summary_path = repo_path("build", "regression", args.suite, "summary.json")
+    summary_path = (
+        result_path.parent / "regression_summary.json"
+        if args.run_dir is not None
+        else repo_path("build", "regression", args.suite, "summary.json")
+    )
     any_difftest = any(
         result.get("difftest", {}).get("enabled", False)
         for result in results

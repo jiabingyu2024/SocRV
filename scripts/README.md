@@ -7,7 +7,8 @@
 - ICCM：128 KiB
 - DCCM：64 KiB
 - 无 C、无 cache、无 ECC、无 AXI/AHB 外部存储
-- FPGA 默认 core 目标频率：100 MHz；外设固定 50 MHz
+- FPGA 默认板卡：`kintex7_competition`，core 目标频率 100 MHz，外设仍固定 50 MHz
+- PYNQ-Z2：固定 50 MHz core/peripheral，用于功能正确性验证
 
 主要链路：
 
@@ -33,6 +34,10 @@ run_regression.py
 
 run_vivado.py
   -> 构建软件镜像、综合、实现、bitstream 与报告门禁
+
+prepare_competition_run.py
+  -> 保存赛事 core_main.c、哈希和接入配置
+  -> 生成 PYNQ/Kintex Vivado GUI 启动 Tcl
 ```
 
 推荐入口：
@@ -44,6 +49,15 @@ make sim-quick
 make sim-full
 make software-fpga
 make fpga-build
+make fpga-build BOARD=pynq_z2 PROFILE=rtthread
+```
+
+比赛 release 使用独立入口，Vivado 仍在 Windows GUI 中分步运行：
+
+```text
+python scripts/prepare_competition_run.py --source <core_main.c或源码目录>
+python scripts/build_software.py --profile contest-rtthread-coremark --run-dir competition_runs/<run-id>
+python scripts/run_verilator.py --profile contest-rtthread-coremark --run-dir competition_runs/<run-id>
 ```
 
 注意：仓库中旧的 `data/isa/` 或 `build/images/` 只有在 `check_images.py` 同时确认内存映射哈希、CODE/DATA 范围和测试状态地址后才可使用。更改 `data/soc/` 后必须重新生成镜像，不能继续使用旧 `.mem` 文件。

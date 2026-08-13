@@ -28,6 +28,27 @@
     "elf": {"type": "object"},
     "dependencies": {"type": "array"},
     "sources": {"type": "array", "minItems": 1},
-    "repository_dirty": {"type": "boolean"}
+    "repository_dirty": {"type": "boolean"},
+    "competition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "config", "entry_source"],
+      "properties": {
+        "mode": {"const": "core_main_replacement"},
+        "config": {"$ref": "#/$defs/source_file"},
+        "entry_source": {"$ref": "#/$defs/source_file"}
+      }
+    }
+  },
+  "$defs": {
+    "source_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
   }
 }

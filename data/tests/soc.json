@@ -191,6 +191,51 @@
         "enabled": true,
         "iterations": 10
       }
+    },
+    {
+      "name": "contest-rtthread-coremark-command-3",
+      "target": "soc",
+      "suite": [
+        "competition",
+        "coremark",
+        "functional",
+        "rtthread",
+        "os"
+      ],
+      "image": "contest-rtthread-coremark",
+      "checker": "coremark-crc-test-status-and-perf-window-uart",
+      "difftest": {
+        "enabled": false,
+        "backend": "spike",
+        "mode": "soc-mmio",
+        "isa": "rv32imf_zicsr"
+      },
+      "uart_command": "coremark 3",
+      "uart_followup_commands": ["ps", "help"],
+      "uart_prompt": ">",
+      "uart_prompt_timeout": 5000000,
+      "uart_expect": [
+        "SocRV RT-Thread ready",
+        "[0]crclist       : 0xe714",
+        "[0]crcmatrix     : 0x1fd7",
+        "[0]crcstate      : 0x8e3a",
+        "thread   pri  status",
+        "RT-Thread shell help"
+      ],
+      "uart_reject": [
+        "ERROR! list crc",
+        "ERROR! matrix crc",
+        "ERROR! state crc",
+        "Cannot validate operation",
+        "SocRV CoreMark CRC check FAIL"
+      ],
+      "max_cycles": 27000000,
+      "max_wall_seconds": 900,
+      "seed": 1,
+      "performance": {
+        "enabled": true,
+        "iterations": 3
+      }
     }
   ]
 }

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socrv.local/schema/competition_source.schema.json",
+  "title": "SocRV competition source configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mode",
+    "entry_source",
+    "extra_sources",
+    "entry_symbol"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "mode": {
+      "enum": [
+        "core_main_replacement",
+        "algorithm_replacement",
+        "complete_coremark_set",
+        "standalone_test"
+      ]
+    },
+    "entry_source": {"$ref": "#/$defs/relative_path"},
+    "extra_sources": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/relative_path"},
+      "uniqueItems": true
+    },
+    "entry_symbol": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "allOf": [
+        {"pattern": "^[^/\\\\]"},
+        {"not": {"pattern": "(^|/)\\.\\.(/|$)"}},
+        {"not": {"pattern": "^[A-Za-z]:"}},
+        {"not": {"pattern": "\\\\"}}
+      ]
+    }
+  }
+}

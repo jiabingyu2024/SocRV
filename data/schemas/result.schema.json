@@ -37,6 +37,10 @@
     "exit_reason": {"type": "string"},
     "max_cycles": {"type": "integer", "minimum": 1},
     "image": {"type": "string"},
+    "image_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
     "checker": {
       "type": "object",
       "additionalProperties": false,

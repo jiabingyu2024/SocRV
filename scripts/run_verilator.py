@@ -9,7 +9,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from build_software import PROFILES, build_profile
+from build_software import PROFILES, build_profile, resolve_run_dir
 from lib.hashing import sha256_file, sha256_text
 from lib.manifest import read_json, write_json_atomic
 from lib.repo import repo_path
@@ -41,6 +41,7 @@ DEFAULT_CYCLES = {
     "rtthread": 6_000_000,
     "coremark-smoke": 50_000_000,
     "rtthread-coremark": 30_000_000,
+    "contest-rtthread-coremark": 30_000_000,
 }
 
 
@@ -56,11 +57,13 @@ DEFAULT_TESTS = {
     "rtthread": "rtthread-smoke",
     "coremark-smoke": "coremark-baremetal-functional",
     "rtthread-coremark": "rtthread-coremark-command",
+    "contest-rtthread-coremark": "contest-rtthread-coremark-command-3",
 }
 
 BENCHMARK_ITERATIONS = {
     "coremark-smoke": 1,
     "rtthread-coremark": 3,
+    "contest-rtthread-coremark": 3,
 }
 
 DEFAULT_CHECKERS = {
@@ -70,6 +73,11 @@ DEFAULT_CHECKERS = {
     "coremark-smoke": "coremark-crc-and-test-status",
     "rtthread-coremark":
         "uart-command-coremark-crc-test-status-and-perf-window",
+    # The contest driver is kept byte-for-byte identical to the organizer's
+    # core_main.c. Validate its official CRC lines directly instead of
+    # requiring project-specific text that the upstream driver cannot emit.
+    "contest-rtthread-coremark":
+        "coremark-crc-test-status-and-perf-window-uart",
 }
 
 DEFAULT_UART_EXPECT = {
@@ -84,6 +92,12 @@ DEFAULT_UART_EXPECT = {
         "SocRV RT-Thread ready",
         "msh >",
     ),
+    "contest-rtthread-coremark": (
+        "SocRV RT-Thread ready",
+        "msh >",
+        "thread   pri  status",
+        "RT-Thread shell help",
+    ),
 }
 
 DEFAULT_UART_REJECT = {
@@ -95,6 +109,13 @@ DEFAULT_UART_REJECT = {
         "Cannot validate operation",
     ),
     "rtthread-coremark": (
+        "ERROR! list crc",
+        "ERROR! matrix crc",
+        "ERROR! state crc",
+        "Cannot validate operation",
+        "SocRV CoreMark CRC check FAIL",
+    ),
+    "contest-rtthread-coremark": (
         "ERROR! list crc",
         "ERROR! matrix crc",
         "ERROR! state crc",
@@ -412,6 +433,8 @@ def run_image(
     difftest_mode: str = "ram-strict",
     difftest_isa: str = "",
     difftest_fault: str = "",
+    run_dir: Path | None = None,
+    competition_config: Path | None = None,
 ) -> Path:
     if difftest:
         raise RuntimeError(
@@ -433,10 +456,23 @@ def run_image(
             raise RuntimeError(f"image file is missing: {image_dir / name}")
 
     safe_name = safe_test_name(test_name) + ("-diff" if difftest else "")
-    result_path = repo_path("build", "result", "soc", f"{safe_name}.json")
-    log_path = repo_path("build", "log", "soc", f"{safe_name}.log")
+    selected_run = resolve_run_dir(run_dir) if run_dir is not None else None
+    result_path = (
+        selected_run / "simulation" / "result.json"
+        if selected_run is not None
+        else repo_path("build", "result", "soc", f"{safe_name}.json")
+    )
+    log_path = (
+        selected_run / "simulation" / "uart.log"
+        if selected_run is not None
+        else repo_path("build", "log", "soc", f"{safe_name}.log")
+    )
     wave_path = (
-        repo_path("build", "wave", "soc", f"{safe_name}.vcd")
+        (
+            selected_run / "simulation" / "wave.vcd"
+            if selected_run is not None
+            else repo_path("build", "wave", "soc", f"{safe_name}.vcd")
+        )
         if trace
         else None
     )
@@ -469,6 +505,13 @@ def run_image(
         )
         if seed != 1:
             reproduce += f" --seed {seed}"
+        if selected_run is not None:
+            reproduce += f" --run-dir {relative_to_repo(selected_run)}"
+        if competition_config is not None:
+            reproduce += (
+                " --competition-config "
+                + json.dumps(relative_to_repo(competition_config))
+            )
         if performance:
             reproduce += (
                 f" --benchmark-iterations {benchmark_iterations}"
@@ -656,8 +699,12 @@ def run_image(
         )
 
     document = read_json(result_path)
+    document["image_manifest_sha256"] = sha256_file(
+        image_dir / "image.json"
+    )
     schema = read_json(repo_path("data", "schemas", "result.schema.json"))
     Draft202012Validator(schema).validate(document)
+    write_json_atomic(result_path, document)
     exit_consistent = (
         (document["status"] == "PASS" and result.returncode == 0)
         or (document["status"] != "PASS" and result.returncode != 0)
@@ -698,9 +745,18 @@ def run_profile(
     difftest_mode: str = "ram-strict",
     difftest_isa: str = "",
     difftest_fault: str = "",
+    run_dir: Path | None = None,
+    competition_config: Path | None = None,
 ) -> Path:
+    selected_run = resolve_run_dir(run_dir) if run_dir is not None else None
     if build_sw:
-        _, image_dir = build_profile(profile)
+        _, image_dir = build_profile(
+            profile,
+            run_dir=selected_run,
+            competition_config=competition_config,
+        )
+    elif selected_run is not None:
+        image_dir = selected_run / "images"
     else:
         image_dir = repo_path("build", "images", profile)
     if performance is None:
@@ -736,6 +792,8 @@ def run_profile(
         difftest_mode=difftest_mode,
         difftest_isa=difftest_isa,
         difftest_fault=difftest_fault,
+        run_dir=selected_run,
+        competition_config=competition_config,
     )
 
 
@@ -750,7 +808,7 @@ def main() -> int:
     parser.add_argument("--benchmark-iterations", type=int)
     parser.add_argument("--uart-command")
     parser.add_argument("--uart-followup-command", action="append")
-    parser.add_argument("--uart-prompt", default="msh >")
+    parser.add_argument("--uart-prompt")
     parser.add_argument("--uart-prompt-timeout", type=int, default=5_000_000)
     parser.add_argument("--checker")
     parser.add_argument("--uart-expect", action="append")
@@ -758,6 +816,16 @@ def main() -> int:
     parser.add_argument("--wall-timeout", type=int, default=600)
     parser.add_argument("--no-rtl-build", action="store_true")
     parser.add_argument("--no-software-build", action="store_true")
+    parser.add_argument(
+        "--run-dir",
+        type=Path,
+        help="competition_runs/<run-id>; reads images and archives simulation output",
+    )
+    parser.add_argument(
+        "--competition-config",
+        type=Path,
+        help="override <run-dir>/source/competition.json while building software",
+    )
     parser.add_argument("--trace", action="store_true")
     parser.add_argument("--build-only", action="store_true")
     parser.add_argument("--force-rtl-build", action="store_true")
@@ -794,7 +862,10 @@ def main() -> int:
         if benchmark_iterations is None:
             benchmark_iterations = BENCHMARK_ITERATIONS.get(args.profile, 0)
         max_cycles = args.max_cycles
-        if max_cycles is None and args.profile == "rtthread-coremark":
+        if max_cycles is None and args.profile in (
+            "rtthread-coremark",
+            "contest-rtthread-coremark",
+        ):
             # RT-Thread boot, shell command echo and the final UART report
             # dominate short CoreMark runs at a real 250 MHz / 115200-baud
             # UART. Keep a generous fixed allowance for that traffic, then
@@ -802,8 +873,20 @@ def main() -> int:
             max_cycles = 24_000_000 + 1_000_000 * benchmark_iterations
         uart_command = args.uart_command or (
             f"coremark {benchmark_iterations}"
-            if args.profile == "rtthread-coremark"
+            if args.profile in (
+                "rtthread-coremark",
+                "contest-rtthread-coremark",
+            )
             else ""
+        )
+        uart_followup_commands = tuple(args.uart_followup_command or ())
+        if (
+            args.uart_followup_command is None
+            and args.profile == "contest-rtthread-coremark"
+        ):
+            uart_followup_commands = ("ps", "help")
+        uart_prompt = args.uart_prompt or (
+            ">" if args.profile == "contest-rtthread-coremark" else "msh >"
         )
         result_path = run_profile(
             args.profile,
@@ -816,10 +899,8 @@ def main() -> int:
             benchmark_iterations=benchmark_iterations,
             wall_timeout=args.wall_timeout,
             uart_command=uart_command,
-            uart_followup_commands=tuple(
-                args.uart_followup_command or ()
-            ),
-            uart_prompt=args.uart_prompt,
+            uart_followup_commands=uart_followup_commands,
+            uart_prompt=uart_prompt,
             uart_prompt_timeout=args.uart_prompt_timeout,
             checker=args.checker or "",
             uart_expect=(
@@ -836,6 +917,8 @@ def main() -> int:
             difftest_mode=args.difftest_mode,
             difftest_isa=args.difftest_isa or "",
             difftest_fault=args.difftest_fault or "",
+            run_dir=args.run_dir,
+            competition_config=args.competition_config,
         )
     except (OSError, RuntimeError, ValueError) as error:
         parser.error(str(error))

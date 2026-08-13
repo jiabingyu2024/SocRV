@@ -17,7 +17,12 @@ CFLAGS += $(PROFILE_CFLAGS)
 ASFLAGS += $(PROFILE_ASFLAGS)
 LDLIBS += -lgcc
 
-OBJECTS := $(addprefix $(OUT)/objects/,$(SOURCES:=.o))
+PROFILE_ENTRY_SOURCE ?=
+PROFILE_ENTRY_OBJECT :=
+ifneq ($(strip $(PROFILE_ENTRY_SOURCE)),)
+PROFILE_ENTRY_OBJECT := $(OUT)/objects/contest/core_main.c.o
+endif
+OBJECTS := $(addprefix $(OUT)/objects/,$(SOURCES:=.o)) $(PROFILE_ENTRY_OBJECT)
 DEPFILES := $(OBJECTS:.o=.d)
 BUILD_CONFIG_FILES := $(MAKEFILE_LIST)
 ELF := $(OUT)/firmware.elf
@@ -47,6 +52,12 @@ $(OUT)/objects/coremark/upstream/core_main.c.o: coremark/upstream/core_main.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDES) -Dmain=coremark_main -MMD -MP -c $< -o $@
 
+ifneq ($(strip $(PROFILE_ENTRY_SOURCE)),)
+$(PROFILE_ENTRY_OBJECT): $(PROFILE_ENTRY_SOURCE)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) -Dmain=coremark_main -MMD -MP -c $< -o $@
+endif
+
 $(ELF): $(OBJECTS) $(LINKER) linker/memory.ldh
 	@mkdir -p $(dir $@)
 	$(CC) $(LDFLAGS) -T$(LINKER) -Wl,-Map,$(MAP) $(OBJECTS) $(LDLIBS) -o $@
@@ -64,7 +75,7 @@ clean:
 	rm -rf $(OUT)
 
 print-sources:
-	@printf '%s\n' $(SOURCES)
+	@printf '%s\n' $(SOURCES) $(PROFILE_ENTRY_SOURCE)
 
 print-flags:
 	@printf '%s\n' '$(CFLAGS)'
