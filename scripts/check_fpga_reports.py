@@ -9,7 +9,7 @@ from lib.manifest import write_json_atomic
 from lib.repo import repo_path
 
 
-def check(build_root: Path) -> Path:
+def check(build_root: Path, *, target: str = "kintex7_competition") -> Path:
     project = build_root / "project"
     bitstream = project / "socrv.runs" / "impl_1" / "fpga_top.bit"
     report_dir = project / "reports"
@@ -43,7 +43,7 @@ def check(build_root: Path) -> Path:
         {
             "schema_version": 1,
             "kind": "fpga",
-            "target": "kintex7_competition",
+            "target": target,
             "status": status,
             "timing_met": timing_met,
             "wns_ns": wns_ns,
@@ -68,13 +68,17 @@ def check(build_root: Path) -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--board",
+        default="kintex7_competition",
+    )
+    parser.add_argument(
         "--build-root",
         type=Path,
         default=repo_path("build", "vivado", "kintex7-smoke"),
     )
     args = parser.parse_args()
     try:
-        result = check(args.build_root.resolve())
+        result = check(args.build_root.resolve(), target=args.board)
     except (OSError, ValueError) as error:
         parser.error(str(error))
     print(f"Result: {result}")

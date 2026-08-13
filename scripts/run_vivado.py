@@ -7,6 +7,7 @@ from pathlib import Path
 
 from build_software import PROFILES, build_profile
 from check_fpga_reports import check
+from lib.fpga import BOARDS, fpga_build_root, resolve_core_mhz
 from lib.repo import repo_path
 
 
@@ -24,27 +25,39 @@ def find_vivado() -> Path:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build the Kintex-7 SocRV bitstream with Vivado.")
+    parser = argparse.ArgumentParser(description="Build a SocRV FPGA bitstream with Vivado.")
+    parser.add_argument(
+        "--board",
+        choices=sorted(BOARDS),
+        default="kintex7_competition",
+    )
     parser.add_argument(
         "--profile",
         choices=sorted(PROFILES),
-        default="rtthread-coremark",
+        default=None,
+        help="software profile; defaults to rtthread-coremark for Kintex-7 and rtthread for PYNQ-Z2",
     )
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument(
-        "--core-mhz", type=int, choices=(100, 125, 150, 200, 250), default=100,
-        help="EH1 TCM SoC target clock (100, 125, 150, 200 or 250 MHz)",
+        "--core-mhz",
+        type=int,
+        default=None,
+        help="SoC core clock; defaults to 150 for Kintex-7 and 50 for PYNQ-Z2",
     )
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
-    build_root = repo_path(
-        "build", "vivado", f"kintex7-{args.profile}-{args.core_mhz}mhz"
-    )
+    board = BOARDS[args.board]
+    profile = args.profile or board.default_profile
+    try:
+        core_mhz = resolve_core_mhz(board, args.core_mhz)
+    except ValueError as error:
+        parser.error(str(error))
+    build_root = fpga_build_root(board, profile, core_mhz)
     if args.check_only:
-        check(build_root)
+        check(build_root, target=board.name)
         return 0
 
-    _, image_dir = build_profile(args.profile)
+    _, image_dir = build_profile(profile)
     build_root.mkdir(parents=True, exist_ok=True)
     project_dir = build_root / "project"
     # A failed or interrupted rebuild must not leave a previous PASS result or
@@ -62,24 +75,25 @@ def main() -> int:
         "-mode",
         "batch",
         "-source",
-        str(repo_path("fpga", "boards", "kintex7_competition", "tcl", "build_bitstream.tcl")),
+        str(board.tcl_dir / "build_bitstream.tcl"),
         "-tclargs",
         str(project_dir),
         str(image_dir),
         str(args.jobs),
     ]
-    clock_mult = {100: "5.0", 125: "5.0", 150: "6.0", 200: "5.0", 250: "5.0"}[args.core_mhz]
-    divide = {100: "10.0", 125: "8.0", 150: "8.0", 200: "5.0", 250: "4.0"}[args.core_mhz]
-    peripheral_divide = {100: "20", 125: "20", 150: "24", 200: "20", 250: "20"}[args.core_mhz]
     env = dict(os.environ)
-    env["SOCRV_CLOCK_MULT"] = clock_mult
-    env["SOCRV_CORE_DIVIDE"] = divide
-    env["SOCRV_PERIPHERAL_DIVIDE"] = peripheral_divide
-    env["SOCRV_CORE_HZ"] = str(args.core_mhz * 1_000_000)
+    if board.mmcm:
+        # Keep the MMCM VCO legal and the independent peripheral clock at
+        # 50 MHz for every supported Kintex-7 sweep point.
+        clock_mult, divide, peripheral_divide = board.mmcm[core_mhz]
+        env["SOCRV_CLOCK_MULT"] = clock_mult
+        env["SOCRV_CORE_DIVIDE"] = divide
+        env["SOCRV_PERIPHERAL_DIVIDE"] = peripheral_divide
+        env["SOCRV_CORE_HZ"] = str(core_mhz * 1_000_000)
     completed = subprocess.run(command, cwd=build_root, check=False, env=env)
     if completed.returncode != 0:
         parser.error(f"Vivado failed with exit code {completed.returncode}")
-    check(build_root)
+    check(build_root, target=board.name)
     return 0
 
 

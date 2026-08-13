@@ -7,7 +7,8 @@
 - ICCM：128 KiB
 - DCCM：64 KiB
 - 无 C、无 cache、无 ECC、无 AXI/AHB 外部存储
-- FPGA 默认 core 目标频率：100 MHz；外设固定 50 MHz
+- FPGA 默认板卡：`kintex7_competition`，core 目标频率 150 MHz
+- PYNQ-Z2：固定 50 MHz core/peripheral，用于功能正确性验证
 
 主要链路：
 
@@ -44,6 +45,7 @@ make sim-quick
 make sim-full
 make software-fpga
 make fpga-build
+make fpga-build BOARD=pynq_z2 PROFILE=rtthread
 ```
 
 注意：仓库中旧的 `data/isa/` 或 `build/images/` 只有在 `check_images.py` 同时确认内存映射哈希、CODE/DATA 范围和测试状态地址后才可使用。更改 `data/soc/` 后必须重新生成镜像，不能继续使用旧 `.mem` 文件。

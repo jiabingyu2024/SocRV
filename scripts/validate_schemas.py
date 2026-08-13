@@ -19,7 +19,10 @@ def main() -> int:
         Draft202012Validator.check_schema(schema)
         print(f"Schema OK: {path.relative_to(repo_path())}")
     instances = [
-        ("board.schema.json", repo_path("fpga", "boards", "kintex7_competition", "board.json")),
+        *[
+            ("board.schema.json", path)
+            for path in sorted(repo_path("fpga", "boards").glob("*/board.json"))
+        ],
         ("memory_map.schema.json", repo_path("data", "soc", "memory_map.json")),
         (
             "software_contract.schema.json",

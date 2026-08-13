@@ -1,6 +1,7 @@
 # SocRV
 
-SocRV 是面向自研 RV32 CPU、HXI SoC、Verilator 和 Kintex-7 FPGA 的统一工程框架。
+SocRV 是面向自研 RV32 CPU、HXI SoC、Verilator、Kintex-7 和 PYNQ-Z2 FPGA
+的统一工程框架。
 最终目标是在 FPGA 上启动 RT-Thread，在 FinSH/MSH 中输入：
 
 ```text
@@ -47,6 +48,16 @@ FPGA 命令会调用 Vivado，应由用户显式执行：
 make fpga-build
 make fpga-check
 make fpga-program
+```
+
+默认目标仍是 150 MHz 的 `kintex7_competition`，原有命令无需增加参数。
+PYNQ-Z2 用于 50 MHz RT-Thread 功能正确性验证，通过 `BOARD` 选择；其
+默认 profile 是 `rtthread`：
+
+```text
+make fpga-build BOARD=pynq_z2
+make fpga-check BOARD=pynq_z2
+make fpga-program BOARD=pynq_z2
 ```
 
 完整操作说明见

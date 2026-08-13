@@ -47,6 +47,7 @@ def main() -> int:
             repo_path("rtl", "filelist.f"),
             repo_path("sim", "filelists", "soc_verilator.f"),
             repo_path("sim", "filelists", "fpga_kintex7.f"),
+            repo_path("sim", "filelists", "fpga_pynq_z2.f"),
         ],
     )
     args = parser.parse_args()
