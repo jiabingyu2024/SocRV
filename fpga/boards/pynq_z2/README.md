@@ -5,7 +5,9 @@
 - SoC clocks: fixed 50 MHz core and 50 MHz peripheral clocks
 - UART: PL UART on Raspberry Pi header pin 10 (`Y19`, RX) and pin 8
   (`Y18`, TX), 115200 baud
-- LEDs: `LED0` is GPIO bit 0, `LED1` is MMCM lock, `LED2` is FAIL and
+- Reset release: MMCM `LOCKED` must remain continuously asserted for 20 ms;
+  loss of lock asserts the SoC reset immediately
+- LEDs: `LED0` is GPIO bit 0, `LED1` is qualified clock stability, `LED2` is FAIL and
   `LED3` is PASS
 
 This target is intended for functional-correctness tests, not frequency

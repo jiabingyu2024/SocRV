@@ -1,4 +1,6 @@
-module board_clock_reset (
+module board_clock_reset #(
+  parameter int unsigned LOCK_STABLE_CYCLES = 1_000_000
+) (
   input  logic sys_clk_i,
   output logic core_clk_o,
   output logic peripheral_clk_o,
@@ -6,6 +8,7 @@ module board_clock_reset (
   output logic clock_locked_o
 );
   logic mmcm_locked;
+  logic clock_stable;
 
   pynq_z2_clock_wrapper u_clock (
     .clk_125mhz_i(sys_clk_i),
@@ -15,11 +18,14 @@ module board_clock_reset (
     .locked_o(mmcm_locked)
   );
 
-  reset_sync u_core_reset_sync (
+  pynq_z2_reset_sequencer #(
+    .LOCK_STABLE_CYCLES(LOCK_STABLE_CYCLES)
+  ) u_reset_sequencer (
     .clk_i(core_clk_o),
-    .arst_ni(mmcm_locked),
-    .rst_ni(core_rst_no)
+    .mmcm_locked_i(mmcm_locked),
+    .soc_rst_no(core_rst_no),
+    .clock_stable_o(clock_stable)
   );
 
-  assign clock_locked_o = mmcm_locked;
+  assign clock_locked_o = clock_stable;
 endmodule

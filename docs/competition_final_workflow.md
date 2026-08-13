@@ -320,6 +320,38 @@ SOCRV_PROJECT=.../competition_runs/20260813_143205_coremark_r1/vivado/pynq_z2-50
 
 PYNQ-Z2 的 Core 和外设时钟都固定为 50 MHz，不做频率扫描。
 
+PYNQ-Z2 使用板载 Ethernet PHY 提供给 PL 的 125 MHz 时钟。PYNQ 专用复位
+顶层不会在 MMCM 第一次报告 `LOCKED` 时立即启动处理器，而是按下面的顺序处理：
+
+```text
+125 MHz PL 时钟 → MMCM 生成 50 MHz → LOCKED 同步
+                                    → 连续稳定约 20 ms
+                                    → 同步释放 SocRV/RT-Thread 复位
+```
+
+在稳定窗口内只要发生一次失锁，计数就会清零并保持 SoC 复位；运行期间失锁则会
+立即重新拉低复位。这样可以避免 PYNQ 上电时 PLL/MMCM 尚未稳定便启动 RT-Thread，
+从而连续看到多次 RT-Thread 启动标志。该逻辑只在 `pynq_z2` 板级路径中使用，
+不会改变 Kintex-7 比赛工程。
+
+新建 PYNQ 工程时，启动 Tcl 会通过 `fpga_pynq_z2.f` 自动加入
+`pynq_z2_reset_sequencer.sv`，现场不需要额外操作。若当前 PYNQ 工程是在这项
+修改之前已经创建的，不要直接沿用旧综合结果；可在该工程的 Tcl Console 执行：
+
+```tcl
+add_files -norecurse {E:/Resources/03_competitions/26_03_jcs/2608round/subprj2/SocRV/fpga/boards/pynq_z2/rtl/pynq_z2_reset_sequencer.sv}
+update_compile_order -fileset sources_1
+reset_run synth_1
+```
+
+随后重新执行 Synthesis、Implementation 和 Generate Bitstream。也可以关闭旧工程，
+为新的 run-id 重新 source `create_pynq_z2_project.tcl`，由脚本自动取得完整文件清单。
+
+PYNQ 的 `LED1` 现在表示“MMCM 已通过连续稳定检测”，而不是未经处理的原始
+`LOCKED`。下载 bitstream 后，`LED1` 应在约 20 ms 后点亮并保持常亮，随后
+RT-Thread 只启动一次。如果 `LED1` 同步熄灭或闪烁且系统重新启动，应优先检查
+PYNQ 供电、125 MHz PHY 时钟和 MMCM，而不是先修改 RT-Thread 软件。
+
 ### Kintex-7：配置 Core 频率
 
 Kintex-7 输入时钟为 200 MHz，外设时钟始终为 50 MHz。现场只设置 Core 的 MHz，
@@ -463,6 +495,11 @@ help
 coremark 10000
 ```
 
+PYNQ 烧录后先观察 `LED1`：它应在复位稳定窗口结束后常亮。打开串口时建议先让
+终端开始记录，再 Program Device；正常情况下只应出现一轮 RT-Thread 启动信息，
+随后停在 `msh >`。若重复打印启动标志，同时记录 `LED1` 是否闪烁：闪烁说明时钟
+稳定资格丢失；始终常亮则应转查 CPU 异常、跳回复位向量或内存破坏。
+
 `coremark 3` 之后再次执行 `ps` 和 `help` 很重要：它能确认 CoreMark 为性能计时
 暂停中断后，RT-Thread tick 已恢复，MSH 没有因为一次基准运行而失效。
 
@@ -478,7 +515,8 @@ coremark 10000
 6. 在 Vivado GUI source 本次 run 自动生成的 PYNQ 启动 Tcl；
 7. 手动完成 Synthesis、Implementation 和 Generate Bitstream；
 8. 保存报告，运行 `check_fpga_reports.py`；
-9. 烧录 PYNQ，通过串口验证 RT-Thread、MSH、CoreMark 和后续命令。
+9. 烧录 PYNQ，确认 `LED1` 延迟点亮后保持稳定且 RT-Thread 只启动一次；
+10. 通过串口验证 RT-Thread、MSH、CoreMark 和后续命令。
 
 PYNQ 只证明软件、存储器初始化、UART、复位和板级数据通路。它固定 50 MHz，
 不能代替 Kintex-7 的 timing 或超频结论。
@@ -503,9 +541,11 @@ PYNQ 只证明软件、存储器初始化、UART、复位和板级数据通路�
 - `--run-dir` 软件、镜像和仿真归档；
 - `coremark 3 → ps → help` 短仿真门禁；
 - PYNQ 固定 50 MHz 和 Kintex 单一 `CORE_MHZ` GUI Tcl；
+- PYNQ MMCM `LOCKED` 连续稳定约 20 ms 后再同步释放 SoC 复位，失锁立即复位；
 - FPGA 报告检查与比赛 run 打包。
 
-实现没有修改 CoreMark 和 RT-Thread upstream，也没有改变板级 RTL、约束或原有
-`create_project.tcl`。当前边界是只支持“赛事文件职责等同 `core_main.c`”这一种
-输入。真实文件若包含多份算法实现、平台 port 或自包含 `main()`，先改
+实现没有修改 CoreMark 和 RT-Thread upstream，也没有改变 Kintex-7 板级路径、
+板级约束或原有 `create_project.tcl`。PYNQ-Z2 板级 RTL 只增加了时钟稳定资格与
+复位延迟释放。当前边界是只支持“赛事文件职责等同 `core_main.c`”这一种输入。
+真实文件若包含多份算法实现、平台 port 或自包含 `main()`，先改
 `competition.json` 的 mode 并补专用 adapter，不能把未知源文件自动并入固件。
