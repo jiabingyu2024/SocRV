@@ -45,11 +45,12 @@ module soc_top #(
    logic        periph_mmio_error;
    logic        timer_irq_peripheral;
    logic        software_irq_peripheral;
-   logic        uart_irq_unused;
+   logic        uart_irq_peripheral;
    logic        peripheral_rst_n;
    logic [1:0]  peripheral_reset_release_q;
    (* ASYNC_REG = "TRUE" *) logic timer_irq_meta_q, timer_irq_sync_q;
    (* ASYNC_REG = "TRUE" *) logic software_irq_meta_q, software_irq_sync_q;
+   (* ASYNC_REG = "TRUE" *) logic uart_irq_meta_q, uart_irq_sync_q;
    logic [31:0] test_status_peripheral, test_code_peripheral;
    logic [31:0] test_status_meta_q, test_code_meta_q;
 
@@ -100,7 +101,7 @@ module soc_top #(
       .req_rdata(periph_mmio_rdata), .req_error(periph_mmio_error),
       .uart_rx, .uart_tx, .gpio_in, .gpio_out, .gpio_oe,
       .timer_irq(timer_irq_peripheral),
-      .software_irq(software_irq_peripheral), .uart_irq(uart_irq_unused),
+      .software_irq(software_irq_peripheral), .uart_irq(uart_irq_peripheral),
       .test_status(test_status_peripheral), .test_code(test_code_peripheral)
    );
 
@@ -114,6 +115,8 @@ module soc_top #(
          timer_irq_sync_q    <= 1'b0;
          software_irq_meta_q <= 1'b0;
          software_irq_sync_q <= 1'b0;
+         uart_irq_meta_q     <= 1'b0;
+         uart_irq_sync_q     <= 1'b0;
          test_status_meta_q  <= 32'b0;
          test_status         <= 32'b0;
          test_code_meta_q    <= 32'b0;
@@ -123,6 +126,8 @@ module soc_top #(
          timer_irq_sync_q    <= timer_irq_meta_q;
          software_irq_meta_q <= software_irq_peripheral;
          software_irq_sync_q <= software_irq_meta_q;
+         uart_irq_meta_q     <= uart_irq_peripheral;
+         uart_irq_sync_q     <= uart_irq_meta_q;
          test_status_meta_q  <= test_status_peripheral;
          test_status         <= test_status_meta_q;
          test_code_meta_q    <= test_code_peripheral;
@@ -165,8 +170,10 @@ module soc_top #(
       // EH1 exposes a direct machine-timer interrupt but no direct MSIP pin.
       // SYSCTRL software requests therefore share cause 7; the BSP reads the
       // pending bit first and performs either a scheduler switch or a tick.
+      // UART is an external device, so its level interrupt is synchronized and
+      // delivered on external source 1 (cause 11 / MEIP via mexintpend).
       .timer_int(timer_irq_sync_q | software_irq_sync_q),
-      .extintsrc_req('0),
+      .extintsrc_req({7'b0, uart_irq_sync_q}),
       .lsu_mmio_valid(mmio_valid),
       .lsu_mmio_write(mmio_write),
       .lsu_mmio_addr(mmio_addr),

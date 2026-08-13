@@ -12,20 +12,6 @@ int coremark_main(void);
 #define COREMARK_DEFAULT_ITERATIONS 10000u
 #define COREMARK_MAX_ITERATIONS 1000000u
 
-static void print_u64(uint64_t value)
-{
-    char digits[24];
-    unsigned used = 0;
-
-    do {
-        digits[used++] = (char)('0' + (value % 10u));
-        value /= 10u;
-    } while (value != 0u);
-    while (used != 0u) {
-        uart_putc(digits[--used]);
-    }
-}
-
 static int parse_iterations(int argc, char **argv, uint32_t *iterations)
 {
     unsigned long parsed;
@@ -62,9 +48,6 @@ static int cmd_coremark(int argc, char **argv)
     }
 
     uart_flush();
-    rt_kprintf("SocRV CoreMark: iterations=%u, clock=%u Hz\n",
-               iterations,
-               COREMARK_TICKS_PER_SEC);
     coremark_set_iterations(iterations);
     (void)coremark_main();
     result = coremark_result_code();
@@ -78,30 +61,8 @@ static int cmd_coremark(int argc, char **argv)
         return -RT_ERROR;
     }
 
-    // CoreMark's ee_printf stream may still occupy the four-byte hardware
-    // FIFO.  Drain it before the checker-critical exact-tick record so a
-    // timer/shell boundary cannot interleave that label on a slow UART.
-    uart_flush();
-    uart_puts("SocRV exact total ticks: ");
-    print_u64(ticks);
-    uart_puts("\nSocRV total time (ms): ");
-    print_u64((ticks * 1000u) / COREMARK_TICKS_PER_SEC);
-    uart_puts("\nSocRV ticks/iteration: ");
-    print_u64(ticks / iterations);
-    uart_puts("\nSocRV CoreMark/MHz (x1000): ");
-    print_u64(((uint64_t)iterations * 1000000000ull) / ticks);
-    uart_putc('\n');
-
-    if (ticks < (uint64_t)COREMARK_TICKS_PER_SEC * 10u) {
-        rt_kprintf(
-            "SocRV note: short functional/trend run; not a formal score.\n"
-        );
-    }
-    if (result == 0) {
-        rt_kprintf("SocRV CoreMark CRC check PASS\n");
-    } else {
-        rt_kprintf("SocRV CoreMark CRC check FAIL: %d\n", result);
-    }
+    // Drain CoreMark's ee_printf output (a four-byte hardware FIFO) before
+    // returning to the shell, so no upstream line is lost or interleaved.
     uart_flush();
 
     /*

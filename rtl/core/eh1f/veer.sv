@@ -1033,7 +1033,9 @@ module veer
 
    // Stage-D MCU profile: no programmable interrupt controller and no DMA
    // ingress.  Machine timer interrupt remains connected directly to TLU.
-   assign mexintpend  = 1'b0;
+   // The PIC is disabled, so external source 1 is delivered straight to the
+   // TLU machine-external-interrupt (MEIP) pending input.
+   assign mexintpend  = extintsrc_req[1];
    assign mhwakeup    = 1'b0;
    assign pic_claimid = 8'b0;
    assign pic_pl      = 4'b0;

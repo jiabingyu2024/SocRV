@@ -4,7 +4,7 @@ include profiles/rtthread_sources.inc
 # only initializes CoreMark before the FinSH command overrides it.
 COREMARK_ITERATIONS := 10000
 COREMARK_TICKS_PER_SEC := 50000000
-COREMARK_FLAGS_TEXT := O3-rv32imf_zicsr-ilp32f-veer-eh1-tcm-rtthread-command
+COREMARK_FLAGS_TEXT := -O3 -march=rv32imf_zicsr -mabi=ilp32f
 include profiles/coremark_sources.inc
 
 PROFILE_KIND := rtthread-coremark-command

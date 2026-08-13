@@ -2,6 +2,7 @@
 
 #include "coremark.h"
 #include "core_portme.h"
+#include "drv_gpio.h"
 #include "drv_irq.h"
 #include "drv_timer.h"
 #include "drv_uart.h"
@@ -40,12 +41,14 @@ void start_time(void)
     irq_clear_software();
     timer_start(0);
     test_status_set_code(SOCRV_TEST_PERF_START_MAGIC);
+    gpio_write(LED_COREMARK_RUN_MASK);
     start_ticks = (CORE_TICKS)timer_read();
 }
 
 void stop_time(void)
 {
     stop_ticks = (CORE_TICKS)timer_read();
+    gpio_write(LED_COREMARK_RUN_MASK | LED_COREMARK_DONE_MASK);
     test_status_set_code(SOCRV_TEST_PERF_STOP_MAGIC);
 }
 
@@ -76,6 +79,7 @@ void portable_init(core_portable *portable, int *argc, char *argv[])
     (void)argv;
     uart_init();
     timer_start(0);
+    gpio_set_output(LED_COREMARK_RUN_MASK | LED_COREMARK_DONE_MASK);
     data_error_seen = 0;
     if (sizeof(ee_ptr_int) != sizeof(ee_u8 *) || sizeof(ee_u32) != 4u) {
         data_error_seen = 1;

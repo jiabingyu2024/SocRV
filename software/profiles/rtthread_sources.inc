@@ -36,6 +36,7 @@ RTTHREAD_COMMON_SOURCES := \
 	bsp/drivers/drv_uart.c \
 	bsp/drivers/drv_timer.c \
 	bsp/drivers/drv_irq.c \
+	bsp/drivers/drv_gpio.c \
 	bsp/drivers/test_status.c \
 	runtime/platform.c \
 	runtime/minilibc.c \
