@@ -466,7 +466,7 @@ BH1750 的 180 ms 转换等待不持锁；OLED 刷新按页/块持锁，避免�
 
 - `light_read` 返回 `addr_nack`、`oled_start` 返回 `not_found`，但 RT-Thread 不重启：优先检查设备地址、接线、上拉和 I/O 电压；
 - 执行三条命令时 RT-Thread 重启：检查时钟锁定、全局复位、异常寄存器和看门狗，不应仅凭它恰好发生在 I²C 操作期间就归因于传感器；
-- Kintex-7 的 `virtual_led[28]` 表示当前 MMCM lock；PYNQ-Z2 当前 LED1 是 qualified clock stability、LED2 是 FAIL、LED3 是 PASS；
+- Kintex-7 的 `virtual_led[28]` 表示当前 MMCM lock；PYNQ-Z2 当前 LED1 是实时 MMCM lock、LED2 是 FAIL、LED3 是 PASS；
 - 此前规划的 PYNQ `FCLK_CLK0` 和 LED2 `lock_loss_sticky` 当前尚未恢复，应在独立时钟任务中实现和验证。
 
 ## 11. 验证计划

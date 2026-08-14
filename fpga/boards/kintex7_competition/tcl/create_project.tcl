@@ -20,8 +20,10 @@ foreach name $image_names {
 }
 
 set socrv_sources [list]
+set socrv_include_dirs [list]
 proc read_socrv_filelist {repo_dir filelist_path} {
     global socrv_sources
+    global socrv_include_dirs
     set stream [open $filelist_path r]
     while {[gets $stream line] >= 0} {
         set line [string trim $line]
@@ -32,8 +34,7 @@ proc read_socrv_filelist {repo_dir filelist_path} {
             read_socrv_filelist $repo_dir [file normalize [file join $repo_dir $nested]]
         } elseif {[regexp {^\+incdir\+(.+)$} $line -> incdir]} {
             set include_path [file normalize [file join $repo_dir $incdir]]
-            set current_dirs [get_property include_dirs [current_fileset]]
-            set_property include_dirs [concat $current_dirs [list $include_path]] [current_fileset]
+            lappend socrv_include_dirs $include_path
         } else {
             set source_path [file normalize [file join $repo_dir $line]]
             if {![file exists $source_path]} {
@@ -57,13 +58,17 @@ set_property default_lib xil_defaultlib [current_project]
 set_property verilog_define {SYNTHESIS} [current_fileset]
 
 read_socrv_filelist $repo_dir [file join $repo_dir sim filelists fpga_kintex7.f]
+set_property include_dirs $socrv_include_dirs [current_fileset]
 read_verilog -sv $socrv_sources
-set eh1_defines [file normalize [file join $repo_dir rtl core eh1f config eh1_stage_a common_defines.vh]]
-set_property file_type {Verilog Header} [get_files $eh1_defines]
-set_property is_global_include true [get_files $eh1_defines]
-read_xdc [file join $repo_dir fpga boards kintex7_competition constraints pins.xdc]
-read_xdc [file join $repo_dir fpga boards kintex7_competition constraints clocks.xdc]
-read_xdc [file join $repo_dir fpga boards kintex7_competition constraints cdc.xdc]
+set eh1_defines [get_files -quiet -filter {NAME =~ "*common_defines.vh"}]
+if {[llength $eh1_defines] != 1} {
+    error "expected exactly one common_defines.vh, got [llength $eh1_defines]"
+}
+set_property file_type {Verilog Header} $eh1_defines
+set_property is_global_include true $eh1_defines
+read_xdc [list [file join $repo_dir fpga boards kintex7_competition constraints pins.xdc]]
+read_xdc [list [file join $repo_dir fpga boards kintex7_competition constraints clocks.xdc]]
+read_xdc [list [file join $repo_dir fpga boards kintex7_competition constraints cdc.xdc]]
 
 set_property top fpga_top [current_fileset]
 set clock_mult [expr {[info exists ::env(SOCRV_CLOCK_MULT)] ? $::env(SOCRV_CLOCK_MULT) : "5.0"}]

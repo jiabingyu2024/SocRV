@@ -1,6 +1,4 @@
-module board_clock_reset #(
-  parameter int unsigned LOCK_STABLE_CYCLES = 1_000_000
-) (
+module board_clock_reset (
   input  logic sys_clk_i,
   output logic core_clk_o,
   output logic peripheral_clk_o,
@@ -8,7 +6,12 @@ module board_clock_reset #(
   output logic clock_locked_o
 );
   logic mmcm_locked;
-  logic clock_stable;
+  // The PYNQ-Z2 PL clock comes from the Ethernet PHY.  Reasserting reset on
+  // every transient loss of MMCM lock restarts RT-Thread.  FPGA configuration
+  // initializes these flops to zero; after the first stable clock arrives the
+  // reset releases once and is deliberately not reasserted.  The clock wrapper
+  // gates both SoC clocks while the MMCM is unlocked, preserving SoC state.
+  (* SHREG_EXTRACT = "NO" *) logic [2:0] startup_release_q = 3'b000;
 
   pynq_z2_clock_wrapper u_clock (
     .clk_125mhz_i(sys_clk_i),
@@ -18,14 +21,10 @@ module board_clock_reset #(
     .locked_o(mmcm_locked)
   );
 
-  pynq_z2_reset_sequencer #(
-    .LOCK_STABLE_CYCLES(LOCK_STABLE_CYCLES)
-  ) u_reset_sequencer (
-    .clk_i(core_clk_o),
-    .mmcm_locked_i(mmcm_locked),
-    .soc_rst_no(core_rst_no),
-    .clock_stable_o(clock_stable)
-  );
+  always_ff @(posedge core_clk_o) begin
+    startup_release_q <= {startup_release_q[1:0], 1'b1};
+  end
 
-  assign clock_locked_o = clock_stable;
+  assign core_rst_no = startup_release_q[2];
+  assign clock_locked_o = mmcm_locked;
 endmodule

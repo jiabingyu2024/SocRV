@@ -63,6 +63,20 @@ class FpgaBoardTest(unittest.TestCase):
                 self.assertIn(f"PACKAGE_PIN {scl_pin}", pins)
                 self.assertIn(f"PACKAGE_PIN {sda_pin}", pins)
 
+    def test_pynq_clock_loss_pauses_without_reasserting_reset(self) -> None:
+        board_dir = REPO_DIR / "fpga" / "boards" / "pynq_z2"
+        reset_rtl = (board_dir / "rtl" / "board_clock_reset.sv").read_text(
+            encoding="utf-8"
+        )
+        clock_rtl = (board_dir / "rtl" / "pynq_z2_clock_wrapper.sv").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("startup_release_q = 3'b000", reset_rtl)
+        self.assertIn("assign core_rst_no = startup_release_q[2]", reset_rtl)
+        self.assertNotIn("pynq_z2_reset_sequencer", reset_rtl)
+        self.assertEqual(clock_rtl.count("BUFGCE #("), 2)
+        self.assertEqual(clock_rtl.count(".CE(locked_o)"), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

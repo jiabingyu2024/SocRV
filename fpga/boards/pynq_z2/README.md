@@ -7,9 +7,9 @@
   (`Y18`, TX), 115200 baud
 - Shared sensor I2C: PMODB pin 1 / `W14` is SCL and PMODB pin 2 / `Y14` is
   SDA. Both are open-drain ports; connect the BH1750 and OLED in parallel.
-- Reset release: MMCM `LOCKED` must remain continuously asserted for 20 ms;
-  loss of lock asserts the SoC reset immediately
-- LEDs: `LED0` is GPIO bit 0, `LED1` is qualified clock stability, `LED2` is FAIL and
+- Reset release: one-time startup release after the first stable MMCM output;
+  a later loss of lock pauses the SoC clocks without resetting RT-Thread
+- LEDs: `LED0` is GPIO bit 0, `LED1` is the live MMCM lock state, `LED2` is FAIL and
   `LED3` is PASS
 
 This target is intended for functional-correctness tests, not frequency
@@ -31,4 +31,8 @@ or 11 as common ground. If neither module provides pull-ups, add approximately
 
 The 125 MHz PL clock is supplied by the Ethernet PHY and stops if `PHYRSTB` is
 held low. The current top level does not drive `PHYRSTB`; the board's normal
-power-up state must leave the PHY clock running.
+power-up state must leave the PHY clock running. The PYNQ clock wrapper gates
+the SoC clocks while the MMCM is unlocked and only releases reset once after
+FPGA configuration. A later short PHY-clock interruption therefore pauses the
+SoC instead of rebooting RT-Thread. During such an interruption `LED1` can go
+dark briefly, while `LED3` (PASS) and the software state remain intact.

@@ -320,37 +320,27 @@ SOCRV_PROJECT=.../competition_runs/20260813_143205_coremark_r1/vivado/pynq_z2-50
 
 PYNQ-Z2 的 Core 和外设时钟都固定为 50 MHz，不做频率扫描。
 
-PYNQ-Z2 使用板载 Ethernet PHY 提供给 PL 的 125 MHz 时钟。PYNQ 专用复位
-顶层不会在 MMCM 第一次报告 `LOCKED` 时立即启动处理器，而是按下面的顺序处理：
+PYNQ-Z2 使用板载 Ethernet PHY 提供给 PL 的 125 MHz 时钟。当前采用
+`origin/fix-reset-bug` 已验证的板级策略：MMCM 首次锁定后释放一次 SoC 复位，
+后续 PHY 时钟短暂中断只暂停时钟，不重新复位 RT-Thread：
 
 ```text
-125 MHz PL 时钟 → MMCM 生成 50 MHz → LOCKED 同步
-                                    → 连续稳定约 20 ms
-                                    → 同步释放 SocRV/RT-Thread 复位
+125 MHz PL 时钟 → MMCM 生成 50 MHz → LOCKED
+                                    → BUFGCE 开启 Core/外设时钟
+                                    → 3 个 Core 时钟后仅释放一次 SoC 复位
+
+后续 LOCKED=0 → BUFGCE 无毛刺暂停两个 SoC 时钟 → 保持寄存器/RT-Thread 状态
+再次 LOCKED=1 → 两个 SoC 时钟恢复 → 从暂停位置继续执行
 ```
 
-在稳定窗口内只要发生一次失锁，计数就会清零并保持 SoC 复位；运行期间失锁则会
-立即重新拉低复位。这样可以避免 PYNQ 上电时 PLL/MMCM 尚未稳定便启动 RT-Thread，
-从而连续看到多次 RT-Thread 启动标志。该逻辑只在 `pynq_z2` 板级路径中使用，
-不会改变 Kintex-7 比赛工程。
+旧的“失锁立即重新复位”方案会在 H16/PHY 时钟短暂中断时反复显示 RT-Thread
+启动标志，因此已移除 `pynq_z2_reset_sequencer.sv`。已有 Vivado 工程不能继续使用
+旧综合结果，应重新创建工程并完整执行 Synthesis、Implementation 和 Generate
+Bitstream。
 
-新建 PYNQ 工程时，启动 Tcl 会通过 `fpga_pynq_z2.f` 自动加入
-`pynq_z2_reset_sequencer.sv`，现场不需要额外操作。若当前 PYNQ 工程是在这项
-修改之前已经创建的，不要直接沿用旧综合结果；可在该工程的 Tcl Console 执行：
-
-```tcl
-add_files -norecurse {E:/Resources/03_competitions/26_03_jcs/2608round/subprj2/SocRV/fpga/boards/pynq_z2/rtl/pynq_z2_reset_sequencer.sv}
-update_compile_order -fileset sources_1
-reset_run synth_1
-```
-
-随后重新执行 Synthesis、Implementation 和 Generate Bitstream。也可以关闭旧工程，
-为新的 run-id 重新 source `create_pynq_z2_project.tcl`，由脚本自动取得完整文件清单。
-
-PYNQ 的 `LED1` 现在表示“MMCM 已通过连续稳定检测”，而不是未经处理的原始
-`LOCKED`。下载 bitstream 后，`LED1` 应在约 20 ms 后点亮并保持常亮，随后
-RT-Thread 只启动一次。如果 `LED1` 同步熄灭或闪烁且系统重新启动，应优先检查
-PYNQ 供电、125 MHz PHY 时钟和 MMCM，而不是先修改 RT-Thread 软件。
+PYNQ 的 `LED1` 现在直接表示实时 MMCM `LOCKED`。正常运行时应常亮；短暂时钟中断
+时可能熄灭，但 `LED3` 和软件状态应保留，恢复锁定后继续运行而不是重新打印启动
+标志。如果 LED1 闪烁且串口仍重新启动，再检查复位来源、异常或看门狗。
 
 ### Kintex-7：配置 Core 频率
 
@@ -541,11 +531,12 @@ PYNQ 只证明软件、存储器初始化、UART、复位和板级数据通路�
 - `--run-dir` 软件、镜像和仿真归档；
 - `coremark 3 → ps → help` 短仿真门禁；
 - PYNQ 固定 50 MHz 和 Kintex 单一 `CORE_MHZ` GUI Tcl；
-- PYNQ MMCM `LOCKED` 连续稳定约 20 ms 后再同步释放 SoC 复位，失锁立即复位；
+- PYNQ 首次 MMCM 锁定后只释放一次 SoC 复位，后续失锁通过 BUFGCE 暂停时钟而不重启 RT-Thread；
 - FPGA 报告检查与比赛 run 打包。
 
-实现没有修改 CoreMark 和 RT-Thread upstream，也没有改变 Kintex-7 板级路径、
-板级约束或原有 `create_project.tcl`。PYNQ-Z2 板级 RTL 只增加了时钟稳定资格与
-复位延迟释放。当前边界是只支持“赛事文件职责等同 `core_main.c`”这一种输入。
+实现没有修改 CoreMark 和 RT-Thread upstream，也没有改变两块板的传感器引脚
+约束。PYNQ-Z2 板级 RTL 使用 BUFGCE 掉锁暂停与一次性启动复位；两块板的
+`create_project.tcl` 同步采用修复分支的 include 目录处理。当前边界是只支持
+“赛事文件职责等同 `core_main.c`”这一种输入。
 真实文件若包含多份算法实现、平台 port 或自包含 `main()`，先改
 `competition.json` 的 mode 并补专用 adapter，不能把未知源文件自动并入固件。
