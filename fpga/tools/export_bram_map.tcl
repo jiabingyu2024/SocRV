@@ -17,7 +17,10 @@ puts $stream [join {
 } "\t"]
 
 set selected_count 0
-set all_brams [lsort [get_cells -hier -filter {PRIMITIVE_TYPE =~ BMEM.bram.*}]]
+# REF_NAME is stable across 7-series RAMB36E1 and UltraScale RAMB18E2/
+# RAMB36E2 cells.  UltraScale does not expose the legacy BMEM.bram.*
+# PRIMITIVE_TYPE strings used by the original Kintex-7-only flow.
+set all_brams [lsort [get_cells -hier -filter {REF_NAME =~ RAMB*}]]
 foreach cell $all_brams {
     if {![string match "*u_soc/core/mem/iccm/*" $cell] &&
         ![string match "*u_soc/core/mem/Gen_dccm_enable.dccm/*" $cell]} {

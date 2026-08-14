@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "name": "axku062",
+  "vendor": "xilinx",
+  "part": "xcku060-ffva1156-2-i",
+  "top": "fpga_top",
+  "clock": {
+    "frequency_hz": 200000000,
+    "differential": true,
+    "soc_frequency_hz": 100000000
+  },
+  "constraints": [
+    "constraints/pins.xdc",
+    "constraints/clocks.xdc",
+    "constraints/cdc.xdc"
+  ]
+}

@@ -35,14 +35,14 @@ def main() -> int:
         "--profile",
         choices=sorted(PROFILES),
         default=None,
-        help="software profile; defaults to rtthread-coremark for Kintex-7 and rtthread for PYNQ-Z2",
+        help="software profile; defaults to rtthread-coremark for AXKU062/Kintex-7 and rtthread for PYNQ-Z2",
     )
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument(
         "--core-mhz",
         type=int,
         default=None,
-        help="SoC core clock; defaults to 100 for Kintex-7 and 50 for PYNQ-Z2",
+        help="SoC core clock; defaults to 100 for AXKU062/Kintex-7 and 50 for PYNQ-Z2",
     )
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
@@ -84,7 +84,7 @@ def main() -> int:
     env = dict(os.environ)
     if board.mmcm:
         # Keep the MMCM VCO legal and the independent peripheral clock at
-        # 50 MHz for every supported Kintex-7 sweep point.
+        # 50 MHz for every supported Kintex/UltraScale sweep point.
         clock_mult, divide, peripheral_divide = board.mmcm[core_mhz]
         env["SOCRV_CLOCK_MULT"] = clock_mult
         env["SOCRV_CORE_DIVIDE"] = divide

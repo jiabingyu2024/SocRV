@@ -10,8 +10,19 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-ICCM_RE = re.compile(r"/iccm/lane([0-3])_reg_([0-7])$")
-DCCM_RE = re.compile(r"/dccm_bank_gen\[([0-7])\]\.bank_mem_reg_([01])$")
+ICCM_RE = re.compile(r"/iccm/lane([0-3])_reg_(?:bram_)?([0-7])$")
+DCCM_RE = re.compile(r"/dccm_bank_gen\[([0-7])\]\.bank_mem_reg_(?:bram_)?([01])$")
+
+
+ICCM_7SERIES_GEOMETRY = (
+    *((4, 4, 4, 4, "p0_d4", "p0_d4") for _ in range(8)),
+)
+ICCM_ULTRASCALE_GEOMETRY = (
+    *((18, 18, 18, 18, "p2_d16", "p2_d16") for _ in range(4)),
+    *((9, 9, 9, 9, "p1_d8", "p1_d8") for _ in range(2)),
+    (4, 4, 4, 4, "p0_d4", "p0_d4"),
+    (2, 2, 2, 2, "p0_d1", "p0_d1"),
+)
 
 
 @dataclass(frozen=True)
@@ -114,11 +125,13 @@ def classify(brams: list[Bram]) -> tuple[dict[int, dict[int, Bram]], dict[int, d
 
     if len(brams) != 48:
         raise ValueError(f"expected 48 BRAMs, got {len(brams)}")
+    iccm_geometry: tuple[tuple[int | str, ...], ...] | None = None
     for lane, slices in iccm.items():
         if set(slices) != set(range(8)):
             raise ValueError(f"ICCM lane {lane} does not contain slices 0..7")
-        for bram in slices.values():
-            expected = (4, 4, 4, 4, "p0_d4", "p0_d4")
+        lane_geometry = []
+        for index in range(8):
+            bram = slices[index]
             actual = (
                 bram.read_width_a,
                 bram.read_width_b,
@@ -127,8 +140,14 @@ def classify(brams: list[Bram]) -> tuple[dict[int, dict[int, Bram]], dict[int, d
                 bram.porta_layout,
                 bram.portb_layout,
             )
-            if actual != expected:
-                raise ValueError(f"unexpected ICCM BRAM geometry at {bram.cell}: {actual}")
+            lane_geometry.append(actual)
+        geometry = tuple(lane_geometry)
+        if geometry not in (ICCM_7SERIES_GEOMETRY, ICCM_ULTRASCALE_GEOMETRY):
+            raise ValueError(f"unexpected ICCM BRAM geometry in lane {lane}: {geometry}")
+        if iccm_geometry is None:
+            iccm_geometry = geometry
+        elif geometry != iccm_geometry:
+            raise ValueError(f"ICCM lane {lane} geometry differs from lane 0")
     for bank, slices in dccm.items():
         if set(slices) != {0, 1}:
             raise ValueError(f"DCCM bank {bank} does not contain slices 0 and 1")
@@ -153,14 +172,23 @@ def add_bram(
     bram: Bram,
     lsb: int,
     msb: int,
+    begin_address: int,
     end_address: int,
 ) -> None:
+    if bram.ref_name.startswith("RAMB36"):
+        mem_type = "RAMB36"
+        placement = bram.loc.removeprefix("RAMB36_")
+    elif bram.ref_name.startswith("RAMB18"):
+        mem_type = "RAMB18"
+        placement = bram.loc.removeprefix("RAMB18_")
+    else:
+        raise ValueError(f"unsupported BRAM primitive at {bram.cell}: {bram.ref_name}")
     node = ET.SubElement(
         layout,
         "BRAM",
         {
-            "MemType": "RAMB36",
-            "Placement": bram.loc.removeprefix("RAMB36_"),
+            "MemType": mem_type,
+            "Placement": placement,
             "Read_Width_A": str(bram.read_width_a),
             "Read_Width_B": str(bram.read_width_b),
             "SLR_INDEX": "0",
@@ -171,7 +199,7 @@ def add_bram(
         ET.SubElement(
             node,
             f"AddressRange_Port{port}",
-            {"Begin": "0", "End": str(end_address)},
+            {"Begin": str(begin_address), "End": str(end_address)},
         )
         ET.SubElement(node, f"BitLayout_Port{port}", {"pattern": bit_layout})
     ET.SubElement(node, "Parity", {"ON": "false", "NumBits": "0"})
@@ -200,12 +228,33 @@ def generate(bram_map: Path, output: Path, validation: Path) -> None:
     root = ET.Element("MemInfo", {"Version": "1", "Minor": "9"})
     for lane in range(4):
         layout = add_memory_array(root, f"ICCM_LANE{lane}", 8191)
-        for index in range(8):
-            add_bram(layout, iccm[lane][index], index * 4, index * 4 + 3, 8191)
+        lane_brams = iccm[lane]
+        if tuple(
+            (
+                bram.read_width_a,
+                bram.read_width_b,
+                bram.write_width_a,
+                bram.write_width_b,
+                bram.porta_layout,
+                bram.portb_layout,
+            )
+            for bram in (lane_brams[index] for index in range(8))
+        ) == ICCM_7SERIES_GEOMETRY:
+            for index in range(8):
+                add_bram(layout, lane_brams[index], index * 4, index * 4 + 3, 0, 8191)
+        else:
+            for index in range(4):
+                begin = index * 2048
+                add_bram(layout, lane_brams[index], 0, 17, begin, begin + 2047)
+            for index in range(4, 6):
+                begin = (index - 4) * 4096
+                add_bram(layout, lane_brams[index], 18, 26, begin, begin + 4095)
+            add_bram(layout, lane_brams[6], 27, 30, 0, 8191)
+            add_bram(layout, lane_brams[7], 31, 31, 0, 8191)
     for bank in range(8):
         layout = add_memory_array(root, f"DCCM_BANK{bank}", 2047)
-        add_bram(layout, dccm[bank][0], 0, 17, 2047)
-        add_bram(layout, dccm[bank][1], 18, 31, 2047)
+        add_bram(layout, dccm[bank][0], 0, 17, 0, 2047)
+        add_bram(layout, dccm[bank][1], 18, 31, 0, 2047)
 
     config = ET.SubElement(root, "Config")
     ET.SubElement(config, "Option", {"Name": "Part", "Val": part})

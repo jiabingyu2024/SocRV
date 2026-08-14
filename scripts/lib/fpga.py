@@ -21,6 +21,21 @@ class FpgaBoard:
 
 
 BOARDS = {
+    "axku062": FpgaBoard(
+        name="axku062",
+        build_prefix="axku062",
+        default_profile="rtthread-coremark",
+        default_core_mhz=100,
+        supported_core_mhz=(50, 100, 125, 150, 200, 250),
+        mmcm={
+            50: ("5.0", "20.0", "20"),
+            100: ("5.0", "10.0", "20"),
+            125: ("5.0", "8.0", "20"),
+            150: ("6.0", "8.0", "24"),
+            200: ("5.0", "5.0", "20"),
+            250: ("5.0", "4.0", "20"),
+        },
+    ),
     "kintex7_competition": FpgaBoard(
         name="kintex7_competition",
         build_prefix="kintex7",

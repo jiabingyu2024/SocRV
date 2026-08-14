@@ -43,7 +43,7 @@ Software:
       Build one explicit software profile.
 
 FPGA (these commands invoke Vivado):
-  make fpga-build BOARD=kintex7_competition|pynq_z2
+  make fpga-build BOARD=axku062|kintex7_competition|pynq_z2
       Build the selected board's bitstream and checked reports.
   make fpga-check BOARD=<board>
       Check an existing implementation result without rebuilding.
@@ -62,9 +62,9 @@ Project checks:
       Run the controlled JSON testlist.
 
 Useful variables:
-  BOARD=kintex7_competition|pynq_z2
-  CORE_MHZ=100 (Kintex-7 default; PYNQ-Z2 is fixed at 50 MHz)
-  PROFILE=rtthread-coremark (Kintex-7 default; PYNQ-Z2 defaults to rtthread)
+  BOARD=axku062|kintex7_competition|pynq_z2
+  CORE_MHZ=100 (AXKU062/Kintex-7 default; PYNQ-Z2 is fixed at 50 MHz)
+  PROFILE=rtthread-coremark (AXKU062/Kintex-7 default; PYNQ-Z2 defaults to rtthread)
   ISA_GATE=current|final-base|fp-single|fp-double|final
   COREMARK_ITERATIONS=3
   TRACE=0|1
