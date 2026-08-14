@@ -52,13 +52,22 @@ module pynq_z2_clock_wrapper (
     .O(clk_feedback_buffered)
   );
 
-  BUFG u_core_clock_buffer (
+  // H16 is driven by the Ethernet PHY and can stop briefly when the PS
+  // manages or resets that device.  Suppress MMCM output edges while the
+  // MMCM is unlocked so a clock interruption behaves as a clean pause.
+  BUFGCE #(
+    .CE_TYPE("SYNC")
+  ) u_core_clock_buffer (
     .I(clk_core_unbuffered),
+    .CE(locked_o),
     .O(clk_core_o)
   );
 
-  BUFG u_peripheral_clock_buffer (
+  BUFGCE #(
+    .CE_TYPE("SYNC")
+  ) u_peripheral_clock_buffer (
     .I(clk_peripheral_unbuffered),
+    .CE(locked_o),
     .O(clk_peripheral_o)
   );
 endmodule

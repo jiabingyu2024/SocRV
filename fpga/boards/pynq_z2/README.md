@@ -23,4 +23,8 @@ common ground. Do not apply 5 V logic to these pins.
 
 The 125 MHz PL clock is supplied by the Ethernet PHY and stops if `PHYRSTB` is
 held low. The current top level does not drive `PHYRSTB`; the board's normal
-power-up state must leave the PHY clock running.
+power-up state must leave the PHY clock running. The PYNQ clock wrapper gates
+the SoC clocks while the MMCM is unlocked and only releases reset once after
+FPGA configuration. A later short PHY-clock interruption therefore pauses the
+SoC instead of rebooting RT-Thread. During such an interruption `LED1` can go
+dark briefly, while `LED3` (PASS) and the software state remain intact.
