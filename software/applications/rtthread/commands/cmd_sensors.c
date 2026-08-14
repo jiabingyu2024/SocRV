@@ -10,7 +10,7 @@ static int cmd_light_read(int argc, char **argv)
     bh1750_measurement_t measurement;
     int result;
 
-    RT_UNUSED(argv);
+    (void)argv;
     if (argc != 1) {
         rt_kprintf("usage: light_read\n");
         return -RT_EINVAL;
@@ -47,7 +47,7 @@ static int cmd_oled_start(int argc, char **argv)
     uint8_t address;
     int result;
 
-    RT_UNUSED(argv);
+    (void)argv;
     if (argc != 1) {
         rt_kprintf("usage: oled_start\n");
         return -RT_EINVAL;
@@ -101,7 +101,7 @@ static int cmd_oled_stop(int argc, char **argv)
     uint8_t address;
     int result;
 
-    RT_UNUSED(argv);
+    (void)argv;
     if (argc != 1) {
         rt_kprintf("usage: oled_stop\n");
         return -RT_EINVAL;

@@ -1,9 +1,9 @@
 # RT-Thread dependency
 
-SocRV 固定使用 RT-Thread `v5.2.2`：
+SocRV 固定使用 RT-Thread `v3.1.5`：
 
 ```text
-commit ddf52e2cdd977f14fc04035c88672ac204aec713
+commit 92beddf3bccf6346e26aa097f82464456fb8e6bd
 ```
 
 `dependency.lock.json` 是版本与稀疏检出范围的权威来源。官方源码通过以下命令放到被 Git 忽略的 `upstream/`：

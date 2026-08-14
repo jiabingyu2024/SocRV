@@ -72,7 +72,12 @@ static int cmd_coremark(int argc, char **argv)
      * the IRQ-enable bit would leave the old compare deadline in the past and
      * cause an interrupt storm.
      */
-    RT_ASSERT(timer_init_tick(RT_TICK_PER_SECOND) != 0u);
+    if (timer_init_tick(RT_TICK_PER_SECOND) == 0u) {
+        rt_kprintf("SocRV failed to restore RT-Thread tick\n");
+        coremark_resume_interrupts();
+        test_status_report_fail(0xffffffffu);
+        return -RT_ERROR;
+    }
     coremark_resume_interrupts();
     if (result == 0) {
         test_status_report_pass(0u);

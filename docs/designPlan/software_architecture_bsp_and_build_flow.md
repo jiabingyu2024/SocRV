@@ -63,7 +63,7 @@ riscv-tests 的 Machine Mode 测试套件，不是名为 “MI” 的 ISA 扩展
 
 | Dependency | Locked revision | Project-owned adaptation |
 | --- | --- | --- |
-| RT-Thread | v5.2.2, `ddf52e2cdd977f14fc04035c88672ac204aec713` | `software/rt-thread/port/`、`rtconfig.h` |
+| RT-Thread | v3.1.5, `92beddf3bccf6346e26aa097f82464456fb8e6bd` | `software/rt-thread/port/`、`rtconfig.h` |
 | riscv-tests | `447a5fcb8253627ddb5f6a226f64e43463afcdd5` | `software/riscv-tests/env/socrv/`、`tests.json` |
 | CoreMark | v1.01, `cfa9ab377835911f23d9b0831c7be302ed1f58de` | `software/coremark/port/` |
 

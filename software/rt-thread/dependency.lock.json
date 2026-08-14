@@ -1,7 +1,7 @@
 {
-  "commit": "ddf52e2cdd977f14fc04035c88672ac204aec713",
+  "commit": "92beddf3bccf6346e26aa097f82464456fb8e6bd",
   "name": "rt-thread",
-  "ref": "v5.2.2",
+  "ref": "v3.1.5",
   "schema_version": 1,
   "sparse_paths": [
     "src",
@@ -15,10 +15,10 @@
   "required_paths": [
     "src",
     "include",
-    "libcpu/risc-v/common",
+    "libcpu/risc-v",
     "components/finsh",
     "LICENSE"
   ],
-  "tag": "v5.2.2",
+  "tag": "v3.1.5",
   "url": "https://github.com/RT-Thread/rt-thread.git"
 }

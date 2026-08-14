@@ -4,9 +4,9 @@
 
 static void worker(void *parameter)
 {
-    RT_UNUSED(parameter);
-    test_status_pass(0u);
+    (void)parameter;
     rt_kprintf("SocRV RT-Thread worker PASS\n");
+    test_status_pass(0u);
 }
 
 int main(void)
@@ -26,7 +26,10 @@ int main(void)
         25,
         10
     );
-    RT_ASSERT(result == RT_EOK);
+    if (result != RT_EOK)
+    {
+        test_status_fail((rt_uint32_t)result);
+    }
     rt_thread_startup(&worker_thread);
     rt_thread_mdelay(2);
     return 0;

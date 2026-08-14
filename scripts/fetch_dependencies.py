@@ -298,6 +298,49 @@ def fetch_one(dependency: Dependency) -> None:
         verify_one(dependency)
         print(f"{dependency.name} already present at the locked revision")
         return
+    if (dependency.destination / ".git").exists():
+        expected_url = str(lock["url"]).rstrip("/")
+        actual_url = (current_remote(dependency) or "").rstrip("/")
+        if actual_url != expected_url:
+            raise SystemExit(
+                f"{dependency.name}: expected origin {expected_url}, "
+                f"got {actual_url or 'missing'}"
+            )
+        status = git("status", "--porcelain", cwd=dependency.destination)
+        if status.returncode != 0 or status.stdout.strip():
+            raise SystemExit(
+                f"{dependency.name}: refusing to replace a modified checkout: "
+                f"{dependency.destination}"
+            )
+        configure_sparse(dependency, lock)
+        fetch = git(
+            "fetch",
+            "--depth",
+            "1",
+            "origin",
+            str(lock["commit"]),
+            cwd=dependency.destination,
+            timeout=600,
+        )
+        if fetch.returncode != 0:
+            raise SystemExit(
+                f"{dependency.name}: fetch failed:\n{fetch.stdout}{fetch.stderr}"
+            )
+        checkout = git(
+            "checkout",
+            "--detach",
+            "FETCH_HEAD",
+            cwd=dependency.destination,
+        )
+        if checkout.returncode != 0:
+            raise SystemExit(
+                f"{dependency.name}: checkout failed:\n"
+                f"{checkout.stdout}{checkout.stderr}"
+            )
+        initialize_submodules(dependency, lock)
+        verify_one(dependency)
+        print(f"Updated {dependency.name} in {dependency.destination}")
+        return
     initialize_checkout(dependency, lock)
     verify_one(dependency)
     print(f"Fetched {dependency.name} into {dependency.destination}")

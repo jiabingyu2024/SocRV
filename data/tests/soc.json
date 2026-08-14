@@ -33,12 +33,12 @@
       "uart_prompt": "msh >",
       "uart_prompt_timeout": 5000000,
       "uart_expect": [
-        "Thread Nano Operating System",
+        "Thread Operating System",
         "SocRV RT-Thread boot",
         "SocRV march=rv32imf_zicsr",
         "msh >"
       ],
-      "max_cycles": 2000000,
+      "max_cycles": 3000000,
       "seed": 1
     },
     {
@@ -79,7 +79,7 @@
         "socrv_info       - show SocRV contract",
         "coremark         - run CoreMark"
       ],
-      "max_cycles": 5000000,
+      "max_cycles": 20000000,
       "seed": 1
     },
     {

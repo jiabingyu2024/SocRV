@@ -11,8 +11,8 @@ extern rt_uint8_t __heap_end;
 
 static void timer_irq(int vector, void *parameter)
 {
-    RT_UNUSED(vector);
-    RT_UNUSED(parameter);
+    (void)vector;
+    (void)parameter;
     /* EH1 has no direct MSIP input.  SYSCTRL software requests share cause 7
      * with mtime; clearing this request is enough because the common trap
      * epilogue observes rt_thread_switch_interrupt_flag and switches stacks.
@@ -62,7 +62,13 @@ void rt_hw_board_init(void)
         RT_NULL,
         "timer"
     );
-    RT_ASSERT(timer_init_tick(RT_TICK_PER_SECOND) != 0u);
+    if (timer_init_tick(RT_TICK_PER_SECOND) == 0u)
+    {
+        rt_kprintf("Failed to initialize RT-Thread tick\n");
+        while (1)
+        {
+        }
+    }
     __asm volatile(
         "csrs mie, %0"
         :

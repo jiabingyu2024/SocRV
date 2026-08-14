@@ -84,7 +84,7 @@ DEFAULT_UART_EXPECT = {
     "smoke": ("SocRV smoke PASS",),
     "coremark-smoke": ("Correct operation validated",),
     "rtthread": (
-        "Thread Nano Operating System",
+        "Thread Operating System",
         "SocRV RT-Thread boot",
         "msh >",
     ),

@@ -1,5 +1,4 @@
 RT_ROOT := rt-thread/upstream
-RT_COMMON := $(RT_ROOT)/libcpu/risc-v/common
 RTTHREAD_COMMON_SOURCES := \
 	rt-thread/port/start_rtthread.S \
 	rt-thread/port/trap_gcc.S \
@@ -7,11 +6,9 @@ RTTHREAD_COMMON_SOURCES := \
 	rt-thread/port/context_gcc.S \
 	rt-thread/port/interrupt_gcc.S \
 	rt-thread/port/cpuport.c \
-	$(RT_COMMON)/trap_common.c \
+	rt-thread/port/trap_common.c \
 	$(RT_ROOT)/src/clock.c \
 	$(RT_ROOT)/src/components.c \
-	$(RT_ROOT)/src/cpu_up.c \
-	$(RT_ROOT)/src/defunct.c \
 	$(RT_ROOT)/src/idle.c \
 	$(RT_ROOT)/src/ipc.c \
 	$(RT_ROOT)/src/irq.c \
@@ -19,17 +16,11 @@ RTTHREAD_COMMON_SOURCES := \
 	$(RT_ROOT)/src/mem.c \
 	$(RT_ROOT)/src/mempool.c \
 	$(RT_ROOT)/src/object.c \
-	$(RT_ROOT)/src/scheduler_comm.c \
-	$(RT_ROOT)/src/scheduler_up.c \
+	$(RT_ROOT)/src/scheduler.c \
 	$(RT_ROOT)/src/thread.c \
 	$(RT_ROOT)/src/timer.c \
-	$(RT_ROOT)/src/klibc/kerrno.c \
-	$(RT_ROOT)/src/klibc/kstdio.c \
-	$(RT_ROOT)/src/klibc/kstring.c \
-	$(RT_ROOT)/src/klibc/rt_vsnprintf_tiny.c \
 	$(RT_ROOT)/components/finsh/shell.c \
 	$(RT_ROOT)/components/finsh/msh.c \
-	$(RT_ROOT)/components/finsh/msh_parse.c \
 	$(RT_ROOT)/components/finsh/cmd.c \
 	startup/crt0.c \
 	rt-thread/port/board.c \
@@ -48,12 +39,17 @@ RTTHREAD_COMMON_SOURCES := \
 RTTHREAD_INCLUDES := \
 	-Irt-thread/port \
 	-I$(RT_ROOT)/include \
-	-I$(RT_COMMON) \
 	-I$(RT_ROOT)/components/finsh
+# RT-Thread 3.1.5 assumes every GCC toolchain ships newlib headers.  SocRV's
+# freestanding compiler uses the small compatibility headers in runtime/include.
 RTTHREAD_CFLAGS := \
 	-Wno-unused-parameter \
 	-Wno-sign-compare \
+	-Wno-implicit-fallthrough \
+	-Wno-empty-body \
 	-Wno-error=cast-function-type \
+	-fsigned-char \
+	-D__ARMCC_VERSION=0 \
 	-D__RTTHREAD__ \
 	-D__RT_KERNEL_SOURCE__ \
 	-std=gnu11

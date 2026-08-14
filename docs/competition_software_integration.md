@@ -126,7 +126,7 @@ software/rt-thread/port/rt_hw_stack_frame.h
 
 ### RT-Thread 内核与 FinSH/MSH
 
-来自锁定的 RT-Thread v5.2.2：
+来自锁定的 RT-Thread v3.1.5：
 
 ```text
 software/rt-thread/upstream/src/clock.c

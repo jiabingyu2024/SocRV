@@ -6,7 +6,7 @@
 
 > 结论先行：
 > - **CoreMark 只改了 `port/` 适配层**，核心算法文件（`core_main.c` / `core_list_join.c` / `core_matrix.c` / `core_state.c` / `core_util.c` / `coremark.h`）全部从 EEMBC 上游 v1.01 **原样拉取**，未做任何改动。
-> - **RT-Thread 只改了 `rt-thread/port/`**，内核源码从 RT-Thread v5.2.2 上游 **原样拉取**，未改动。
+> - **RT-Thread 只改了 `rt-thread/port/`**，内核源码从 RT-Thread v3.1.5 上游 **原样拉取**，未改动。
 > - 硬件/软件的地址与寄存器定义由 `data/soc/*.json` 唯一权威生成（`make soc-contract`），生成的头文件/链接脚本**禁止手改**。
 
 ---
@@ -203,7 +203,7 @@ CORE_TICKS get_time(void) { return stop_ticks - start_ticks; }
 
 ### 5.1 上游来源
 
-`software/rt-thread/dependency.lock.json`：RT-Thread **v5.2.2**，commit `ddf52e2cdd977f14fc04035c88672ac204aec713`。`make deps` 拉到 `software/rt-thread/upstream/`（gitignore），不改动。
+`software/rt-thread/dependency.lock.json`：RT-Thread **v3.1.5**，commit `92beddf3bccf6346e26aa097f82464456fb8e6bd`。`make deps` 拉到 `software/rt-thread/upstream/`（gitignore），不改动。
 
 ### 5.2 本工程自定义的 port 文件
 
@@ -276,7 +276,7 @@ CORE_TICKS get_time(void) { return stop_ticks - start_ticks; }
 | --- | --- | --- | --- | --- |
 | CoreMark 核心算法 | eembc/coremark v1.01 | `coremark/upstream/`（gitignore） | **未改** | —— |
 | CoreMark 适配 | —— | —— | —— | `coremark/port/common/`、`port/baremetal/`、`port/rtthread/` |
-| RT-Thread 内核 | RT-Thread v5.2.2 | `rt-thread/upstream/`（gitignore） | **未改** | —— |
+| RT-Thread 内核 | RT-Thread v3.1.5 | `rt-thread/upstream/`（gitignore） | **未改** | —— |
 | RT-Thread 适配 | —— | —— | —— | `rt-thread/port/` |
 | 裸机启动 / BSP / 驱动 | —— | —— | —— | `startup/`、`bsp/`、`runtime/`、`linker/`、`applications/`、`profiles/` |
 

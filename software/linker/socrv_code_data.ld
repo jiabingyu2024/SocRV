@@ -37,6 +37,10 @@ SECTIONS
     __fsymtab_start = .;
     KEEP(*(FSymTab))
     __fsymtab_end = .;
+    . = ALIGN(4);
+    __vsymtab_start = .;
+    KEEP(*(VSymTab))
+    __vsymtab_end = .;
   } > DATA
 
   .data : ALIGN(4)
