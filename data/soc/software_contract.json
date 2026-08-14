@@ -235,6 +235,53 @@
           "side_effect": "fixed UART/GPIO/timer/SYSCTRL peripheral clock frequency"
         }
       }
+    },
+    "I2C": {
+      "region": "I2C",
+      "registers": {
+        "CONTROL": {
+          "offset": "0x00000000",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "bit0 enables the controller; bit1 aborts and resets the transaction state; bit2 starts bus recovery when idle"
+        },
+        "STATUS": {
+          "offset": "0x00000004",
+          "access": "W1C",
+          "reset": "0x00000000",
+          "side_effect": "bit0 busy; bits1-6 sticky completion/error flags cleared by writing one; bits7-10 report live SCL, SDA, bus-active, and bus-ready; bit11 reports valid RX data"
+        },
+        "CLOCK_DIV": {
+          "offset": "0x00000008",
+          "access": "RW",
+          "reset": "0x0000007c",
+          "side_effect": "SCL equals peripheral_hz divided by four times CLOCK_DIV plus one"
+        },
+        "TXDATA": {
+          "offset": "0x0000000c",
+          "access": "RW",
+          "reset": "0x00000000",
+          "side_effect": "low byte is shifted out by the next WRITE command"
+        },
+        "RXDATA": {
+          "offset": "0x00000010",
+          "access": "RO",
+          "reset": "0x00000000",
+          "side_effect": "low byte contains the most recently completed READ command"
+        },
+        "COMMAND": {
+          "offset": "0x00000014",
+          "access": "WO",
+          "reset": "0x00000000",
+          "side_effect": "one command is accepted while enabled and idle: START, STOP, WRITE, READ, with ADDRESS and READ_NACK modifiers"
+        },
+        "TIMEOUT": {
+          "offset": "0x00000018",
+          "access": "RW",
+          "reset": "0x0007a120",
+          "side_effect": "maximum peripheral-clock cycles for one command before timeout and open-drain release"
+        }
+      }
     }
   },
   "test_status": {

@@ -27,6 +27,8 @@ module soc_sim_top (
    logic [15:0] gpio_oe;
    logic [31:0] test_status;
    logic        peripheral_clk;
+   logic        i2c_scl_drive_low;
+   logic        i2c_sda_drive_low;
 
    // The simulation contract fixes the core at 100 MHz and the peripherals
    // at 50 MHz.  clk_i is one core cycle per harness step, so this divider is
@@ -85,10 +87,15 @@ module soc_sim_top (
       .gpio_in(gpio_in),
       .gpio_out(gpio_out),
       .gpio_oe(gpio_oe),
+      .i2c_scl_i(1'b1),
+      .i2c_sda_i(1'b1),
+      .i2c_scl_drive_low(i2c_scl_drive_low),
+      .i2c_sda_drive_low(i2c_sda_drive_low),
       .test_status(test_status),
       .test_code(test_code_o)
    );
 
    logic unused;
-   assign unused = ^gpio_out ^ ^gpio_oe;
+   assign unused = ^gpio_out ^ ^gpio_oe ^ i2c_scl_drive_low ^
+                   i2c_sda_drive_low;
 endmodule

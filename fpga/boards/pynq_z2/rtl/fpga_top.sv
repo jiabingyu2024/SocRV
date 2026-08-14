@@ -17,7 +17,9 @@ module fpga_top #(
   input  logic       i_sys_clk,
   input  logic       i_uart_rx,
   output logic       o_uart_tx,
-  output logic [3:0] o_led
+  output logic [3:0] o_led,
+  inout  wire        sensor_i2c_scl_io,
+  inout  wire        sensor_i2c_sda_io
 );
   logic core_clk;
   logic peripheral_clk;
@@ -31,12 +33,20 @@ module fpga_top #(
   logic [31:0] test_code;
   logic cpu_fault;
   logic [31:0] test_status;
+  logic i2c_scl_i;
+  logic i2c_sda_i;
+  logic i2c_scl_drive_low;
+  logic i2c_sda_drive_low;
 
   assign gpio_i = '0;
   assign test_done = (test_status == 32'h5041_5353) ||
                      (test_status == 32'h4641_494c);
   assign test_pass = test_status == 32'h5041_5353;
   assign cpu_fault = test_status == 32'h4641_494c;
+  assign sensor_i2c_scl_io = i2c_scl_drive_low ? 1'b0 : 1'bz;
+  assign sensor_i2c_sda_io = i2c_sda_drive_low ? 1'b0 : 1'bz;
+  assign i2c_scl_i = sensor_i2c_scl_io;
+  assign i2c_sda_i = sensor_i2c_sda_io;
 
   board_clock_reset u_clock_reset (
     .sys_clk_i(i_sys_clk),
@@ -70,6 +80,10 @@ module fpga_top #(
     .gpio_in(gpio_i),
     .gpio_out(gpio_o),
     .gpio_oe(gpio_oe),
+    .i2c_scl_i(i2c_scl_i),
+    .i2c_sda_i(i2c_sda_i),
+    .i2c_scl_drive_low(i2c_scl_drive_low),
+    .i2c_sda_drive_low(i2c_sda_drive_low),
     .test_status(test_status),
     .test_code(test_code)
   );

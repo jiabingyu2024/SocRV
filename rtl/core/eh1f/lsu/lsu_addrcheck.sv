@@ -35,7 +35,7 @@ module lsu_addrcheck
    localparam logic [31:0] DCCM_FIRST = DATA_BASE;
    localparam logic [31:0] DCCM_LAST  = DATA_BASE + DATA_SIZE - 1;
    localparam logic [31:0] MMIO_FIRST = TIMER_BASE;
-   localparam logic [31:0] MMIO_LAST  = SYSCTRL_BASE + SYSCTRL_SIZE - 1;
+   localparam logic [31:0] MMIO_LAST  = I2C_BASE + I2C_SIZE - 1;
 
    logic start_in_dccm, end_in_dccm;
    logic start_in_mmio, end_in_mmio;

@@ -35,7 +35,13 @@ static inline uint32_t soc_peripheral_clock_hz(void)
         SOCRV_SYSCTRL_BASE + SOCRV_SYSCTRL_PERIPHERAL_CLOCK_HZ_OFFSET
     );
 
-    return clock_hz != 0u ? clock_hz : SOCRV_PERIPHERAL_CLOCK_HZ;
+    /* A clock value outside the supported implementation range cannot be a
+     * valid SYSCTRL response.  Fall back to the generated contract so an
+     * early or stale MMIO sample cannot poison UART/timer/I2C divisors. */
+    if (clock_hz >= 1000000u && clock_hz <= 500000000u) {
+        return clock_hz;
+    }
+    return SOCRV_PERIPHERAL_CLOCK_HZ;
 }
 
 static inline uint32_t csr_read_mstatus(void)

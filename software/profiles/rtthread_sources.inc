@@ -37,10 +37,14 @@ RTTHREAD_COMMON_SOURCES := \
 	bsp/drivers/drv_timer.c \
 	bsp/drivers/drv_irq.c \
 	bsp/drivers/drv_gpio.c \
+	bsp/drivers/drv_i2c.c \
+	bsp/drivers/drv_bh1750.c \
+	bsp/drivers/drv_oled.c \
 	bsp/drivers/test_status.c \
 	runtime/platform.c \
 	runtime/minilibc.c \
-	applications/rtthread/commands/cmd_info.c
+	applications/rtthread/commands/cmd_info.c \
+	applications/rtthread/commands/cmd_sensors.c
 RTTHREAD_INCLUDES := \
 	-Irt-thread/port \
 	-I$(RT_ROOT)/include \

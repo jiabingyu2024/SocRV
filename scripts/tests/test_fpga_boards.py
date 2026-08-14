@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+REPO_DIR = SCRIPTS_DIR.parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
@@ -41,6 +42,26 @@ class FpgaBoardTest(unittest.TestCase):
         pynq = fpga_build_root(BOARDS["pynq_z2"], "rtthread", 50)
         self.assertEqual(kintex.name, "kintex7-smoke-100mhz")
         self.assertEqual(pynq.name, "pynq_z2-rtthread-50mhz")
+
+    def test_sensor_i2c_is_wired_on_both_boards(self) -> None:
+        pin_contracts = {
+            "pynq_z2": ("W14", "Y14"),
+            "kintex7_competition": ("F22", "G22"),
+        }
+        for board, (scl_pin, sda_pin) in pin_contracts.items():
+            with self.subTest(board=board):
+                board_dir = REPO_DIR / "fpga" / "boards" / board
+                top = (board_dir / "rtl" / "fpga_top.sv").read_text(encoding="utf-8")
+                pins = (board_dir / "constraints" / "pins.xdc").read_text(
+                    encoding="utf-8"
+                )
+                self.assertIn("inout  wire", top)
+                self.assertIn("sensor_i2c_scl_io", top)
+                self.assertIn("sensor_i2c_sda_io", top)
+                self.assertIn("i2c_scl_drive_low ? 1'b0 : 1'bz", top)
+                self.assertIn("i2c_sda_drive_low ? 1'b0 : 1'bz", top)
+                self.assertIn(f"PACKAGE_PIN {scl_pin}", pins)
+                self.assertIn(f"PACKAGE_PIN {sda_pin}", pins)
 
 
 if __name__ == "__main__":

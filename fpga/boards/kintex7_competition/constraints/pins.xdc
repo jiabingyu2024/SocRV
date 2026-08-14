@@ -3,6 +3,14 @@ set_property IOSTANDARD LVCMOS33 [get_ports i_uart_rx]
 set_property PACKAGE_PIN D17 [get_ports o_uart_tx]
 set_property IOSTANDARD LVCMOS33 [get_ports o_uart_tx]
 
+# Shared open-drain sensor bus on J10 DEBUG_39/40. These pins belong to
+# Bank 17 (VADJ1); use this LVCMOS33 constraint only when TP5 confirms that
+# the board's VADJ1 rail is configured for 3.3 V. Pull SCL/SDA up externally
+# to the same rail; the FPGA top level only drives them low or releases them.
+set_property PACKAGE_PIN F22 [get_ports sensor_i2c_scl_io]
+set_property PACKAGE_PIN G22 [get_ports sensor_i2c_sda_io]
+set_property IOSTANDARD LVCMOS33 [get_ports {sensor_i2c_scl_io sensor_i2c_sda_io}]
+
 set_property PACKAGE_PIN AD12 [get_ports { i_sys_clk_p }]
 set_property IOSTANDARD DIFF_HSTL_II_18 [get_ports { i_sys_clk_p }]
 set_property PACKAGE_PIN AD11 [get_ports { i_sys_clk_n }]

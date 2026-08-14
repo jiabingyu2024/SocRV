@@ -11,4 +11,6 @@ package soc_memory_map_pkg;
    localparam logic [31:0] GPIO_SIZE    = 32'h0000_1000;
    localparam logic [31:0] SYSCTRL_BASE = 32'h1000_3000;
    localparam logic [31:0] SYSCTRL_SIZE = 32'h0000_1000;
+   localparam logic [31:0] I2C_BASE     = 32'h1000_4000;
+   localparam logic [31:0] I2C_SIZE     = 32'h0000_1000;
 endpackage

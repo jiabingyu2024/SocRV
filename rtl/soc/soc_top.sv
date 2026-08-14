@@ -24,6 +24,10 @@ module soc_top #(
    input  logic [GPIO_WIDTH-1:0] gpio_in,
    output logic [GPIO_WIDTH-1:0] gpio_out,
    output logic [GPIO_WIDTH-1:0] gpio_oe,
+   input  logic                  i2c_scl_i,
+   input  logic                  i2c_sda_i,
+   output logic                  i2c_scl_drive_low,
+   output logic                  i2c_sda_drive_low,
    output logic [31:0]           test_status,
    output logic [31:0]           test_code
 );
@@ -100,6 +104,7 @@ module soc_top #(
       .req_wstrb(periph_mmio_wstrb), .req_ready(periph_mmio_ready),
       .req_rdata(periph_mmio_rdata), .req_error(periph_mmio_error),
       .uart_rx, .uart_tx, .gpio_in, .gpio_out, .gpio_oe,
+      .i2c_scl_i, .i2c_sda_i, .i2c_scl_drive_low, .i2c_sda_drive_low,
       .timer_irq(timer_irq_peripheral),
       .software_irq(software_irq_peripheral), .uart_irq(uart_irq_peripheral),
       .test_status(test_status_peripheral), .test_code(test_code_peripheral)
