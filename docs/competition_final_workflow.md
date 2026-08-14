@@ -1,9 +1,19 @@
-# SocRV 比赛收尾流程
+# SocRV 三合一基线与比赛构建流程
 
-这份文档对应最后几天的 PYNQ-Z2 验证，以及比赛现场的 Kintex-7 构建和烧录。
-正式软件固定使用 **RT-Thread + MSH + CoreMark**：系统启动后进入 MSH，通过
-`coremark [iterations]` 运行赛事程序，结束后仍能继续执行 `ps`、`help`、
-`free`、`uptime` 和 `socrv_info`。裸机 CoreMark 不在这条流程中。
+本项目的正式基线固定为 **RT-Thread + CoreMark + 传感器**，缺少其中任何一项都
+不能作为 PYNQ-Z2 或 Kintex-7 的发布镜像。系统启动后进入串口 MSH，至少应包含：
+
+```text
+coremark
+light_read
+oled_start
+oled_stop
+```
+
+默认测评入口使用仓库当前锁定的
+`software/coremark/upstream/core_main.c`。`light_read`、`oled_start` 和
+`oled_stop` 来自同一份 RT-Thread 固件，不另外烧录传感器程序。裸机 CoreMark、
+纯 RT-Thread profile 和不含传感器命令的旧镜像均不属于这条基线。
 
 软件和 FPGA 分成两个清楚的阶段：
 
@@ -15,7 +25,7 @@
 
 ```mermaid
 flowchart LR
-    A["赛事 C 文件"] --> B["RT-Thread + MSH<br/>软件编译"]
+    A["默认 core_main.c<br/>或赛事替换文件"] --> B["RT-Thread + CoreMark<br/>BH1750/OLED + MSH"]
     B --> C["firmware.elf<br/>ICCM/DCCM 镜像"]
     C --> D["Vivado GUI<br/>source 本次运行的启动 Tcl"]
     D --> E["Synthesis"]
@@ -24,14 +34,36 @@ flowchart LR
     G --> H["FPGA 板级验证"]
 ```
 
-## 1. 每次比赛测试使用独立目录
+## 1. 基线合同与运行目录
+
+默认基线使用以下设置：
+
+| 项目 | 固定值 |
+| --- | --- |
+| RTOS | RT-Thread + FinSH/MSH |
+| 默认测评文件 | `software/coremark/upstream/core_main.c` |
+| 归档编译 profile | `contest-rtthread-coremark` |
+| 本地快速编译 profile | `rtthread-coremark` |
+| 传感器命令 | `light_read`、`oled_start`、`oled_stop` |
+| CoreMark 命令 | `coremark [iterations]` |
+| 串口 | 115200 baud，8N1 |
+
+`contest-rtthread-coremark` 和 `rtthread-coremark` 都复用
+`software/profiles/rtthread_sources.inc`，其中已经列入 I²C、BH1750、OLED 驱动和
+`cmd_sensors.c`。二者的差别只是 CoreMark 入口来源及产物是否写入独立 run。
+
+正式构建每次使用一个新的 `<run-id>`，例如
+`baseline_coremark_rtos_sensors_20260814_01`。禁止手工新建一个空的
+`competition_runs/release` 再把它传给 `--run-dir`；`--run-dir` 必须由
+`prepare_competition_run.py` 创建，目录中应先存在 `source/competition.json` 和
+`vivado/create_pynq_z2_project.tcl`。
 
 不再把正式结果全部堆进公共 `build/`。每次收到一版赛事源码，就建立一个带日期、
 版本和用途的运行目录，例如：
 
 ```text
 competition_runs/
-└── 20260813_143205_coremark_r1/
+└── <run-id>/
     ├── source/
     │   ├── original/                  # 赛事方原始文件，禁止修改
     │   ├── source_manifest.json       # 文件名、大小和 SHA-256
@@ -70,8 +102,9 @@ competition_runs/
 频率时，只增加新的 `vivado/kintex7-<频率>mhz/`，软件和镜像保持不变。
 
 这套目录不由现场人员逐项创建。`prepare_competition_run.py` 会建立完整目录、复制
-原文件、计算哈希，并生成两块板卡的 Vivado GUI 启动 Tcl。比赛 profile 使用
-`--run-dir` 后，软件、镜像和仿真结果直接写入本次运行目录。
+原文件、计算哈希，并生成两块板卡的 Vivado GUI 启动 Tcl。脚本若报告目录已经
+存在，应换一个新的 run-id，不要修改目录权限，也不要在未准备的目录中直接运行
+`build_software.py`。
 
 ## 2. 第一步：检查环境和依赖
 
@@ -137,55 +170,83 @@ python -m unittest discover -s scripts/tests -v
 
 这些命令不会调用 Vivado。
 
-## 3. 第二步：放置赛事 C 程序
+## 3. 第二步：准备默认基线 run
 
-赛事 C 文件与当前软件各层的对应关系、完整编译源清单和计划改动见
-[`competition_software_integration.md`](competition_software_integration.md)。本节只保留
-现场操作步骤；实际接入前应先按该文档判断源码 mode。
-
-准备脚本接受一个 C 文件、一个压缩包解压目录，或包含多个 `.c/.h` 的目录：
+默认输入就是仓库中的 `software/coremark/upstream/core_main.c`。以下命令在仓库
+根目录执行；`$runId` 每次使用新名称：
 
 ```powershell
+$ErrorActionPreference = "Stop"
+$runId = "baseline_coremark_rtos_sensors_20260814_01"
+$runDir = "competition_runs/$runId"
+$coremarkSource = "software/coremark/upstream/core_main.c"
+
+if (Test-Path -LiteralPath $runDir) {
+    throw "run 已存在，请修改 `$runId，不要复用或手工改权限：$runDir"
+}
+
 python scripts/prepare_competition_run.py `
-    --source "D:/competition_input/coremark_r1"
+    --source $coremarkSource `
+    --run-id $runId
 ```
 
-不指定 run-id 时，脚本根据时间和输入名称生成，例如：
-
-```text
-RUN_DIR=competition_runs/20260813_143205_coremark_r1
-SOURCE_MODE=core_main_replacement
-BUILD=python scripts/build_software.py --profile contest-rtthread-coremark --run-dir "competition_runs/20260813_143205_coremark_r1"
-PYNQ_TCL=E:/.../competition_runs/20260813_143205_coremark_r1/vivado/create_pynq_z2_project.tcl
-KINTEX_TCL=E:/.../competition_runs/20260813_143205_coremark_r1/vivado/create_kintex7_project.tcl
-```
-
-需要固定名称时可增加一个可选参数：
+准备成功后，控制台会打印 `RUN_DIR`、`BUILD`、`PYNQ_TCL` 和 `KINTEX_TCL`。立即
+检查关键文件是否存在且确实可读，并打印可直接粘贴到 Vivado Tcl Console 的完整
+命令：
 
 ```powershell
+$requiredRunFiles = @(
+    "$runDir/source/competition.json",
+    "$runDir/vivado/create_pynq_z2_project.tcl",
+    "$runDir/vivado/create_kintex7_project.tcl"
+)
+
+$requiredRunFiles | ForEach-Object {
+    if (-not (Test-Path -LiteralPath $_ -PathType Leaf)) {
+        throw "run 文件不存在：$_"
+    }
+    $null = Get-Content -LiteralPath $_ -TotalCount 1 -ErrorAction Stop
+}
+
+$pynqTcl = (Resolve-Path -LiteralPath $requiredRunFiles[1]).Path.Replace("\", "/")
+$kintexTcl = (Resolve-Path -LiteralPath $requiredRunFiles[2]).Path.Replace("\", "/")
+
+Write-Host "PYNQ_SOURCE=source {$pynqTcl}"
+Write-Host "KINTEX_SOURCE=source {$kintexTcl}"
+```
+
+上述检查没有抛出错误才可继续。把 `PYNQ_SOURCE=` 或 `KINTEX_SOURCE=` 后面的整条
+命令复制到 Vivado，不再手工拼接 run 路径。若出现 `Access denied`、
+`Permission denied` 或“文件不存在”，应回到这里创建一个全新的 run-id；不要对旧
+目录改权限，也不要进入 Vivado 后反复 source。
+
+准备脚本会复制默认 `core_main.c`、记录 SHA-256、生成 `competition.json` 和两块板
+的 Vivado 启动 Tcl。默认文件本身仍留在 `software/coremark/upstream/`，不得手工
+覆盖或修改。需要确认默认输入时执行：
+
+```powershell
+Get-FileHash -Algorithm SHA256 $coremarkSource
+Get-FileHash -Algorithm SHA256 "$runDir/source/original/core_main.c"
+```
+
+两个哈希应一致。
+
+以后收到赛事方替换文件时，只改 `--source` 和 `$runId`：
+
+```powershell
+$runId = "contest_coremark_r1_20260814_01"
+$runDir = "competition_runs/$runId"
+
 python scripts/prepare_competition_run.py `
     --source "D:/competition_input/coremark_r1" `
-    --run-id "final_coremark_r1"
+    --run-id $runId
 ```
 
-脚本一次完成：
+若输入目录中有多个 C 文件且没有唯一的 `core_main.c`，使用
+`--entry <相对路径>` 明确入口。源码类型和适配限制见
+[`competition_software_integration.md`](competition_software_integration.md)。
 
-1. 创建 `source/software/images/simulation/vivado`；
-2. 把输入原样复制到 `source/original/`；
-3. 生成 `source/source_manifest.json`；
-4. 生成待确认的 `source/competition.json`；
-5. 生成 PYNQ 和 Kintex 的 GUI 启动 Tcl；
-6. 打印后续编译命令与两个 Tcl 的完整路径。
-
-现场只需要选择赛事方输入，不需要手动维护目录树或 PowerShell 哈希管道。
-脚本优先选择名为 `core_main.c` 的文件；输入中只有一个 C 文件时，也把它当作
-CoreMark 驱动。若目录中有多个 C 文件且没有唯一的 `core_main.c`，脚本会停止，
-此时用 `--entry <相对路径>` 明确指定，不会自行猜测。
-
-原文件不得覆盖 `software/coremark/upstream/`。该目录是锁定的 EEMBC CoreMark
-依赖，覆盖后会破坏依赖验证，也会把赛事输入和项目适配代码混在一起。
-
-### 赛事程序如何接入 MSH
+### CoreMark 和传感器如何进入同一份 MSH
 
 现有 MSH 命令位于 `software/coremark/port/rtthread/command.c`。它负责：
 
@@ -195,9 +256,12 @@ CoreMark 驱动。若目录中有多个 C 文件且没有唯一的 `core_main.c`
 4. 恢复 RT-Thread tick；
 5. 返回 MSH，使 `ps`、`help` 等命令还能继续工作。
 
-赛事源码不直接替换这层命令适配。现有 `contest-rtthread-coremark` profile 把赛事
-文件的 `main()` 编译为 `coremark_main()`；下面其余接口继续由 SocRV CoreMark
-port 提供：
+传感器命令位于 `software/applications/rtthread/commands/cmd_sensors.c`，驱动来自
+`software/bsp/drivers/drv_i2c.c`、`drv_bh1750.c` 和 `drv_oled.c`。这些文件由
+`rtthread_sources.inc` 固定加入，不需要额外 profile 或第二份固件。
+
+测评源码不直接替换 MSH 适配层。`contest-rtthread-coremark` 把选定文件的 `main()`
+编译为 `coremark_main()`；下面其余接口继续由 SocRV CoreMark port 提供：
 
 ```c
 int coremark_main(void);
@@ -212,29 +276,38 @@ void coremark_resume_interrupts(void);
 [`competition_software_integration.md`](competition_software_integration.md) 增加
 对应 adapter，不能直接套用本流程。
 
-`contest-rtthread-coremark` 已复用现有：
+`contest-rtthread-coremark` 复用现有：
 
 - RT-Thread 内核、启动代码和 FinSH/MSH；
-- UART、timer、GPIO 和 test-status BSP；
+- UART、timer、GPIO、I²C、BH1750、OLED 和 test-status BSP；
 - `software/coremark/port/rtthread/command.c`；
 - `-O3` 与 `rv32imf_zicsr/ilp32f` 软件约定；
-- 赛事运行目录中的 C/H 文件，而不是固定的 CoreMark upstream 源文件。
+- run 目录中的测评入口文件。默认 run 的入口副本来自当前仓库的
+  `software/coremark/upstream/core_main.c`。
 
-## 4. 第三步 A：命令行编译软件
+## 4. 第三步 A：编译三合一软件
 
-正式软件命令为：
+沿用第 3 节 PowerShell 窗口中的 `$runDir`。如果已经关闭过 PowerShell，先重新设置
+这两个变量，不要对同一个 run-id 再执行 `prepare_competition_run.py`：
+
+```powershell
+$runId = "baseline_coremark_rtos_sensors_20260814_01"  # 改成第 3 节实际使用的值
+$runDir = "competition_runs/$runId"
+```
+
+然后执行：
 
 ```powershell
 python scripts/build_software.py `
     --profile contest-rtthread-coremark `
-    --run-dir "competition_runs/20260813_143205_coremark_r1"
+    --run-dir $runDir
 ```
 
 该命令只做软件工作，不启动 Vivado。输出位置固定为：
 
 ```text
-competition_runs/20260813_143205_coremark_r1/software/
-competition_runs/20260813_143205_coremark_r1/images/
+$runDir/software/
+$runDir/images/
 ```
 
 必须生成并检查：
@@ -245,19 +318,46 @@ competition_runs/20260813_143205_coremark_r1/images/
 - `images/image.json` 中 ELF、memory map 和各 `.mem` 哈希一致；
 - 四个 ICCM lane 和八个 DCCM bank 全部存在。
 
+随后检查 CoreMark 和三条传感器命令是否同时进入 ELF：
+
+```powershell
+$requiredSymbols = @(
+    "__fsym_coremark",
+    "__fsym_light_read",
+    "__fsym_oled_start",
+    "__fsym_oled_stop"
+)
+
+$mapText = Get-Content -LiteralPath "$runDir/software/firmware.map" -Raw
+$requiredSymbols | ForEach-Object {
+    if ($mapText -notmatch [regex]::Escape($_)) {
+        throw "基线缺少 MSH 符号：$_"
+    }
+}
+
+python scripts/check_images.py "$runDir/images/image.json"
+```
+
+这一步通过后，run 才满足“RT-Thread + CoreMark + 传感器”的软件基线。
+
 赛事流程中的 IROM/DRAM，在本项目中对应 ICCM/DCCM。Vivado 读取的是
 `images/` 下的十二个 bank/lane 文件，不直接读取 `firmware.bin`。
 
-### 原 release profile 的基线命令
+### 不归档的本地快速编译
 
-原 `rtthread-coremark` 仍可独立编译，用于确认比赛改造没有破坏已有软件链路：
+只想快速确认当前仓库能编译时，可以使用内置 profile：
 
 ```powershell
 python scripts/build_software.py --profile rtthread-coremark
 python scripts/check_images.py build/images/rtthread-coremark/image.json
 ```
 
-这两条命令仍输出到 `build/`，只作为 release 基线，不参与比赛 run 归档。
+它同样包含 RT-Thread、CoreMark 和传感器命令，但产物写在 `build/`，不会生成
+run 专用的 Vivado 启动 Tcl。正式 GUI 构建继续使用前面的 `$runDir`。
+
+不要执行省略 profile 的 `make fpga-build BOARD=pynq_z2`；当前 PYNQ 默认 profile
+是纯 `rtthread`，不满足三合一基线。必须显式使用 `rtthread-coremark`，或使用本文
+的归档 run 流程。
 
 ### MSH 入口仿真
 
@@ -266,7 +366,7 @@ python scripts/check_images.py build/images/rtthread-coremark/image.json
 ```powershell
 python scripts/run_verilator.py `
     --profile contest-rtthread-coremark `
-    --run-dir "competition_runs/20260813_143205_coremark_r1"
+    --run-dir $runDir
 ```
 
 软件刚刚编译过时，可增加 `--no-software-build`；RTL 模型指纹未变化时，可增加
@@ -275,7 +375,8 @@ python scripts/run_verilator.py `
 
 - 出现 RT-Thread 启动信息和 `msh >`；
 - `coremark 3` 完成且无 CRC、trap、timer 错误；
-- CoreMark 返回后 `ps` 和 `help` 均能执行；
+- CoreMark 返回后 `ps` 和 `help` 均能执行，`help` 中存在 `coremark`、
+  `light_read`、`oled_start` 和 `oled_stop`；
 - 最终 test-status 为 PASS。
 
 三轮运行远短于 CoreMark 要求的 10 秒，标准 `core_main.c` 会打印
@@ -291,6 +392,14 @@ python scripts/run_verilator.py `
 生成的启动 Tcl，随后从 Flow Navigator 手动执行 Synthesis、Implementation 和
 Generate Bitstream。启动 Tcl 内部再调用板卡原有的 `create_project.tcl`。
 
+必须使用第 3 节准备脚本打印的实际 `PYNQ_TCL`/`KINTEX_TCL`。不要凭记忆输入
+`competition_runs/release/...`，也不要复制本文中过期的时间戳目录。
+
+启动 Tcl 不会替你编译软件。只有第 4 节构建完成、四个 MSH 符号检查通过，并且
+本次 run 的 `images/` 已生成后，才可 source。板级工程始终包含 I²C RTL 和传感器
+引脚；RT-Thread、CoreMark 与传感器命令则来自同一个 run 的软件镜像，二者缺一
+不可。
+
 现有 `synth.tcl`、`impl.tcl` 和 `bitstream.tcl` 会自行 launch、wait 并关闭工程，
 属于自动化批处理链路；GUI 观察模式也不 source 这三个脚本。
 
@@ -298,16 +407,15 @@ Generate Bitstream。启动 Tcl 内部再调用板卡原有的 `create_project.t
 
 1. 从 Windows 启动 Vivado 2023.2。
 2. 打开底部 **Tcl Console**。
-3. source 准备脚本打印的 `PYNQ_TCL`：
+3. 原样粘贴第 3 节 PowerShell 输出中 `PYNQ_SOURCE=` 后面的完整命令。
 
-```tcl
-source {E:/Resources/03_competitions/26_03_jcs/2608round/subprj2/SocRV/competition_runs/20260813_143205_coremark_r1/vivado/create_pynq_z2_project.tcl}
-```
+这条命令已经包含本次 run 的绝对路径。不要改成 `competition_runs/release`，也不要
+手工输入 run-id 或旧时间戳目录。
 
 Console 应打印：
 
 ```text
-SOCRV_PROJECT=.../competition_runs/20260813_143205_coremark_r1/vivado/pynq_z2-50mhz/project
+SOCRV_PROJECT=.../competition_runs/<run-id>/vivado/pynq_z2-50mhz/project
 ```
 
 此时工程留在 GUI 中。依次执行：
@@ -351,13 +459,15 @@ Kintex-7 输入时钟为 200 MHz，外设时钟始终为 50 MHz。现场只设�
 100 / 125 / 150 / 200 / 250 MHz
 ```
 
-下面是 150 MHz 的完整操作。第一行是唯一需要调整的参数，第二行使用准备脚本
-打印的 `KINTEX_TCL`：
+下面是 150 MHz 的完整操作。先设置频率，再粘贴第 3 节 PowerShell 输出中
+`KINTEX_SOURCE=` 后面的完整命令；它与 PYNQ 使用同一个 run：
 
 ```tcl
 set CORE_MHZ 150
-source {E:/Resources/03_competitions/26_03_jcs/2608round/subprj2/SocRV/competition_runs/20260813_143205_coremark_r1/vivado/create_kintex7_project.tcl}
 ```
+
+设置频率后，原样粘贴 `KINTEX_SOURCE=` 后面的 `source {...}` 命令。要测试其他
+档位时，仅修改 `CORE_MHZ`；不要改 Tcl 路径中的 run-id。
 
 启动 Tcl 会检查 `CORE_MHZ`，根据项目内的频率表选择合法 MMCM 参数，推导
 `CORE_CLOCK_HZ`，并自动使用：
@@ -430,7 +540,7 @@ report_methodology -file [file join $report_dir post_impl_methodology.rpt]
 python scripts/check_fpga_reports.py `
     --board kintex7_competition `
     --core-mhz 150 `
-    --run-dir "competition_runs/20260813_143205_coremark_r1"
+    --run-dir $runDir
 ```
 
 该命令不启动 Vivado，只读取现有 `.bit`、timing 和 DRC 报告，并在
@@ -449,7 +559,7 @@ PYNQ 对应使用 `--board pynq_z2 --core-mhz 50`。
 
 ```powershell
 python scripts/package_release.py `
-    --run-dir "competition_runs/20260813_143205_coremark_r1" `
+    --run-dir $runDir `
     --board kintex7_competition `
     --core-mhz 150
 ```
@@ -469,12 +579,21 @@ competition_runs/<run-id>/vivado/<board>-<freq>/project/
 不要从公共 `build/`、Downloads 或上一次运行目录选择同名 `fpga_top.bit`。烧录前
 可在 PowerShell 中执行 `Get-FileHash`，与对应 `result.json` 核对。
 
-串口工具和具体交互操作不在本文展开。板级验收应覆盖以下行为：
+串口固定为 115200 baud、8N1：
+
+- PYNQ-Z2 的 RT-Thread UART 位于 PL，不能使用板载 Micro-USB 的 PS UART。外接
+  3.3 V USB-UART：转接器 TX 接 RPi pin 10/Y19，RX 接 RPi pin 8/Y18，并共地；
+- Kintex-7 使用板载 CP2104，FPGA RX 为 D18、TX 为 D17。
+
+打开正确的 COM 口后执行：
 
 ```text
 RT-Thread 启动
 msh >
 help
+light_read
+oled_start
+oled_stop
 ps
 free
 uptime
@@ -485,36 +604,39 @@ help
 coremark 10000
 ```
 
-PYNQ 烧录后先观察 `LED1`：它应在复位稳定窗口结束后常亮。打开串口时建议先让
-终端开始记录，再 Program Device；正常情况下只应出现一轮 RT-Thread 启动信息，
-随后停在 `msh >`。若重复打印启动标志，同时记录 `LED1` 是否闪烁：闪烁说明时钟
-稳定资格丢失；始终常亮则应转查 CPU 异常、跳回复位向量或内存破坏。
+PYNQ 烧录后先观察 `LED1`，它表示实时 MMCM lock。打开串口记录后再 Program
+Device；正常情况下只出现一轮 RT-Thread 启动信息，随后停在 `msh >`。LED1 因
+PHY 时钟短暂中断而熄灭时，BUFGCE 会暂停 SoC 时钟，锁定恢复后应继续运行，不应
+重新打印启动标志。若仍重启，再检查其他复位来源、CPU 异常或内存破坏。
 
 `coremark 3` 之后再次执行 `ps` 和 `help` 很重要：它能确认 CoreMark 为性能计时
 暂停中断后，RT-Thread tick 已恢复，MSH 没有因为一次基准运行而失效。
+
+传感器验收至少满足：`light_read` 打印地址、raw、lux 和 `status=ok`；
+`oled_start` 显示 `RTThread`；`oled_stop` 关闭显示；随后再次运行 `light_read` 仍能
+成功。设备未连接时允许返回 `addr_nack`/`not_found`，但 RT-Thread 不得重启。
 
 ## 8. PYNQ 赛前与 Kintex 现场顺序
 
 ### 最后几天的 PYNQ 流程
 
 1. 准备依赖并通过环境检查；
-2. 用 `rtthread-coremark` 基线跑短仿真；
-3. 对赛事输入运行一次 `prepare_competition_run.py`，自动建立并登记 run；
-4. 把赛事程序接入 `contest-rtthread-coremark`；
-5. 编译软件并将产物写入同一个 run-id；
-6. 在 Vivado GUI source 本次 run 自动生成的 PYNQ 启动 Tcl；
-7. 手动完成 Synthesis、Implementation 和 Generate Bitstream；
-8. 保存报告，运行 `check_fpga_reports.py`；
-9. 烧录 PYNQ，确认 `LED1` 延迟点亮后保持稳定且 RT-Thread 只启动一次；
-10. 通过串口验证 RT-Thread、MSH、CoreMark 和后续命令。
+2. 以 `software/coremark/upstream/core_main.c` 创建新的基线 run；
+3. 编译 `contest-rtthread-coremark`，检查四个 MSH 符号和镜像；
+4. 完成短仿真，确认 `coremark 3 → ps → help`；
+5. 在 Vivado GUI 中先检查再 source 本次 run 的 PYNQ Tcl；
+6. 手动完成 Synthesis、Implementation 和 Generate Bitstream；
+7. 保存报告，运行 `check_fpga_reports.py`；
+8. 烧录 PYNQ，确认 RT-Thread 只启动一次；
+9. 使用外接 3.3 V USB-UART 验证 MSH、CoreMark、BH1750 和 OLED。
 
 PYNQ 只证明软件、存储器初始化、UART、复位和板级数据通路。它固定 50 MHz，
 不能代替 Kintex-7 的 timing 或超频结论。
 
 ### 比赛现场的 Kintex 流程
 
-1. 对赛事输入运行一次准备脚本，由脚本生成正式 run-id、保存原文件并记录哈希；
-2. 编译 `contest-rtthread-coremark`，完成短仿真；
+1. 默认沿用已经通过 PYNQ 验证的同一个三合一 run；收到新赛事文件时才新建 run；
+2. 确认 `contest-rtthread-coremark` 软件、传感器命令和短仿真均通过；
 3. 先在 GUI 创建 100 MHz 工程并得到稳定 bitstream；
 4. 再按 `125 → 150 → 200 → 250 MHz` 建立独立工程；
 5. 每档保存 timing、DRC、bitstream 和 `result.json`；
@@ -526,6 +648,9 @@ PYNQ 只证明软件、存储器初始化、UART、复位和板级数据通路�
 
 以下部分已经完成：
 
+- 默认三合一基线：RT-Thread、CoreMark、BH1750/OLED 和串口 MSH；
+- 默认测评入口：`software/coremark/upstream/core_main.c`；
+- `coremark`、`light_read`、`oled_start`、`oled_stop` 四条 MSH 命令；
 - `core_main_replacement` 源码准备、原文件复制和 SHA-256；
 - `contest-rtthread-coremark` 软件 profile；
 - `--run-dir` 软件、镜像和仿真归档；
@@ -534,9 +659,9 @@ PYNQ 只证明软件、存储器初始化、UART、复位和板级数据通路�
 - PYNQ 首次 MMCM 锁定后只释放一次 SoC 复位，后续失锁通过 BUFGCE 暂停时钟而不重启 RT-Thread；
 - FPGA 报告检查与比赛 run 打包。
 
-实现没有修改 CoreMark 和 RT-Thread upstream，也没有改变两块板的传感器引脚
-约束。PYNQ-Z2 板级 RTL 使用 BUFGCE 掉锁暂停与一次性启动复位；两块板的
-`create_project.tcl` 同步采用修复分支的 include 目录处理。当前边界是只支持
-“赛事文件职责等同 `core_main.c`”这一种输入。
+实现没有修改 CoreMark 和 RT-Thread upstream。PYNQ-Z2 使用 PMODB W14/Y14，
+Kintex-7 使用 J10 F22/G22，两块板共用相同的 I²C MMIO 和驱动。PYNQ-Z2 板级
+RTL 使用 BUFGCE 掉锁暂停与一次性启动复位；两块板的 `create_project.tcl` 使用
+相同的 include 目录处理。赛事替换文件当前只支持“职责等同 `core_main.c`”的输入。
 真实文件若包含多份算法实现、平台 port 或自包含 `main()`，先改
 `competition.json` 的 mode 并补专用 adapter，不能把未知源文件自动并入固件。

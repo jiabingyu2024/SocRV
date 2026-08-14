@@ -11,10 +11,8 @@
 
 int bh1750_read_once(bh1750_measurement_t *measurement)
 {
-    const uint8_t commands[] = {
-        BH1750_POWER_ON,
-        BH1750_ONE_TIME_H_RESOLUTION
-    };
+    const uint8_t power_on = BH1750_POWER_ON;
+    const uint8_t measurement_command = BH1750_ONE_TIME_H_RESOLUTION;
     uint8_t sample[2];
     uint16_t raw;
     int result;
@@ -26,10 +24,18 @@ int bh1750_read_once(bh1750_measurement_t *measurement)
     measurement->raw = 0u;
     measurement->lux_x100 = 0u;
 
+    /* BH1750 opcodes are complete one-byte instructions.  Sending POWER_ON
+     * and the measurement opcode as two data bytes in one transaction makes
+     * real GY-302 modules NACK the second byte. */
+    result = i2c_master_write(BH1750_DEFAULT_ADDRESS, &power_on, 1u);
+    if (result != I2C_OK) {
+        return result;
+    }
+
     result = i2c_master_write(
         BH1750_DEFAULT_ADDRESS,
-        commands,
-        sizeof(commands)
+        &measurement_command,
+        1u
     );
     if (result != I2C_OK) {
         return result;

@@ -310,8 +310,9 @@ I2C_ERR_BUS_STUCK
 `light_read` 每次执行一笔完整的单次测量：
 
 1. 获取共享 I²C mutex；
-2. 向 `0x23` 写 Power On `0x01`；
-3. 写 One Time H-Resolution `0x20`；
+2. 以独立 I²C 写事务向 `0x23` 写 Power On `0x01`；
+3. 再以另一笔独立 I²C 写事务写 One Time H-Resolution `0x20`；BH1750
+   的这些 opcode 是完整的一字节指令，不能拼成同一笔连续数据写入；
 4. 释放 mutex，使用 RT-Thread 延时等待转换完成，第一版预留约 180 ms；
 5. 再次获取 mutex，从 `0x23` 连续读取两个字节；
 6. 组合 `raw = (msb << 8) | lsb`；
