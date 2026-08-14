@@ -8,8 +8,10 @@
 软件和 FPGA 分成两个清楚的阶段：
 
 - Windows/WSL 命令行只负责依赖检查、软件编译、短仿真和 ICCM/DCCM 镜像；
-- Vivado 从 Windows GUI 打开，在 Tcl Console 中设置参数并 source 建工程脚本，
-  综合、实现和 bitstream 均从 Flow Navigator 分步执行。
+- 赛前生成黄金实现时，Vivado 从 Windows GUI 打开，在 Tcl Console 中设置参数并
+  source 建工程脚本，综合、实现和 bitstream 均从 Flow Navigator 分步执行；
+- 赛时只有软件变化时，使用黄金 bit/MMI 和 `updatemem` 生成新 bit，不重新综合、
+  布局或布线。
 
 这样既能观察 Vivado 的每一步，也能在出错时保留工程状态和日志。
 
@@ -52,6 +54,10 @@ competition_runs/
     ├── simulation/
     │   ├── result.json
     │   └── uart.log
+    ├── patched/
+    │   ├── competition.bit
+    │   ├── patch_result.json
+    │   └── work/                       # 12 路 MEM、stage bit 和逐步日志
     └── vivado/
         ├── create_pynq_z2_project.tcl       # 自动生成，直接 source
         ├── create_kintex7_project.tcl       # 自动生成，只读取 CORE_MHZ
@@ -284,7 +290,31 @@ python scripts/run_verilator.py `
 
 正式的长迭代运行放到 FPGA 上，不放进 RTL 仿真。
 
-## 5. 第三步 B：在 Vivado GUI 中生成 bitstream
+## 5. 第三步 B：选择 bitstream 生成路径
+
+软件编译完成并得到 `images/code.mem` 和 `images/data.mem` 后，有两条互斥路径：
+
+```mermaid
+flowchart LR
+    A["赛事 C 源码"] --> B["编译 RT-Thread 固件"]
+    B --> C["code.mem + data.mem"]
+    C --> D{"硬件是否改变？"}
+    D -->|"RTL、约束、板卡或频率改变"| E["路径 A：综合 + 实现 + bitstream"]
+    D -->|"仅软件内容改变"| F["路径 B：拆成 12 路 MEM"]
+    F --> G["黄金 bit + 严格匹配的 MMI"]
+    G --> H["12 次串行 updatemem"]
+    H --> I["competition.bit"]
+    E --> I
+```
+
+- **路径 A**是原有完整流程，用于硬件发生变化，或尚无经过验收的黄金包时。
+- **路径 B**是正式赛时优先流程，只修改既有 bitstream 中 48 个 BRAM 的初始化值，
+  不运行综合、布局或布线。
+
+路径 B 并不取消路径 A。赛前仍必须用路径 A 生成并实板验收一次黄金实现；赛时只有
+程序变化时，才从这份只读黄金实现快速生成新 bitstream。
+
+### 5.1 路径 A：在 Vivado GUI 中完整生成 bitstream
 
 这一阶段不使用 `make fpga-build`，也不使用会串行跑完整流程的
 `build_bitstream.tcl`。在 Vivado GUI 的 Tcl Console 中 source 本次运行目录里自动
@@ -359,8 +389,245 @@ vivado/kintex7-<CORE_MHZ>mhz/project/
 新的 Vivado 窗口。每次创建 Kintex 工程只重新设置 `CORE_MHZ`，不依赖上一次
 Tcl Console 中残留的内部 MMCM 参数。
 
-软件镜像更新后也不能沿用旧综合结果。最稳妥的做法是新建 run-id；确需复用工程
-时，在 GUI 中 Reset Synthesis Run，再重新执行后续步骤。
+如果选择本节的完整路径，软件镜像更新后不能沿用旧综合结果。最稳妥的做法是新建
+run-id；确需复用工程时，在 GUI 中 Reset Synthesis Run，再重新执行后续步骤。
+如果硬件完全不变且已有匹配并验收过的黄金包，则改用下一节的快速路径。
+
+### 5.2 路径 B：不重新布局布线，直接替换 code.mem/data.mem
+
+#### 5.2.1 适用条件和不会发生的事情
+
+快速路径只适用于以下内容全部不变的情况：
+
+- FPGA 板卡和器件；
+- RTL、参数、约束、时钟频率和 Vivado 版本；
+- ICCM/DCCM 的深度、宽度、交织方式和物理 BRAM 布局；
+- RT-Thread 固件的链接地址和内存布局。
+
+`updatemem` 只改 BRAM 的 `INIT/INITP` 配置内容。它不修改网表、BRAM LOC、连线或
+时钟，不调用 `synth_design`、`place_design` 或 `route_design`，所以不会改变黄金
+实现已经签核的静态时序路径。新程序本身仍可能暴露原来没有执行到的软件或硬件问题，
+因此生成后仍要做串口和板级功能检查。
+
+只要板卡、频率、RTL、约束或存储结构有任何变化，就必须回到路径 A。PYNQ-Z2 与
+Kintex-7 的 bit、MMI 和 DCP 绝对不能混用；不同频率或不同实现 run 的文件也不能
+拼装使用。
+
+#### 5.2.2 赛前必须准备的黄金包
+
+每套黄金包至少包含：
+
+```text
+golden/<board>-<profile>-<frequency>-<git-commit>/
+├── golden.bit
+├── golden.mmi
+├── golden_postroute.dcp
+├── bram_map.tsv
+├── mmi_validation.json
+├── result.json
+├── reports/
+├── original_image/
+│   ├── firmware.elf
+│   ├── image.json
+│   ├── code.mem
+│   ├── data.mem
+│   ├── iccm_lane0.mem ... iccm_lane3.mem
+│   └── dccm_bank0.mem ... dccm_bank7.mem
+└── sha256.txt
+```
+
+`golden.bit`、`golden.mmi`、`golden_postroute.dcp` 和 `bram_map.tsv` 必须来自同一次
+实现。黄金 bit 设为只读，赛时永远写到新的工作目录，不原地覆盖。赛前至少完成：
+
+1. WNS 不小于 0、TNS 为 0，DRC 没有未批准的 error；
+2. MMI 中 4 个 ICCM lane 和 8 个 DCCM bank 恰好覆盖全部 48 个 RAMB36，不能遗漏
+   或重复 LOC；
+3. 用 `original_image/` 中的原 MEM 回填并启动，行为与未修改的黄金 bit 一致；
+4. 再回填一份特征明显的不同 RT-Thread 程序并上板启动；
+5. 记录所有文件 SHA-256、Git commit、板卡、器件、频率和 Vivado 版本。
+
+当前工程的 RAM 仍是 RTL 推断 RAM，不要求为了快速更新改成 XPM。已验证的手工 MMI
+应使用 Vivado `MemoryArray/MemoryLayout/BRAM` 结构，并按 routed DCP 的真实 LOC 和
+`BitLayout` 生成；特别是 DCCM 的两个物理切片为 `p2_d16` 与 `p0_d14`，不能把它
+们简单写成普通的 16+16 `Processor/BitLane`。
+
+#### 5.2.3 为什么不能把两个文件直接各调用一次 updatemem
+
+项目的两个规范镜像需要先按地址交织拆开：
+
+```text
+code.mem：32768 个 32-bit word
+  word_index = flat_index
+  lane = word_index % 4
+  row  = word_index // 4
+  → 4 × 8192 word：iccm_lane0.mem ... iccm_lane3.mem
+
+data.mem：16384 个 32-bit word
+  word_index = flat_index
+  bank = word_index % 8
+  row  = word_index // 8
+  → 8 × 2048 word：dccm_bank0.mem ... dccm_bank7.mem
+```
+
+因此 `code.mem` 和 `data.mem` 是赛时脚本的两个输入，但不是两个可直接更新的物理
+地址空间。脚本必须先产生 12 个临时 lane/bank 文件，再对同一个 bit 串行执行 12 次
+`updatemem`。Vivado 2023.2 的 `updatemem` 还要求每个临时 MEM 含地址起点：
+
+```text
+@00000000
+30047073
+...
+```
+
+工程生成的原始 MEM 不需要修改；快速替换脚本应只在临时目录自动补这一行。
+
+#### 5.2.4 现场实际操作
+
+先按第 3、4 节完成赛事源码接入和软件编译。确认本次 run 中存在：
+
+```text
+competition_runs/<run-id>/images/code.mem
+competition_runs/<run-id>/images/data.mem
+```
+
+统一入口按以下形式使用：
+
+```powershell
+& "C:\Users\Ren Minxin\AppData\Local\Programs\Python\Python310\python.exe" `
+  scripts\patch_bitstream.py `
+  --golden-dir "D:\jichuang_soc\golden\kintex7-rtthread-coremark-150mhz-<commit>" `
+  --code-mem "D:\jichuang_soc\competition_runs\<run-id>\images\code.mem" `
+  --data-mem "D:\jichuang_soc\competition_runs\<run-id>\images\data.mem" `
+  --output-dir "D:\jichuang_soc\competition_runs\<run-id>\patched"
+```
+
+预期输出为：
+
+```text
+competition_runs/<run-id>/patched/
+├── competition.bit
+├── patch_result.json
+└── work/
+    ├── iccm_lane0.mem ... iccm_lane3.mem
+    ├── dccm_bank0.mem ... dccm_bank7.mem
+    ├── stage-01.bit ... stage-12.bit
+    └── stage-01.log ... stage-12.log
+```
+
+`scripts/patch_bitstream.py` 已完成 PYNQ-Z2 黄金包的 12 路自回填和不同软件镜像
+替换测试。每次运行仍必须按下面的过程核查，不得因为脚本退出码为 0 就省略验收：
+
+1. 校验黄金 bit/MMI 的 SHA-256 和目标 FPGA part；
+2. 严格检查 `code.mem` 为 32768 行、`data.mem` 为 16384 行，每行恰好 8 个十六进制
+   字符；
+3. 按上述公式拆成 4+8 个文件，并在临时副本首行添加 `@00000000`；
+4. 从只读 `golden.bit` 开始更新 `ICCM_LANE0`；
+5. 每一步以上一步的 stage bit 为输入，依次更新剩余 3 个 lane 和 8 个 bank；
+6. 第 12 步成功后才复制为 `competition.bit`；
+7. 保存输入、黄金文件、最终 bit 的 SHA-256 及每一步日志。
+
+单步命令的等价形式为：
+
+```powershell
+& "D:\Xilinx\Vivado\2023.2\bin\updatemem.bat" `
+  --force `
+  --meminfo "<golden-dir>\golden.mmi" `
+  --data "<work-dir>\iccm_lane0.mem" `
+  --bit "<golden-dir>\golden.bit" `
+  --proc "ICCM_LANE0" `
+  --out "<work-dir>\stage-01.bit"
+```
+
+后续步骤把 `--bit` 改为前一步输出，并把 `--data`、`--proc` 和 `--out` 改成当前
+lane/bank。`--proc` 名称必须从当前黄金 MMI 精确读取，不能照抄另一套黄金包。
+
+#### 5.2.5 必须使用严格的失败判定
+
+Windows 下已经观察到 `updatemem` 内部报告失败时进程退出码仍可能是 0。因此每一步
+必须同时满足以下条件，不能只检查 `$LASTEXITCODE`：
+
+- 日志不含 `ERROR:`；
+- 日志不含 `update_mem failed`；
+- 日志不含 `Abnormal program termination`；
+- 输出 stage bit 存在；
+- 输出大小与黄金 bit 相同或符合黄金包中记录的精确期望；
+- 日志明确出现 `update_mem completed successfully`。
+
+任一步失败都立即停止，删除本次不完整的 stage 输出，并从只读 `golden.bit` 重新
+开始；不能从失败步骤留下的 bit 接着更新。
+
+#### 5.2.6 下载前验收和回退
+
+下载 `competition.bit` 前检查 `patch_result.json` 中的黄金包身份、12 个步骤和 SHA-256。
+上板后至少确认：
+
+```text
+RT-Thread 启动
+msh >
+help
+ps
+competition（或比赛规定的 MSH 命令）
+ps
+```
+
+若出现非法指令、无串口、数据异常或 MSH 无法返回，立即重新下载未修改的
+`golden.bit`。先检查 MEM 行数、lane/bank 顺序、MMI/bit 是否配套以及 12 步是否完整，
+不要在赛时启动重新综合实现。
+
+#### 5.2.7 已完成的 PYNQ-Z2 不同软件镜像替换验证
+
+2026-08-14 使用以下已上板验证的黄金实现进行 A/B 镜像测试：
+
+```text
+板卡/器件：PYNQ-Z2 / xc7z020clg400-1
+频率：50 MHz
+Git commit：3fce8d8eec5fd948ce3a9176a5e1033a4757d82c
+黄金目录：golden/pynq_z2-rtthread-coremark-50mhz-3fce8d8
+golden.bit SHA-256：e1a17c77723088f2e206b275712294ae40661990e4232b6f6519ade6f1dd0064
+golden.mmi SHA-256：417494e7f197f58a26c5a673e01540f2b0e53e7db4981c07c64b98a374760510
+```
+
+验证软件保留 RT-Thread、MSH 和 CoreMark，另外增加：
+
+```text
+hello       -> Hello, world!
+plus 7 35   -> 7 + 35 = 42
+```
+
+为避免改动已用于比赛的 `rtthread-coremark` 基线，测试放在 detached worktree
+`tmp/quickpatch-hello-plus-20260814/`，只在该工作树增加命令源文件并修改其本地 profile。
+主工作树中的比赛软件源和黄金包均未修改。测试结果为：
+
+- 新 `code.mem` 为 32768 行，SHA-256 为
+  `0f8f1c7023df8ea8af4e7be55f4c0e1624f4f60a3250fd6b87804c59087adf04`；
+- 新 `data.mem` 为 16384 行，SHA-256 为
+  `ae40e6bcfd678eac3863c6fa39f3b1d149eb84b4b56f53be1ec5b7c2ea222a7d`；
+- `updatemem` 共 12 步，12 个日志均含成功标记、无失败关键词，所有 stage bit 均为
+  4045668 bytes；
+- 最终 `competition.bit` SHA-256 为
+  `c43aa73a217a118c6ed5e42dfd66ad544a5b71e2169cfaad151fde9148e78b7b`；
+- 辅助 Verilator 运行实际执行 `hello`、`plus 7 35`、`help`，checker PASS，最终返回
+  `msh >`，`help` 同时列出 `hello`、`plus` 和原有 `coremark`。
+
+该辅助仿真复用了已有模型；由于模型 manifest 不是当前 HEAD，正式包装脚本正确拒绝
+了 `--no-rtl-build`。测试中直接调用旧模型只用于验证软件命令链，不可作为正式 RTL
+回归的替代。正式回归必须使用 fingerprint 匹配的模型，或者重新构建 Verilator 模型。
+
+另一个已确认的隔离注意事项：不要在 detached worktree 中用 Windows Junction 指向
+主工作树的 RT-Thread/CoreMark dependency。构建清单会解析真实路径并拒绝越出当前
+仓库根目录。需要完整独立构建时，应复制锁定依赖的实体文件；正式比赛的
+`competition_runs/<run-id>` 流程无需另建 worktree，也不会遇到这个问题。
+
+这份替换 bit 已完成软件编译、ELF/FinSH 静态检查、12 路 `updatemem` 和辅助仿真，
+还需在 PYNQ-Z2 上依次运行以下命令，才算完成“不同软件镜像”的最终实板 A/B 验收：
+
+```text
+help
+hello
+plus 7 35
+coremark 3
+ps
+```
 
 ## 6. 保存报告和确认结果位置
 
@@ -487,12 +754,16 @@ PYNQ 只证明软件、存储器初始化、UART、复位和板级数据通路�
 
 1. 对赛事输入运行一次准备脚本，由脚本生成正式 run-id、保存原文件并记录哈希；
 2. 编译 `contest-rtthread-coremark`，完成短仿真；
-3. 先在 GUI 创建 100 MHz 工程并得到稳定 bitstream；
-4. 再按 `125 → 150 → 200 → 250 MHz` 建立独立工程；
-5. 每档保存 timing、DRC、bitstream 和 `result.json`；
-6. 只烧录 timing 通过、DRC error 为 0 且板上连续运行稳定的频率。
+3. 核对正式 Kintex 黄金包的板卡、频率、Git commit、Vivado 版本和 SHA-256；
+4. 用 `code.mem`、`data.mem` 运行第 5.2 节的快速替换脚本；
+5. 确认 12 个更新步骤全部成功并生成 `competition.bit`；
+6. 下载 `competition.bit`，完成 RT-Thread、MSH 和赛事程序检查；
+7. 若快速替换或板测失败，立即下载只读 `golden.bit` 并排查输入和映射，不现场尝试
+   频率扫描或重新实现。
 
-每个频率都使用独立目录，不覆盖上一档。某档失败时直接回退到最近的稳定版本。
+`100 → 125 → 150 → 200 → 250 MHz` 的扫频属于赛前工程验证，不是赛事现场的默认
+流程。每档完整实现仍要使用独立目录，不覆盖上一档；最终只把 timing 通过、DRC
+error 为 0 且实板稳定的某一档封装为正式黄金包。现场的软件变化不需要重复这些实现。
 
 ## 9. 当前实现状态
 
@@ -505,7 +776,26 @@ PYNQ 只证明软件、存储器初始化、UART、复位和板级数据通路�
 - PYNQ 固定 50 MHz 和 Kintex 单一 `CORE_MHZ` GUI Tcl；
 - FPGA 报告检查与比赛 run 打包。
 
+快速 bitstream 路线已经完成以下验证：
+
+- 已从 v5.9/160 MHz 样本 routed DCP 导出 32 个 ICCM 和 16 个 DCCM RAMB36 的实际
+  LOC、宽度及 `BitLayout`；
+- 已实现 `export_bram_map.tcl`、手工 MMI 生成器、快速替换脚本和自动化测试；
+- 已验证 DCCM 必须使用 `MemoryArray/BRAM` 结构表达 `p2_d16 + p0_d14`，并成功更新
+  全部 8 个 bank；
+- PYNQ-Z2 50 MHz 黄金包的原 MEM 12 路自回填通过，黄金 bit 已实板验证；
+- 不同的 RT-Thread + CoreMark + `hello`/`plus` 镜像已完成 12 路替换和辅助仿真，生成
+  新 bitstream，未运行综合、布局或布线；
+- 已确认 MEM 临时副本需要 `@00000000`，且必须组合检查日志、成功标记、输出存在、
+  精确大小和失败关键词，不能只依赖 `updatemem` 进程退出码。
+
+尚未完成、因此当前不能宣称为可直接参赛功能的部分：
+
+- 新生成的 PYNQ `hello`/`plus` 替换 bit 仍需实板 A/B 验收；
+- 正式 Kintex 黄金包的时序签核、手工 MMI 配套验证和不同软件镜像实板 A/B 验收。
+
 实现没有修改 CoreMark 和 RT-Thread upstream，也没有改变板级 RTL、约束或原有
-`create_project.tcl`。当前边界是只支持“赛事文件职责等同 `core_main.c`”这一种
-输入。真实文件若包含多份算法实现、平台 port 或自包含 `main()`，先改
+`create_project.tcl`。`hello`/`plus` 仅存在于隔离测试 worktree，没有改动主工作树的
+比赛 `rtthread-coremark` 版本。当前正式赛事输入边界仍只支持“赛事文件职责等同
+`core_main.c`”这一种输入。真实文件若包含多份算法实现、平台 port 或自包含 `main()`，先改
 `competition.json` 的 mode 并补专用 adapter，不能把未知源文件自动并入固件。
