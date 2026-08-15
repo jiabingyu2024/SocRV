@@ -296,6 +296,10 @@ module dec_decode_ctl
 
    logic i0_fp_op, i0_fpload, i0_fpstore, i0_fp_any;
    logic i1_fp_any;
+   logic i0_cmx, i1_cmx;
+   logic i0_cmx_mul, i1_cmx_mul;
+   logic i0_cmx_isdigit, i1_cmx_isdigit;
+   logic [1:0] i0_cmx_op, i1_cmx_op;
    logic i0_fp_encoding_legal;
    logic i0_rm_legal;
    logic i0_fp_writes_gpr;
@@ -714,6 +718,20 @@ module dec_decode_ctl
                       (i1[6:0] == 7'b1001111) ||
                       ((i1[6:0] == 7'b0000111) && (i1[14:12] == 3'b010)) ||
                       ((i1[6:0] == 7'b0100111) && (i1[14:12] == 3'b010));
+
+   // custom-0, funct7=0.  Keep these operations at no more than two sources
+   // so the existing EH1F register file and dependency network can be reused
+   // without adding a timing-sensitive read port.
+   assign i0_cmx = (i0[6:0] == 7'b0001011) && (i0[31:25] == 7'b0000000) &&
+                   (i0[14:12] <= 3'b010);
+   assign i1_cmx = (i1[6:0] == 7'b0001011) && (i1[31:25] == 7'b0000000) &&
+                   (i1[14:12] <= 3'b010);
+   assign i0_cmx_mul = i0_cmx && (i0[14:12] <= 3'b001);
+   assign i1_cmx_mul = i1_cmx && (i1[14:12] <= 3'b001);
+   assign i0_cmx_isdigit = i0_cmx && (i0[14:12] == 3'b010);
+   assign i1_cmx_isdigit = i1_cmx && (i1[14:12] == 3'b010);
+   assign i0_cmx_op = i0_cmx_mul ? ((i0[14:12] == 3'b000) ? 2'd1 : 2'd2) : 2'd0;
+   assign i1_cmx_op = i1_cmx_mul ? ((i1[14:12] == 3'b000) ? 2'd1 : 2'd2) : 2'd0;
    assign i0_rm_legal = (i0[14:12] <= 3'b100) ||
                         ((i0[14:12] == 3'b111) && (dec_tlu_frm <= 3'b100));
 
@@ -765,6 +783,19 @@ module dec_decode_ctl
 
    always_comb begin
       i0_dp = i0_dp_raw;
+      if (i0_cmx) begin
+         i0_dp = '0;
+         i0_dp.rs1 = 1'b1;
+         i0_dp.rd = 1'b1;
+         if (i0_cmx_mul) begin
+            i0_dp.rs2 = 1'b1;
+            i0_dp.mul = 1'b1;
+            i0_dp.low = 1'b1;
+         end else begin
+            i0_dp.alu = 1'b1;
+         end
+         i0_dp.legal = 1'b1;
+      end
       if (i0_fp_any) begin
          i0_dp = '0;
          i0_dp.legal = dec_tlu_fp_enabled;
@@ -804,6 +835,19 @@ module dec_decode_ctl
       end
 
       i1_dp = i1_dp_raw;
+      if (i1_cmx) begin
+         i1_dp = '0;
+         i1_dp.rs1 = 1'b1;
+         i1_dp.rd = 1'b1;
+         if (i1_cmx_mul) begin
+            i1_dp.rs2 = 1'b1;
+            i1_dp.mul = 1'b1;
+            i1_dp.low = 1'b1;
+         end else begin
+            i1_dp.alu = 1'b1;
+         end
+         i1_dp.legal = 1'b1;
+      end
       if (i1_br_error_all) begin
          i1_dp = '0;
          i1_dp.alu = 1'b1;
@@ -853,6 +897,7 @@ module dec_decode_ctl
 
    assign i0_ap.csr_write = i0_csr_write_only_d;
    assign i0_ap.csr_imm = i0_dp.csr_imm;
+   assign i0_ap.cm_isdigit = i0_cmx_isdigit;
 
 
    assign i0_ap.jal    =  i0_jal;
@@ -885,6 +930,7 @@ module dec_decode_ctl
 
    assign i1_ap.csr_write = 1'b0;
    assign i1_ap.csr_imm   = 1'b0;
+   assign i1_ap.cm_isdigit = i1_cmx_isdigit;
 
    assign i1_ap.jal    =    i1_jal;
 
@@ -1215,6 +1261,7 @@ end : cam_array
    assign mul_p.rs1_sign =   (i0_dp.mul) ? i0_dp.rs1_sign :   i1_dp.rs1_sign;
    assign mul_p.rs2_sign =   (i0_dp.mul) ? i0_dp.rs2_sign :   i1_dp.rs2_sign;
    assign mul_p.low      =   (i0_dp.mul) ? i0_dp.low      :   i1_dp.low;
+   assign mul_p.cm_op    =   (i0_dp.mul) ? i0_cmx_op      :   i1_cmx_op;
 
    assign mul_p.load_mul_rs1_bypass_e1 = load_mul_rs1_bypass_e1;
    assign mul_p.load_mul_rs2_bypass_e1 = load_mul_rs2_bypass_e1;

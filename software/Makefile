@@ -1,5 +1,7 @@
 include toolchain/riscv_gcc.mk
 
+PYTHON ?= python3
+
 PROFILE ?= smoke
 OUT ?= ../build/software/$(PROFILE)
 LINKER := linker/socrv_code_data.ld
@@ -51,6 +53,27 @@ $(OUT)/objects/%.c.o: %.c
 $(OUT)/objects/coremark/upstream/core_main.c.o: coremark/upstream/core_main.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDES) -Dmain=coremark_main -MMD -MP -c $< -o $@
+
+# The competition source remains unchanged.  These rules operate on GCC's
+# assembly output and only replace dependency-checked CoreMark idioms.  A
+# missing pattern is a hard build error instead of silently changing semantics.
+$(OUT)/objects/coremark/upstream/core_matrix.c.o: coremark/upstream/core_matrix.c ../scripts/fuse_coremark_asm.py
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -MF $(@:.o=.d) -MT $@ -S $< -o $@.orig.s
+	$(PYTHON) ../scripts/fuse_coremark_asm.py --kind matrix --input $@.orig.s --output $@.fused.s
+	$(CC) $(ASFLAGS) $(INCLUDES) -c $@.fused.s -o $@
+
+$(OUT)/objects/coremark/upstream/core_util.c.o: coremark/upstream/core_util.c ../scripts/fuse_coremark_asm.py
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) -fno-inline -g0 -MMD -MP -MF $(@:.o=.d) -MT $@ -S $< -o $@.orig.s
+	$(PYTHON) ../scripts/fuse_coremark_asm.py --kind crc --input $@.orig.s --output $@.fused.s
+	$(CC) $(ASFLAGS) $(INCLUDES) -c $@.fused.s -o $@
+
+$(OUT)/objects/coremark/upstream/core_state.c.o: coremark/upstream/core_state.c ../scripts/fuse_coremark_asm.py
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) -g0 -MMD -MP -MF $(@:.o=.d) -MT $@ -S $< -o $@.orig.s
+	$(PYTHON) ../scripts/fuse_coremark_asm.py --kind state --input $@.orig.s --output $@.fused.s
+	$(CC) $(ASFLAGS) $(INCLUDES) -c $@.fused.s -o $@
 
 ifneq ($(strip $(PROFILE_ENTRY_SOURCE)),)
 $(PROFILE_ENTRY_OBJECT): $(PROFILE_ENTRY_SOURCE)

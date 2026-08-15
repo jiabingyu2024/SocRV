@@ -209,6 +209,10 @@ typedef struct packed {
                        logic predict_nt;
                        logic csr_write;
                        logic csr_imm;
+                       // One-cycle CoreMark character classifier.  Keeping
+                       // the flag in the existing ALU packet avoids a new
+                       // execution unit or result mux at writeback.
+                       logic cm_isdigit;
                        } alu_pkt_t;
 
 typedef struct packed {
@@ -302,6 +306,10 @@ typedef struct packed {
                        logic rs1_sign;
                        logic rs2_sign;
                        logic low;
+                       // CoreMark-oriented custom-0 operations reuse the
+                       // existing three-cycle multiply issue/writeback path.
+                       // 0: architectural MUL, 1: bfmul16, 2: crc8step.
+                       logic [1:0] cm_op;
                        logic load_mul_rs1_bypass_e1;
                        logic load_mul_rs2_bypass_e1;
                        } mul_pkt_t;

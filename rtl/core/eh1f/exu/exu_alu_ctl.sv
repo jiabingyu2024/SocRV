@@ -66,6 +66,7 @@ module exu_alu_ctl
    logic                sel_logic,sel_shift,sel_adder;
 
    logic                slt_one;
+   logic                cm_isdigit_one;
 
    logic                actual_taken;
 
@@ -183,12 +184,19 @@ module exu_alu_ctl
 
    assign slt_one = (ap.slt & lt);
 
+   // This path is intentionally only eight bits wide and runs in parallel
+   // with the normal ALU.  It therefore does not lengthen the 32-bit adder or
+   // shifter paths used by architectural instructions.
+   assign cm_isdigit_one = ap.cm_isdigit &
+                           (a_ff[7:0] >= 8'd48) &
+                           (a_ff[7:0] <= 8'd57);
+
    assign out[31:0] = ({32{sel_logic}} & lout[31:0]) |
                       ({32{sel_shift}} & sout[31:0]) |
                       ({32{sel_adder}} & aout[31:0]) |
                       ({32{ap.jal | pp_ff.pcall | pp_ff.pja | pp_ff.pret}} & {pcout[31:1],1'b0}) |
                       ({32{ap.csr_write}} & ((ap.csr_imm) ? b_ff[31:0] : a_ff[31:0])) |                // csr_write: if csr_imm rs2 else rs1
-                      ({31'b0, slt_one});
+                      ({31'b0, slt_one | cm_isdigit_one});
 
    // branch handling
 
