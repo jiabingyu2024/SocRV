@@ -1,11 +1,12 @@
-if {$argc != 2} {
-    error "usage: export_golden.tcl ROUTED_DCP GOLDEN_DIR"
+if {$argc < 2 || $argc > 3} {
+    error "usage: export_golden.tcl ROUTED_DCP GOLDEN_DIR ?ALLOW_TIMING_VIOLATIONS?"
 }
 
 set script_dir [file normalize [file dirname [info script]]]
 set repo_root [file normalize [file join $script_dir .. .. .. ..]]
 set dcp_path [file normalize [lindex $argv 0]]
 set golden_dir [file normalize [lindex $argv 1]]
+set allow_timing_violations [expr {$argc == 3 && [lindex $argv 2]}]
 file mkdir $golden_dir
 
 open_checkpoint $dcp_path
@@ -29,7 +30,7 @@ if {[llength $setup_path] == 0 || [llength $hold_path] == 0} {
 }
 set setup_slack [get_property SLACK $setup_path]
 set hold_slack [get_property SLACK $hold_path]
-if {$setup_slack < 0.0 || $hold_slack < 0.0} {
+if {!$allow_timing_violations && ($setup_slack < 0.0 || $hold_slack < 0.0)} {
     error "golden checkpoint fails timing: setup=$setup_slack hold=$hold_slack"
 }
 

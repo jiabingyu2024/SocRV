@@ -41,7 +41,10 @@ class FpgaBoardTest(unittest.TestCase):
 
     def test_axku062_clock_contract(self) -> None:
         board = BOARDS["axku062"]
-        self.assertEqual(board.supported_core_mhz, (50, 100, 125, 150, 200, 250))
+        self.assertEqual(
+            board.supported_core_mhz,
+            (50, 100, 125, 150, 170, 200, 250),
+        )
         self.assertEqual(
             board.mmcm,
             {
@@ -49,6 +52,7 @@ class FpgaBoardTest(unittest.TestCase):
                 100: ("5.0", "10.0", "20"),
                 125: ("5.0", "8.0", "20"),
                 150: ("6.0", "8.0", "24"),
+                170: ("4.25", "5.0", "17"),
                 200: ("5.0", "5.0", "20"),
                 250: ("5.0", "4.0", "20"),
             },
