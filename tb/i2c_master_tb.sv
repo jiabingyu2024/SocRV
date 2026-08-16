@@ -3,6 +3,7 @@
 module i2c_master_tb;
   localparam logic [11:0] CONTROL   = 12'h000;
   localparam logic [11:0] STATUS    = 12'h004;
+  localparam logic [11:0] CLOCK_DIV = 12'h008;
   localparam logic [11:0] TXDATA    = 12'h00c;
   localparam logic [11:0] RXDATA    = 12'h010;
   localparam logic [11:0] COMMAND   = 12'h014;
@@ -155,6 +156,35 @@ module i2c_master_tb;
     end
   endtask
 
+  task automatic check_scl_phase_timing(input realtime expected_phase_ns);
+    realtime low_started;
+    realtime high_started;
+    realtime high_ended;
+    realtime low_duration;
+    realtime high_duration;
+    begin
+      @(negedge scl_bus);
+      low_started = $realtime;
+      @(posedge scl_bus);
+      high_started = $realtime;
+      @(negedge scl_bus);
+      high_ended = $realtime;
+      low_duration = high_started - low_started;
+      high_duration = high_ended - high_started;
+      if (low_duration < expected_phase_ns - 0.01 ||
+          low_duration > expected_phase_ns + 0.01 ||
+          high_duration < expected_phase_ns - 0.01 ||
+          high_duration > expected_phase_ns + 0.01)
+        $fatal(
+          1,
+          "unexpected SCL timing: low=%0.2fns high=%0.2fns expected=%0.2fns",
+          low_duration,
+          high_duration,
+          expected_phase_ns
+        );
+    end
+  endtask
+
   logic [31:0] status;
   logic [31:0] value;
 
@@ -169,6 +199,10 @@ module i2c_master_tb;
 
     mmio_write(CONTROL, CTRL_ENABLE | CTRL_RESET);
     mmio_write(CONTROL, CTRL_ENABLE);
+    mmio_write(CLOCK_DIV, 32'd3);
+    mmio_read(CLOCK_DIV, value);
+    if (value != 32'd3)
+      $fatal(1, "clock divider readback mismatch: %08x", value);
 
     issue_command(CMD_START, status);
     if ((status & ST_BUS_ACTIVE) == 0)
@@ -177,6 +211,7 @@ module i2c_master_tb;
     mmio_write(TXDATA, 8'h46);
     fork
       respond_to_write(1'b1);
+      check_scl_phase_timing(40.0);
       issue_command(CMD_WRITE | CMD_ADDRESS, status);
     join
     if ((status & ST_ADDR_NACK) != 0)
@@ -189,6 +224,19 @@ module i2c_master_tb;
     join
     if ((status & ST_DATA_NACK) == 0)
       $fatal(1, "data NACK was not latched: %08x", status);
+    issue_command(CMD_STOP, status);
+    if ((status & ST_BUS_ACTIVE) != 0 || (status & ST_BUS_READY) == 0)
+      $fatal(1, "STOP did not restore an idle bus: %08x", status);
+
+    mmio_write(STATUS, 32'h0000_007e);
+    issue_command(CMD_START, status);
+    mmio_write(TXDATA, 8'h78);
+    fork
+      respond_to_write(1'b0);
+      issue_command(CMD_WRITE | CMD_ADDRESS, status);
+    join
+    if ((status & ST_ADDR_NACK) == 0)
+      $fatal(1, "address NACK was not latched: %08x", status);
     issue_command(CMD_STOP, status);
 
     mmio_write(STATUS, 32'h0000_007e);
@@ -206,6 +254,14 @@ module i2c_master_tb;
     if (value[7:0] != 8'ha5)
       $fatal(1, "read byte mismatch: %02x", value[7:0]);
     issue_command(CMD_STOP, status);
+
+    mmio_write(STATUS, 32'h0000_007e);
+    issue_command(CMD_START, status);
+    slave_sda_low = 1'b1;
+    issue_command(CMD_STOP, status);
+    if ((status & ST_BUS_STUCK) == 0 || (status & ST_BUS_ACTIVE) != 0)
+      $fatal(1, "failed STOP was not reported: %08x", status);
+    slave_sda_low = 1'b0;
 
     slave_sda_low = 1'b1;
     fork

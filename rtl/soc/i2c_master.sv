@@ -1,5 +1,5 @@
 module i2c_master #(
-   parameter int unsigned RESET_CLOCK_DIV = 124,
+   parameter int unsigned RESET_CLOCK_DIV = 249,
    parameter int unsigned RESET_TIMEOUT   = 500_000
 ) (
    input  logic        clk,

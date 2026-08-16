@@ -98,10 +98,10 @@
       "uart_prompt": "msh >",
       "uart_prompt_timeout": 5000000,
       "uart_expect": [
-        "thread   pri  status",
+        "thread pri  status",
         "tshell",
-        "tidle0",
-        "running"
+        "tidle",
+        "main    10  close"
       ],
       "max_cycles": 5000000,
       "seed": 1

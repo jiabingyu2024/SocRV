@@ -15,6 +15,7 @@
 #define OLED_DATA_CONTROL 0x40u
 #define OLED_DISPLAY_OFF 0xaeu
 #define OLED_DISPLAY_ON 0xafu
+#define OLED_DEACTIVATE_SCROLL 0x2eu
 #define OLED_CHUNK_SIZE 16u
 
 static uint8_t framebuffer[OLED_FRAMEBUFFER_SIZE];
@@ -61,6 +62,7 @@ static int initialize_ssd1306(void)
 {
     static const uint8_t init_commands[] = {
         OLED_DISPLAY_OFF,
+        OLED_DEACTIVATE_SCROLL,
         0xd5u, 0x80u,
         0xa8u, 0x3fu,
         0xd3u, 0x00u,
@@ -70,11 +72,13 @@ static int initialize_ssd1306(void)
         0xa1u,
         0xc8u,
         0xdau, 0x12u,
-        0x81u, 0x7fu,
+        0x81u, 0xcfu,
         0xd9u, 0xf1u,
-        0xdbu, 0x40u,
+        0xdbu, 0x20u,
         0xa4u,
-        0xa6u
+        0xa6u,
+        0x21u, 0x00u, 0x7fu,
+        0x22u, 0x00u, 0x07u
     };
 
     return oled_write_commands(init_commands, sizeof(init_commands));
@@ -188,6 +192,7 @@ static int refresh_framebuffer(void)
 
 int oled_start_rtthread(void)
 {
+    const uint8_t display_off = OLED_DISPLAY_OFF;
     const uint8_t display_on = OLED_DISPLAY_ON;
     int result;
 
@@ -211,6 +216,9 @@ int oled_start_rtthread(void)
     }
     if (result == I2C_OK) {
         running = RT_TRUE;
+    } else {
+        running = RT_FALSE;
+        (void)oled_write_commands(&display_off, 1u);
     }
     return result;
 }

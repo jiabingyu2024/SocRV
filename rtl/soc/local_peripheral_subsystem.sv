@@ -32,7 +32,8 @@ module local_peripheral_subsystem #(
    import soc_memory_map_pkg::*;
 
    localparam int unsigned I2C_CLOCK_DIV =
-      (PERIPHERAL_CLOCK_HZ / (4 * 100_000)) - 1;
+      ((PERIPHERAL_CLOCK_HZ + (2 * 100_000) - 1) /
+       (2 * 100_000)) - 1;
    localparam int unsigned I2C_TIMEOUT_CYCLES = PERIPHERAL_CLOCK_HZ / 100;
 
    logic timer_sel, uart_sel, gpio_sel, sysctrl_sel, i2c_sel;

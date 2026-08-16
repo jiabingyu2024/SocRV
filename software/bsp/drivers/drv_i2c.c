@@ -117,9 +117,9 @@ static int read_byte(uint8_t *value, rt_bool_t send_nack)
     return result;
 }
 
-static void finish_with_stop(void)
+static int finish_with_stop(void)
 {
-    (void)issue_command(SOCRV_I2C_COMMAND_STOP);
+    return issue_command(SOCRV_I2C_COMMAND_STOP);
 }
 
 static int recover_bus(void)
@@ -175,6 +175,7 @@ int i2c_master_init(void)
 {
     uint32_t peripheral_hz;
     uint32_t divider;
+    uint32_t divider_denominator;
     uint32_t timeout_cycles;
 
     if (!mutex_initialized) {
@@ -188,10 +189,12 @@ int i2c_master_init(void)
     }
 
     peripheral_hz = soc_peripheral_clock_hz();
-    if (peripheral_hz < (4u * I2C_BUS_HZ)) {
+    divider_denominator = 2u * I2C_BUS_HZ;
+    if (peripheral_hz < divider_denominator) {
         return I2C_ERR_INVALID;
     }
-    divider = peripheral_hz / (4u * I2C_BUS_HZ) - 1u;
+    divider = (peripheral_hz + divider_denominator - 1u) /
+              divider_denominator - 1u;
     timeout_cycles = peripheral_hz / 100u;
 
     mmio_write32(
@@ -212,6 +215,7 @@ int i2c_master_init(void)
 int i2c_master_probe(uint8_t address)
 {
     int result;
+    int stop_result;
 
     if (address > 0x7fu) {
         return I2C_ERR_INVALID;
@@ -221,7 +225,10 @@ int i2c_master_probe(uint8_t address)
         return result;
     }
     result = begin_transaction(address, RT_FALSE);
-    finish_with_stop();
+    stop_result = finish_with_stop();
+    if (result == I2C_OK) {
+        result = stop_result;
+    }
     unlock_bus();
     return result;
 }
@@ -230,6 +237,7 @@ int i2c_master_write(uint8_t address, const uint8_t *data, size_t length)
 {
     size_t index;
     int result;
+    int stop_result;
 
     if (address > 0x7fu || (length != 0u && data == RT_NULL)) {
         return I2C_ERR_INVALID;
@@ -243,7 +251,10 @@ int i2c_master_write(uint8_t address, const uint8_t *data, size_t length)
     for (index = 0u; result == I2C_OK && index < length; ++index) {
         result = write_byte(data[index], RT_FALSE);
     }
-    finish_with_stop();
+    stop_result = finish_with_stop();
+    if (result == I2C_OK) {
+        result = stop_result;
+    }
     unlock_bus();
     return result;
 }
@@ -252,6 +263,7 @@ int i2c_master_read(uint8_t address, uint8_t *data, size_t length)
 {
     size_t index;
     int result;
+    int stop_result;
 
     if (address > 0x7fu || length == 0u || data == RT_NULL) {
         return I2C_ERR_INVALID;
@@ -265,7 +277,10 @@ int i2c_master_read(uint8_t address, uint8_t *data, size_t length)
     for (index = 0u; result == I2C_OK && index < length; ++index) {
         result = read_byte(&data[index], index + 1u == length);
     }
-    finish_with_stop();
+    stop_result = finish_with_stop();
+    if (result == I2C_OK) {
+        result = stop_result;
+    }
     unlock_bus();
     return result;
 }
@@ -280,6 +295,7 @@ int i2c_master_write_read(
 {
     size_t index;
     int result;
+    int stop_result;
 
     if (address > 0x7fu || write_length == 0u || read_length == 0u ||
         write_data == RT_NULL || read_data == RT_NULL) {
@@ -303,7 +319,10 @@ int i2c_master_write_read(
     for (index = 0u; result == I2C_OK && index < read_length; ++index) {
         result = read_byte(&read_data[index], index + 1u == read_length);
     }
-    finish_with_stop();
+    stop_result = finish_with_stop();
+    if (result == I2C_OK) {
+        result = stop_result;
+    }
     unlock_bus();
     return result;
 }

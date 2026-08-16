@@ -1,6 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-// Copyright 2019 Western Digital Corporation or its affiliates.
-
 
 module dec_tlu_ctl
    import mycpu_types::*;
