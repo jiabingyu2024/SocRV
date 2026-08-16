@@ -181,6 +181,7 @@ typedef struct packed {
                        logic predict_nt;
                        logic csr_write;
                        logic csr_imm;
+                       logic cm_isdigit;
                        } alu_pkt_t;
 
 typedef struct packed {
@@ -271,6 +272,7 @@ typedef struct packed {
                        logic rs1_sign;
                        logic rs2_sign;
                        logic low;
+                       logic [1:0] cm_op;
                        logic load_mul_rs1_bypass_e1;
                        logic load_mul_rs2_bypass_e1;
                        } mul_pkt_t;
