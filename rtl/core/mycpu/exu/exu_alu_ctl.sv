@@ -1,0 +1,206 @@
+
+
+module exu_alu_ctl
+   import mycpu_types::*;
+(
+   input logic  clk,
+   input logic  active_clk,
+   input logic  rst_l,
+   input logic  scan_mode,
+
+   input predict_pkt_t  predict_p,
+
+   input logic freeze,
+
+   input logic [31:0] a,
+   input logic [31:0] b,
+   input logic [31:1] pc,
+
+   input logic valid,
+   input logic flush,
+
+   input logic [12:1] brimm,
+
+   input alu_pkt_t ap,
+
+   input logic  enable,
+
+
+   output logic [31:0] out,
+
+   output logic        flush_upper,
+   output logic [31:1] flush_path,
+   output logic        target_misaligned,
+
+   output logic [31:1] pc_ff,
+
+   output logic pred_correct,
+   output predict_pkt_t predict_p_ff
+
+  );
+
+
+   logic        [31:0]  aout,bm;
+   logic                cout,ov,neg;
+
+   logic        [3:1]   logic_sel;
+
+   logic        [31:0]  lout;
+   logic        [31:0]  sout;
+   logic                sel_logic,sel_shift,sel_adder;
+
+   logic                slt_one;
+
+   logic                actual_taken;
+
+   logic signed [31:0]  a_ff;
+
+   logic [31:0]         b_ff;
+
+   logic [12:1]         brimm_ff;
+
+   logic [31:1]         pcout;
+
+   logic                valid_ff;
+
+   logic [31:0]         ashift;
+   logic                cond_mispredict;
+   logic                target_mispredict;
+
+   logic                eq, ne, lt, ge;
+
+
+   rvdffs #(1)  validff (.*, .clk(active_clk), .en(~freeze), .din(valid & ~flush), .dout(valid_ff));
+
+   rvdffe #(32) aff (.*, .en(enable & valid), .din(a[31:0]), .dout(a_ff[31:0]));
+
+   rvdffe #(32) bff (.*, .en(enable & valid), .din(b[31:0]), .dout(b_ff[31:0]));
+
+
+   rvdffe #(31) pcff (.*, .en(enable), .din(pc[31:1]), .dout(pc_ff[31:1]));
+
+   rvdffe #(12) brimmff (.*, .en(enable), .din(brimm[12:1]), .dout(brimm_ff[12:1]));
+
+   predict_pkt_t pp_ff;
+
+   rvdffe #($bits(predict_pkt_t)) predictpacketff (.*,
+                           .en(enable),
+                           .din(predict_p),
+                           .dout(pp_ff)
+                           );
+
+
+   assign bm[31:0] = ( ap.sub ) ? ~b_ff[31:0] : b_ff[31:0];
+
+
+   assign {cout, aout[31:0]} = {1'b0, a_ff[31:0]} + {1'b0, bm[31:0]} + {32'b0, ap.sub};
+
+   assign ov = (~a_ff[31] & ~bm[31] &  aout[31]) |
+               ( a_ff[31] &  bm[31] & ~aout[31] );
+
+   assign neg = aout[31];
+
+   assign eq = a_ff[31:0] == b_ff[31:0];
+
+   assign ne = ~eq;
+
+   assign logic_sel[3] = ap.land | ap.lor;
+   assign logic_sel[2] = ap.lor | ap.lxor;
+   assign logic_sel[1] = ap.lor | ap.lxor;
+
+
+   assign lout[31:0] =  (  a_ff[31:0] &  b_ff[31:0] & {32{logic_sel[3]}} ) |
+                        (  a_ff[31:0] & ~b_ff[31:0] & {32{logic_sel[2]}} ) |
+                        ( ~a_ff[31:0] &  b_ff[31:0] & {32{logic_sel[1]}} );
+
+
+   assign ashift[31:0] = a_ff >>> b_ff[4:0];
+
+   assign sout[31:0] = ( {32{ap.sll}} & (a_ff[31:0] <<  b_ff[4:0]) ) |
+                       ( {32{ap.srl}} & (a_ff[31:0] >>  b_ff[4:0]) ) |
+                       ( {32{ap.sra}} &  ashift[31:0]              );
+
+
+   assign sel_logic = |{ap.land,ap.lor,ap.lxor};
+
+   assign sel_shift = |{ap.sll,ap.srl,ap.sra};
+
+   assign sel_adder = (ap.add | ap.sub) & ~ap.slt;
+
+
+   assign lt = (~ap.unsign & (neg ^ ov)) |
+               ( ap.unsign & ~cout);
+
+   assign ge = ~lt;
+
+
+   assign slt_one = (ap.slt & lt);
+
+   assign out[31:0] = ({32{sel_logic}} & lout[31:0]) |
+                      ({32{sel_shift}} & sout[31:0]) |
+                      ({32{sel_adder}} & aout[31:0]) |
+                      ({32{ap.jal | pp_ff.pcall | pp_ff.pja | pp_ff.pret}} & {pcout[31:1],1'b0}) |
+                      ({32{ap.csr_write}} & ((ap.csr_imm) ? b_ff[31:0] : a_ff[31:0])) |
+                      ({31'b0, slt_one});
+
+
+   logic                any_jal;
+
+   assign any_jal =       ap.jal |
+                          pp_ff.pcall |
+                          pp_ff.pja   |
+                          pp_ff.pret;
+
+
+   assign actual_taken = (ap.beq & eq) |
+                         (ap.bne & ne) |
+                         (ap.blt & lt) |
+                         (ap.bge & ge) |
+                         (any_jal);
+
+
+   rvbradder ibradder (
+                     .pc(pc_ff[31:1]),
+                     .offset(brimm_ff[12:1]),
+                     .dout(pcout[31:1])
+                      );
+
+
+   assign pred_correct = ((ap.predict_nt & ~actual_taken) |
+                          (ap.predict_t  &  actual_taken)) & ~any_jal;
+
+
+   assign flush_path[31:1] = (any_jal) ? aout[31:1] : pcout[31:1];
+
+
+   assign target_misaligned = valid_ff & actual_taken & flush_path[1] & ~flush & ~freeze;
+
+
+   assign cond_mispredict = (ap.predict_t & ~actual_taken) |
+                            (ap.predict_nt & actual_taken);
+
+
+   assign target_mispredict = pp_ff.pret & (pp_ff.prett[31:1] != aout[31:1]);
+
+   assign flush_upper = ( ap.jal | cond_mispredict | target_mispredict) & valid_ff & ~flush & ~freeze;
+
+
+   logic [1:0]          newhist;
+
+   assign newhist[1] = (pp_ff.hist[1]&pp_ff.hist[0]) | (!pp_ff.hist[0]&actual_taken);
+
+   assign newhist[0] = (!pp_ff.hist[1]&!actual_taken) | (pp_ff.hist[1]&actual_taken);
+
+
+   always_comb begin
+      predict_p_ff = pp_ff;
+
+      predict_p_ff.misp    = (valid_ff) ? (cond_mispredict | target_mispredict) & ~flush : pp_ff.misp;
+      predict_p_ff.ataken  = (valid_ff) ? actual_taken : pp_ff.ataken;
+      predict_p_ff.hist[1] = (valid_ff) ? newhist[1] : pp_ff.hist[1];
+      predict_p_ff.hist[0] = (valid_ff) ? newhist[0] : pp_ff.hist[0];
+
+   end
+
+
+endmodule

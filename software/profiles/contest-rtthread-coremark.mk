@@ -10,7 +10,7 @@ CONTEST_SOURCE_ROOT ?= $(dir $(CONTEST_ENTRY_SOURCE))
 # is renamed by software/Makefile and called from command.c.
 COREMARK_ITERATIONS := 10000
 COREMARK_TICKS_PER_SEC := 50000000
-COREMARK_FLAGS_TEXT := O3-rv32imf_zicsr-ilp32f-veer-eh1-tcm-rtthread-contest
+COREMARK_FLAGS_TEXT := O3-rv32imf_zicsr-ilp32f-mycpu-tcm-rtthread-contest
 include profiles/coremark_sources.inc
 
 PROFILE_KIND := contest-rtthread-coremark-command

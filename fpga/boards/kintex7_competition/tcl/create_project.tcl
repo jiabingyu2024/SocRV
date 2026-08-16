@@ -41,9 +41,9 @@ proc read_socrv_filelist {repo_dir filelist_path} {
                 error "filelist source does not exist: $source_path"
             }
             # Keep the ordered source list and submit it as one SystemVerilog
-            # compilation unit below.  EH1's generated common_defines.vh is
+            # compilation unit below.  The mycpu configuration header is
             # intentionally the first source and its macros must remain live
-            # while veer_types and the implementation modules are parsed.
+            # while mycpu_types and the implementation modules are parsed.
             lappend socrv_sources $source_path
         }
     }
@@ -60,12 +60,12 @@ set_property verilog_define {SYNTHESIS} [current_fileset]
 read_socrv_filelist $repo_dir [file join $repo_dir sim filelists fpga_kintex7.f]
 set_property include_dirs $socrv_include_dirs [current_fileset]
 read_verilog -sv $socrv_sources
-set eh1_defines [get_files -quiet -filter {NAME =~ "*common_defines.vh"}]
-if {[llength $eh1_defines] != 1} {
-    error "expected exactly one common_defines.vh, got [llength $eh1_defines]"
+set mycpu_config_header [get_files -quiet -filter {NAME =~ "*mycpu_config.vh"}]
+if {[llength $mycpu_config_header] != 1} {
+    error "expected exactly one mycpu_config.vh, got [llength $mycpu_config_header]"
 }
-set_property file_type {Verilog Header} $eh1_defines
-set_property is_global_include true $eh1_defines
+set_property file_type {Verilog Header} $mycpu_config_header
+set_property is_global_include true $mycpu_config_header
 read_xdc [list [file join $repo_dir fpga boards kintex7_competition constraints pins.xdc]]
 read_xdc [list [file join $repo_dir fpga boards kintex7_competition constraints clocks.xdc]]
 read_xdc [list [file join $repo_dir fpga boards kintex7_competition constraints cdc.xdc]]

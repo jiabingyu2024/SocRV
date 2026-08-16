@@ -115,8 +115,7 @@ module i2c_master #(
       endcase
    end
 
-   // Open-drain intent: these outputs only request a low level. The board
-   // wrapper converts zero requests into high impedance on SCL/SDA.
+
    always_comb begin
       scl_drive_low = 1'b0;
       sda_drive_low = 1'b0;
@@ -209,7 +208,7 @@ module i2c_master #(
          phase_count_q        <= 32'b0;
          command_timer_q      <= 32'b0;
       end else begin
-         // W1C completion/error bits are independent of the live status bits.
+
          if (req_valid && req_write && (req_addr == STATUS_OFFSET) &&
              req_wstrb[0]) begin
             if (req_wdata[1]) done_q             <= 1'b0;

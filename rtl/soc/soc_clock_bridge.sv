@@ -1,6 +1,5 @@
-// Two-clock bundled-data bridge for the EH1 local-MMIO request channel.
-// A request is latched in the core domain, transferred with a toggle, and
-// acknowledged only after the peripheral domain has completed the transfer.
+
+
 module soc_clock_bridge (
    input  logic        core_clk,
    input  logic        core_rst_n,
@@ -57,7 +56,7 @@ module soc_clock_bridge (
    assign periph_req_wdata = periph_req_wdata_q;
    assign periph_req_wstrb = periph_req_wstrb_q;
 
-   // Core-domain request capture and response synchronizer.
+
    always_ff @(posedge core_clk or negedge core_rst_n) begin
       if (!core_rst_n) begin
          req_toggle_q       <= 1'b0;
@@ -93,7 +92,7 @@ module soc_clock_bridge (
       end
    end
 
-   // Peripheral-domain request synchronizer and one-entry transaction engine.
+
    always_ff @(posedge periph_clk or negedge periph_rst_n) begin
       if (!periph_rst_n) begin
          req_toggle_meta_q  <= 1'b0;

@@ -5,7 +5,7 @@
 #define SOCRV_XLEN 32u
 #define SOCRV_MARCH "rv32imf_zicsr"
 #define SOCRV_MABI "ilp32f"
-#define SOCRV_CPU_IMPLEMENTATION "veer_eh1_rv32imf_tcm"
+#define SOCRV_CPU_IMPLEMENTATION "mycpu_rv32imf_tcm"
 #define SOCRV_TARGET_INTEGER_MARCH "rv32im_zicsr"
 #define SOCRV_TARGET_FP_SELECTION "single"
 #define SOCRV_TARGET_SINGLE_MARCH "rv32imf_zicsr"

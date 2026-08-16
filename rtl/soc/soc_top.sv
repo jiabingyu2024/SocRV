@@ -58,9 +58,7 @@ module soc_top #(
    logic [31:0] test_status_peripheral, test_code_peripheral;
    logic [31:0] test_status_meta_q, test_code_meta_q;
 
-   // Reset is asserted globally and released synchronously in the slower
-   // peripheral domain.  The incoming core reset is already synchronous to
-   // core_clk in both the board and simulation wrappers.
+
    always_ff @(posedge peripheral_clk or negedge rst_n) begin
       if (!rst_n)
          peripheral_reset_release_q <= 2'b00;
@@ -110,10 +108,7 @@ module soc_top #(
       .test_status(test_status_peripheral), .test_code(test_code_peripheral)
    );
 
-   // Peripheral interrupts are level signals.  Two-stage synchronizers make
-   // them safe for the core domain; the shared EH1 cause remains unchanged.
-   // Test status/code are software-held level buses and are similarly sampled
-   // twice before they leave soc_top for the simulation/board status logic.
+
    always_ff @(posedge core_clk or negedge rst_n) begin
       if (!rst_n) begin
          timer_irq_meta_q    <= 1'b0;
@@ -140,7 +135,7 @@ module soc_top #(
       end
    end
 
-   veer_wrapper #(
+   mycpu_wrapper #(
       .ICCM_LANE0_INIT_FILE(ICCM_LANE0_INIT_FILE),
       .ICCM_LANE1_INIT_FILE(ICCM_LANE1_INIT_FILE),
       .ICCM_LANE2_INIT_FILE(ICCM_LANE2_INIT_FILE),
@@ -156,11 +151,6 @@ module soc_top #(
    ) core (
       .clk(core_clk),
       .rst_l(rst_n),
-      .dbg_rst_l(rst_n),
-      .rst_vec(31'b0),
-      .nmi_int(1'b0),
-      .nmi_vec(31'b0),
-      .jtag_id(31'h0cafe001),
       .trace_rv_i_insn_ip(),
       .trace_rv_i_address_ip(),
       .trace_rv_i_valid_ip(),
@@ -168,15 +158,8 @@ module soc_top #(
       .trace_rv_i_ecause_ip(),
       .trace_rv_i_interrupt_ip(),
       .trace_rv_i_tval_ip(),
-      .lsu_bus_clk_en(1'b1),
-      .ifu_bus_clk_en(1'b1),
-      .dbg_bus_clk_en(1'b1),
-      .dma_bus_clk_en(1'b1),
-      // EH1 exposes a direct machine-timer interrupt but no direct MSIP pin.
-      // SYSCTRL software requests therefore share cause 7; the BSP reads the
-      // pending bit first and performs either a scheduler switch or a tick.
-      // UART is an external device, so its level interrupt is synchronized and
-      // delivered on external source 1 (cause 11 / MEIP via mexintpend).
+
+
       .timer_int(timer_irq_sync_q | software_irq_sync_q),
       .extintsrc_req({7'b0, uart_irq_sync_q}),
       .lsu_mmio_valid(mmio_valid),
@@ -186,16 +169,6 @@ module soc_top #(
       .lsu_mmio_wstrb(mmio_wstrb),
       .lsu_mmio_ready(mmio_ready),
       .lsu_mmio_rdata(mmio_rdata),
-      .lsu_mmio_error(mmio_error),
-      .dec_tlu_perfcnt0(), .dec_tlu_perfcnt1(),
-      .dec_tlu_perfcnt2(), .dec_tlu_perfcnt3(),
-      .jtag_tck(1'b0), .jtag_tms(1'b1), .jtag_tdi(1'b0),
-      .jtag_trst_n(rst_n), .jtag_tdo(),
-      .mpc_debug_halt_req(1'b0), .mpc_debug_run_req(1'b0),
-      .mpc_reset_run_req(1'b1), .mpc_debug_halt_ack(),
-      .mpc_debug_run_ack(), .debug_brkpt_status(),
-      .i_cpu_halt_req(1'b0), .o_cpu_halt_ack(), .o_cpu_halt_status(),
-      .o_debug_mode_status(), .i_cpu_run_req(1'b0), .o_cpu_run_ack(),
-      .scan_mode(1'b0), .mbist_mode(1'b0)
+      .lsu_mmio_error(mmio_error)
    );
 endmodule

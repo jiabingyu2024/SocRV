@@ -46,7 +46,7 @@ SimResult SimControl::run() {
     std::uint32_t first_inst_candidate_flags = 0;
 
     const auto dump_debug_state = [&]() {
-        std::cerr << "EH1 trap state: mepc=0x" << std::hex
+        std::cerr << "MyCPU trap state: mepc=0x" << std::hex
                   << std::setw(8) << std::setfill('0') << dut_.debug_mepc()
                   << " mcause=0x" << std::setw(8) << dut_.debug_mcause()
                   << " mtval=0x" << std::setw(8) << dut_.debug_mtval()

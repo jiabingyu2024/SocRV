@@ -64,8 +64,7 @@ module uart #(
       endcase
    end
 
-   // TX FIFO and 8-N-1 serializer.  The divider is a clock-enable generator;
-   // no second clock domain is created.
+
    always_ff @(posedge clk or negedge rst_l) begin
       if (!rst_l) begin
          tx_wr_ptr     <= 2'b0;
@@ -101,7 +100,7 @@ module uart #(
       end
    end
 
-   // RX synchronizer and centre-sampled 8-N-1 receiver.
+
    assign rx_push = rx_busy && (rx_bit_index == 4'd9) && (rx_baud_count == 0) &&
                     rx_sync && !rx_full;
    always_ff @(posedge clk or negedge rst_l) begin

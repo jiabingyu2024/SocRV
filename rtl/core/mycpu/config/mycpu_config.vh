@@ -1,0 +1,51 @@
+`ifndef SOCRV_MYCPU_COMMON_DEFINES_VH
+`define SOCRV_MYCPU_COMMON_DEFINES_VH
+
+`define TEC_RV_ICG clockhdr
+`define RV_RET_STACK_SIZE 4
+`define RV_LSU_BUS_TAG 4
+`define RV_IFU_BUS_TAG 3
+`define RV_SB_BUS_TAG 1
+`define RV_LSU_NUM_NBLOAD 8
+`define RV_LSU_NUM_NBLOAD_WIDTH 3
+`define RV_DEC_INSTBUF_DEPTH 4
+`define RV_LSU_STBUF_DEPTH 8
+
+`define RV_DCCM_FDATA_WIDTH 32
+`define RV_DCCM_DATA_WIDTH 32
+`define RV_DCCM_BANK_BITS 3
+`define RV_DCCM_BITS 16
+`define RV_DCCM_ROWS 2048
+`define RV_DCCM_ECC_WIDTH 7
+`define RV_DCCM_NUM_BANKS 8
+`define RV_DCCM_INDEX_BITS 11
+`define RV_DCCM_BYTE_WIDTH 4
+`define RV_LSU_SB_BITS 16
+
+`define RV_BTB_ADDR_LO 4
+`define RV_BTB_INDEX2_LO 10
+`define RV_BTB_INDEX3_LO 16
+`define RV_BTB_ADDR_HI 9
+`define RV_BTB_INDEX1_HI 9
+`define RV_BTB_INDEX3_HI 21
+`define RV_BTB_INDEX1_LO 4
+`define RV_BTB_BTAG_SIZE 5
+`define RV_BTB_ARRAY_DEPTH 64
+`define RV_BTB_INDEX2_HI 15
+`define RV_BHT_ADDR_HI 11
+`define RV_BHT_ADDR_LO 4
+`define RV_BHT_GHR_PAD2 fghr[8:3],2'b0
+`define RV_BHT_GHR_RANGE 8:0
+`define RV_BHT_GHR_PAD fghr[8:4],3'b0
+`define RV_BHT_GHR_SIZE 9
+`define RV_BHT_HASH_STRING {ghr[7:6] ^ {ghr[8], 1'b0},hashin[9:4]^ghr[5:0]}
+`define RV_BHT_ARRAY_DEPTH 256
+
+`define RV_ICCM_BITS 17
+`define RV_ICCM_BANK_BITS 3
+`define RV_ICCM_SADR 32'h00000000
+`define RV_ICCM_SIZE 128
+`define RV_ICCM_INDEX_BITS 12
+`define RV_ICCM_NUM_BANKS 8
+
+`endif

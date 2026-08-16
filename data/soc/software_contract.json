@@ -6,8 +6,8 @@
     "march": "rv32imf_zicsr",
     "mabi": "ilp32f",
     "implementation": {
-      "name": "veer_eh1_rv32imf_tcm",
-      "status": "eh1_dual_issue_tcm_only_fpnew_rv32f",
+      "name": "mycpu_rv32imf_tcm",
+      "status": "mycpu_dual_issue_tcm_only_fpnew_rv32f",
       "riscv_test_gate": "rv32imf_zicsr"
     },
     "target": {

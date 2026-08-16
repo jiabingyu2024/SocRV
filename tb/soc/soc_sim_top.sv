@@ -47,30 +47,30 @@ module soc_sim_top (
    assign trace_valid_o = dut.core.trace_rv_i_valid_ip;
    assign trace_address_o = dut.core.trace_rv_i_address_ip;
    assign trace_instruction_o = dut.core.trace_rv_i_insn_ip;
-   assign debug_mepc_o = {dut.core.veer.dec.tlu.mepc, 1'b0};
-   assign debug_mcause_o = dut.core.veer.dec.tlu.mcause;
-   assign debug_mtval_o = dut.core.veer.dec.tlu.mtval;
-   assign debug_lsu_start_o = dut.core.veer.lsu.lsu_lsc_ctl.full_addr_dc1;
-   assign debug_lsu_end_o = dut.core.veer.lsu.lsu_lsc_ctl.full_end_addr_dc1;
+   assign debug_mepc_o = {dut.core.u_mycpu_core.dec.tlu.mepc, 1'b0};
+   assign debug_mcause_o = dut.core.u_mycpu_core.dec.tlu.mcause;
+   assign debug_mtval_o = dut.core.u_mycpu_core.dec.tlu.mtval;
+   assign debug_lsu_start_o = dut.core.u_mycpu_core.lsu.lsu_lsc_ctl.full_addr_dc1;
+   assign debug_lsu_end_o = dut.core.u_mycpu_core.lsu.lsu_lsc_ctl.full_end_addr_dc1;
    assign debug_lsu_flags_o = {
-      dut.core.veer.lsu.lsu_lsc_ctl.misaligned_fault_dc1,
-      dut.core.veer.lsu.lsu_lsc_ctl.access_fault_dc1,
-      dut.core.veer.lsu.lsu_lsc_ctl.addr_in_dccm_dc1,
-      dut.core.veer.lsu.lsu_lsc_ctl.lsu_pkt_dc1.valid
+      dut.core.u_mycpu_core.lsu.lsu_lsc_ctl.misaligned_fault_dc1,
+      dut.core.u_mycpu_core.lsu.lsu_lsc_ctl.access_fault_dc1,
+      dut.core.u_mycpu_core.lsu.lsu_lsc_ctl.addr_in_dccm_dc1,
+      dut.core.u_mycpu_core.lsu.lsu_lsc_ctl.lsu_pkt_dc1.valid
    };
    assign debug_inst_flags_o = {
-      dut.core.veer.dec.tlu.inst_acc_e4,
-      dut.core.veer.dec.tlu.exu_i0_br_mp_e4,
-      dut.core.veer.dec.tlu.dec_tlu_flush_lower_wb,
-      dut.core.veer.dec.tlu.rfpc_i0_e4,
-      dut.core.veer.dec.tlu.dec_tlu_i0_valid_e4,
-      dut.core.veer.dec.tlu.inst_misaligned_i0_e4,
-      dut.core.veer.dec.tlu.exu_i0_inst_misaligned_e4,
-      dut.core.veer.exu.i0_flush_path_e4_eff[1]
+      dut.core.u_mycpu_core.dec.tlu.inst_acc_e4,
+      dut.core.u_mycpu_core.dec.tlu.exu_i0_br_mp_e4,
+      dut.core.u_mycpu_core.dec.tlu.dec_tlu_flush_lower_wb,
+      dut.core.u_mycpu_core.dec.tlu.rfpc_i0_e4,
+      dut.core.u_mycpu_core.dec.tlu.dec_tlu_i0_valid_e4,
+      dut.core.u_mycpu_core.dec.tlu.inst_misaligned_i0_e4,
+      dut.core.u_mycpu_core.dec.tlu.exu_i0_inst_misaligned_e4,
+      dut.core.u_mycpu_core.exu.i0_flush_path_e4_eff[1]
    };
-   assign debug_inst_pc_o = {dut.core.veer.dec.tlu.dec_tlu_i0_pc_e4, 1'b0};
+   assign debug_inst_pc_o = {dut.core.u_mycpu_core.dec.tlu.dec_tlu_i0_pc_e4, 1'b0};
    assign debug_inst_target_o = {
-      dut.core.veer.dec.tlu.exu_i0_inst_misaligned_addr_e4, 1'b0
+      dut.core.u_mycpu_core.dec.tlu.exu_i0_inst_misaligned_addr_e4, 1'b0
    };
 
    soc_top #(

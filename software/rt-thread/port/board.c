@@ -13,7 +13,7 @@ static void timer_irq(int vector, void *parameter)
 {
     (void)vector;
     (void)parameter;
-    /* EH1 has no direct MSIP input.  SYSCTRL software requests share cause 7
+    /* MyCPU has no direct MSIP input.  SYSCTRL software requests share cause 7
      * with mtime; clearing this request is enough because the common trap
      * epilogue observes rt_thread_switch_interrupt_flag and switches stacks.
      */

@@ -2,7 +2,7 @@ include profiles/baremetal_sources.inc
 
 COREMARK_ITERATIONS ?= 10000
 COREMARK_TICKS_PER_SEC := 50000000
-COREMARK_FLAGS_TEXT := O3-rv32imf_zicsr-ilp32f-veer-eh1-tcm-baremetal
+COREMARK_FLAGS_TEXT := O3-rv32imf_zicsr-ilp32f-mycpu-tcm-baremetal
 include profiles/coremark_sources.inc
 
 PROFILE_KIND := coremark-baremetal-score-candidate
