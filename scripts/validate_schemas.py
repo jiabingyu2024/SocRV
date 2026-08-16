@@ -1,11 +1,22 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
 from lib.repo import repo_path
+
+
+def read_json(path: Path) -> object:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except PermissionError as error:
+        raise RuntimeError(
+            f"permission denied while reading {path}; fix the Windows ACL "
+            "or exclude the inaccessible run from this validation"
+        ) from error
 
 
 def main() -> int:
@@ -15,7 +26,7 @@ def main() -> int:
         print(f"No schemas found under {schema_dir}")
         return 1
     for path in schemas:
-        schema = json.loads(path.read_text(encoding="utf-8"))
+        schema = read_json(path)
         Draft202012Validator.check_schema(schema)
         print(f"Schema OK: {path.relative_to(repo_path())}")
     instances = [
@@ -72,11 +83,15 @@ def main() -> int:
         for path in schemas
     }
     for schema_name, path in instances:
-        instance = json.loads(path.read_text(encoding="utf-8"))
+        instance = read_json(path)
         Draft202012Validator(loaded[schema_name]).validate(instance)
         print(f"Data OK:   {path.relative_to(repo_path())}")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except RuntimeError as error:
+        print(f"Schema validation failed: {error}", file=sys.stderr)
+        raise SystemExit(1)

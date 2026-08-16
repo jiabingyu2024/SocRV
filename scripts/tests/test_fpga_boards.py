@@ -25,38 +25,45 @@ class FpgaBoardTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "choose one of: 50"):
             resolve_core_mhz(BOARDS["pynq_z2"], 100)
 
-    def test_kintex_release_clock_contract_is_unchanged(self) -> None:
+    def test_kintex_release_clock_contract(self) -> None:
         board = BOARDS["kintex7_competition"]
-        self.assertEqual(board.supported_core_mhz, (100, 125, 150, 200, 250))
         self.assertEqual(
-            board.mmcm,
-            {
-                100: ("5.0", "10.0", "20"),
-                125: ("5.0", "8.0", "20"),
-                150: ("6.0", "8.0", "24"),
-                200: ("5.0", "5.0", "20"),
-                250: ("5.0", "4.0", "20"),
-            },
+            board.supported_core_mhz,
+            (100, 110, 120, 125, *range(130, 251, 10)),
         )
+        for core_mhz in range(100, 251, 10):
+            self.assertEqual(resolve_core_mhz(board, core_mhz), core_mhz)
+        self.assert_clock_table(board)
 
     def test_axku062_clock_contract(self) -> None:
         board = BOARDS["axku062"]
         self.assertEqual(
             board.supported_core_mhz,
-            (50, 100, 125, 150, 170, 200, 250),
+            (50, 100, 110, 120, 125, *range(130, 251, 10)),
         )
-        self.assertEqual(
-            board.mmcm,
-            {
-                50: ("5.0", "20.0", "20"),
-                100: ("5.0", "10.0", "20"),
-                125: ("5.0", "8.0", "20"),
-                150: ("6.0", "8.0", "24"),
-                170: ("4.25", "5.0", "17"),
-                200: ("5.0", "5.0", "20"),
-                250: ("5.0", "4.0", "20"),
-            },
-        )
+        for core_mhz in range(100, 251, 10):
+            self.assertEqual(resolve_core_mhz(board, core_mhz), core_mhz)
+        self.assert_clock_table(board)
+
+    def assert_clock_table(self, board) -> None:
+        for core_mhz in board.supported_core_mhz:
+            with self.subTest(board=board.name, core_mhz=core_mhz):
+                mult, core_divide, peripheral_divide = board.mmcm[core_mhz]
+                self.assertAlmostEqual(
+                    200.0 * float(mult) / float(core_divide),
+                    core_mhz,
+                )
+                self.assertAlmostEqual(
+                    200.0 * float(mult) / int(peripheral_divide),
+                    50.0,
+                )
+                vco_mhz = 200.0 * float(mult)
+                if board.name == "axku062":
+                    self.assertGreaterEqual(vco_mhz, 800.0)
+                    self.assertLessEqual(vco_mhz, 1600.0)
+                else:
+                    self.assertGreaterEqual(vco_mhz, 600.0)
+                    self.assertLessEqual(vco_mhz, 1200.0)
 
     def test_build_directories_are_board_scoped(self) -> None:
         kintex = fpga_build_root(BOARDS["kintex7_competition"], "smoke", 100)

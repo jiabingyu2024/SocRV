@@ -13,7 +13,7 @@ from jsonschema import Draft202012Validator
 from elf2mem import parse_elf32_little
 from lib.hashing import sha256_file
 from lib.manifest import read_json, write_json_atomic
-from lib.repo import ensure_within, repo_path
+from lib.repo import ensure_directory_accessible, ensure_within, repo_path
 from lib.wsl import bash, in_repo
 
 
@@ -149,9 +149,10 @@ def relative_from_software(path: Path) -> str:
 def resolve_run_dir(path: Path) -> Path:
     candidate = path if path.is_absolute() else repo_path(*path.parts)
     candidate = ensure_within(candidate, repo_path("competition_runs"))
-    if not candidate.is_dir():
-        raise ValueError(f"competition run directory does not exist: {candidate}")
-    return candidate
+    return ensure_directory_accessible(
+        candidate,
+        label="competition run directory",
+    )
 
 
 @dataclass(frozen=True)

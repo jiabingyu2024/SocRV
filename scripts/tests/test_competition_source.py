@@ -65,6 +65,21 @@ class CompetitionSourceTest(unittest.TestCase):
                     encoding="utf-8"
                 ),
             )
+            axku_launcher = (
+                run / "vivado" / "create_axku062_project.tcl"
+            ).read_text(encoding="utf-8")
+            self.assertIn("axku062-${CORE_MHZ}mhz", axku_launcher)
+            self.assertIn("supported values: 50 / 100 / 110", axku_launcher)
+            self.assertIn("230 / 240 / 250", axku_launcher)
+            kintex_launcher = (
+                run / "vivado" / "create_kintex7_project.tcl"
+            ).read_text(encoding="utf-8")
+            self.assertIn("110 [list 5.5 10.0 22]", kintex_launcher)
+            self.assertIn("240 [list 6.0 5.0 24]", kintex_launcher)
+            self.assertIn(
+                "fpga boards axku062 tcl create_project.tcl",
+                axku_launcher,
+            )
 
     def test_only_c_file_is_the_default_entry(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
