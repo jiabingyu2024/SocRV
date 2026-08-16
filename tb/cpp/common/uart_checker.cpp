@@ -104,6 +104,9 @@ UartCheckSnapshot UartChecker::evaluate(
     if (checks_uart && framing_error_) {
         snapshot.forbidden_seen.push_back("UART framing error");
     }
+    if (checks_uart && transcript_.find('\0') != std::string::npos) {
+        snapshot.forbidden_seen.push_back("UART NUL byte");
+    }
 
     if (!config_.uart_command.empty()) {
         if (!prompt_seen_) {

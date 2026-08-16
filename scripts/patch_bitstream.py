@@ -8,9 +8,12 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
+
+from generate_manual_mmi import generate as generate_mmi
 
 
 EXPECTED_ARRAYS = (
@@ -18,6 +21,7 @@ EXPECTED_ARRAYS = (
     *(f"DCCM_BANK{index}" for index in range(8)),
 )
 FAILURE_MARKERS = ("ERROR:", "update_mem failed", "Abnormal program termination")
+BASE_BIT_RELATIVE = Path("project", "socrv.runs", "impl_1", "fpga_top.bit")
 
 
 def sha256(path: Path) -> str:
@@ -133,10 +137,8 @@ def run_update(
     )
     result: dict[str, object] = {
         "proc": proc,
-        "data": str(data),
-        "input_bit": str(source_bit),
-        "output_bit": str(output_bit),
-        "log": str(log),
+        "data_sha256": sha256(data),
+        "input_bit_sha256": sha256(source_bit),
         "returncode": completed.returncode,
         "failure_markers": errors,
         "success_marker": success_marker,
@@ -152,94 +154,98 @@ def run_update(
 
 
 def patch(
-    golden_dir: Path,
-    code_mem: Path,
-    data_mem: Path,
-    output_dir: Path,
+    base_dir: Path,
+    out_dir: Path,
     updatemem: Path | None,
 ) -> Path:
-    golden_bit = golden_dir / "golden.bit"
-    mmi = golden_dir / "golden.mmi"
-    for required in (golden_bit, mmi, code_mem, data_mem):
+    base_bit = base_dir / BASE_BIT_RELATIVE
+    bram_map = base_dir / "bram_map.tsv"
+    code_mem = out_dir / "images" / "code.mem"
+    data_mem = out_dir / "images" / "data.mem"
+    final_bit = out_dir / "competition.bit"
+    result_path = out_dir / "patch_result.json"
+    for required in (base_bit, bram_map, code_mem, data_mem):
         if not required.is_file():
             raise FileNotFoundError(required)
-    if output_dir.exists() and any(output_dir.iterdir()):
-        raise FileExistsError(f"output directory is not empty: {output_dir}")
-    work = output_dir / "work"
-    work.mkdir(parents=True, exist_ok=True)
+    for output in (final_bit, result_path):
+        if output.exists():
+            raise FileExistsError(f"refusing to overwrite existing output: {output}")
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    part, arrays = validate_mmi(mmi)
     code_words = read_flat_mem(code_mem, 32768)
     data_words = read_flat_mem(data_mem, 16384)
-    image_files: list[tuple[str, Path]] = []
-    for index, words in enumerate(split_words(code_words, 4)):
-        path = work / f"iccm_lane{index}.mem"
-        write_updatemem_file(path, words)
-        image_files.append((f"ICCM_LANE{index}", path))
-    for index, words in enumerate(split_words(data_words, 8)):
-        path = work / f"dccm_bank{index}.mem"
-        write_updatemem_file(path, words)
-        image_files.append((f"DCCM_BANK{index}", path))
-    if tuple(proc for proc, _ in image_files) != arrays:
-        raise AssertionError("internal update order does not match MMI")
-
     executable = find_updatemem(updatemem)
-    expected_size = golden_bit.stat().st_size
-    current_bit = golden_bit
-    steps: list[dict[str, object]] = []
-    for step_number, (proc, mem) in enumerate(image_files, 1):
-        next_bit = work / f"stage-{step_number:02d}.bit"
-        log = work / f"stage-{step_number:02d}.log"
-        steps.append(
-            run_update(
-                executable,
-                mmi,
-                mem,
-                current_bit,
-                proc,
-                next_bit,
-                log,
-                expected_size,
-            )
-        )
-        current_bit = next_bit
+    expected_size = base_bit.stat().st_size
+    with tempfile.TemporaryDirectory(prefix="socrv-patch-") as temporary:
+        work = Path(temporary)
+        mmi = work / "base.mmi"
+        validation = work / "mmi_validation.json"
+        generate_mmi(bram_map, mmi, validation)
+        part, arrays = validate_mmi(mmi)
+        image_files: list[tuple[str, Path]] = []
+        for index, words in enumerate(split_words(code_words, 4)):
+            path = work / f"iccm_lane{index}.mem"
+            write_updatemem_file(path, words)
+            image_files.append((f"ICCM_LANE{index}", path))
+        for index, words in enumerate(split_words(data_words, 8)):
+            path = work / f"dccm_bank{index}.mem"
+            write_updatemem_file(path, words)
+            image_files.append((f"DCCM_BANK{index}", path))
+        if tuple(proc for proc, _ in image_files) != arrays:
+            raise AssertionError("internal update order does not match MMI")
 
-    final_bit = output_dir / "competition.bit"
-    shutil.copy2(current_bit, final_bit)
+        current_bit = base_bit
+        steps: list[dict[str, object]] = []
+        for step_number, (proc, mem) in enumerate(image_files, 1):
+            next_bit = work / f"stage-{step_number:02d}.bit"
+            log = work / f"stage-{step_number:02d}.log"
+            steps.append(
+                run_update(
+                    executable,
+                    mmi,
+                    mem,
+                    current_bit,
+                    proc,
+                    next_bit,
+                    log,
+                    expected_size,
+                )
+            )
+            current_bit = next_bit
+        shutil.copy2(current_bit, final_bit)
+        mmi_sha256 = sha256(mmi)
+        validation_payload = json.loads(validation.read_text(encoding="utf-8"))
+
     result = {
         "schema_version": 1,
         "status": "pass",
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "part": part,
         "updatemem": str(executable),
-        "golden_dir": str(golden_dir),
-        "golden_bit": {"path": str(golden_bit), "size": expected_size, "sha256": sha256(golden_bit)},
-        "mmi": {"path": str(mmi), "sha256": sha256(mmi)},
+        "base_dir": str(base_dir),
+        "base_bit": {"path": str(base_bit), "size": expected_size, "sha256": sha256(base_bit)},
+        "bram_map": {"path": str(bram_map), "sha256": sha256(bram_map)},
+        "generated_mmi": {"sha256": mmi_sha256, "validation": validation_payload},
         "code_mem": {"path": str(code_mem), "sha256": sha256(code_mem)},
         "data_mem": {"path": str(data_mem), "sha256": sha256(data_mem)},
         "steps": steps,
         "competition_bit": {"path": str(final_bit), "size": final_bit.stat().st_size, "sha256": sha256(final_bit)},
     }
-    result_path = output_dir / "patch_result.json"
     result_path.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     return result_path
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Patch a SocRV golden bitstream from canonical code.mem and data.mem."
+        description="Patch a SocRV Vivado bitstream with software images from an output run."
     )
-    parser.add_argument("--golden-dir", type=Path, required=True)
-    parser.add_argument("--code-mem", type=Path, required=True)
-    parser.add_argument("--data-mem", type=Path, required=True)
-    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--base-dir", type=Path, required=True)
+    parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--updatemem", type=Path)
     args = parser.parse_args()
     result = patch(
-        args.golden_dir.resolve(),
-        args.code_mem.resolve(),
-        args.data_mem.resolve(),
-        args.output_dir.resolve(),
+        args.base_dir.resolve(),
+        args.out_dir.resolve(),
         args.updatemem.resolve() if args.updatemem else None,
     )
     print(f"PATCH_RESULT={result}")

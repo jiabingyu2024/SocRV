@@ -1857,7 +1857,7 @@ end : cam_array
    assign store_data_bypass_i0_e2_c2 = i0_dp.alu & ~i0_secondary_d & i1_rs2_depend_i0_d & ~i1_rs1_depend_i0_d & i1_dp.store;
 
    assign non_block_case_d = (
-                                (i1_dp.alu & i0_dp.load) |
+                                (i1_dp.alu & ~i1_dp.condbr & i0_dp.load) |
                                 (i1_dp.alu & i0_dp.mul)
                                 ) & ~disable_secondary;
 
@@ -1914,8 +1914,8 @@ end : cam_array
                                      };
 
 
-   assign i0_not_alu_eff = (~i0_dp.alu | disable_secondary);
-   assign i1_not_alu_eff = (~i1_dp.alu | disable_secondary);
+   assign i0_not_alu_eff = (~i0_dp.alu | i0_dp.condbr | disable_secondary);
+   assign i1_not_alu_eff = (~i1_dp.alu | i1_dp.condbr | disable_secondary);
 
 
    assign i0_load_block_d = (i0_not_alu_eff & i0_rs1_class_d.load & i0_rs1_match_e1) |
