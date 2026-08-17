@@ -82,5 +82,7 @@ set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
 set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
 set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE AggressiveExplore [get_runs impl_1]
 set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
+set patch_base_hook [file normalize [file join $repo_dir fpga tools export_patch_base_post.tcl]]
+set_property STEPS.WRITE_BITSTREAM.TCL.POST $patch_base_hook [get_runs impl_1]
 update_compile_order -fileset sources_1
 puts "SOCRV_PROJECT=[get_property DIRECTORY [current_project]]"

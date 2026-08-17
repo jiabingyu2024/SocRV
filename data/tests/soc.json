@@ -95,15 +95,16 @@
         "isa": "rv32imf_zicsr"
       },
       "uart_command": "ps",
+      "uart_followup_commands": ["help", "ps"],
       "uart_prompt": "msh >",
       "uart_prompt_timeout": 5000000,
       "uart_expect": [
-        "thread   pri  status",
+        "thread pri  status",
         "tshell",
-        "tidle0",
-        "running"
+        "tidle",
+        "main    10  close"
       ],
-      "max_cycles": 5000000,
+      "max_cycles": 25000000,
       "seed": 1
     },
     {

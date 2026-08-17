@@ -128,74 +128,92 @@ AXKU062 板载 I2C 总线为 1.8 V，当前连接的是 LM75 和 24LC04。最终
 连接 3.3 V BH1750/OLED，需要先确认可用扩展引脚、电平转换和对应 XDC，不能直接
 将外部 3.3 V 上拉接到现有 1.8 V I2C 总线。
 
-如果这次实现已经通过时序和实板验证，可以将同一次实现的文件整理成路线二使用的黄金目录：
+三个板卡的 `create_project.tcl` 都为 `impl_1` 配置了 bitstream 生成后的 post-hook。
+因此，使用这些 Tcl 重新创建工程后，无论是在 GUI 中点击 `Generate Bitstream`，还是
+由脚本启动同一个 `impl_1`，成功写出 bitstream 后都会自动在板卡构建目录中生成：
 
 ```text
-golden.bit
-golden.mmi
-golden_postroute.dcp
 bram_map.tsv
-mmi_validation.json
 ```
+
+例如 PYNQ-Z2 的 base Vivado 构建目录天然包含：
+
+```text
+competition_runs/coremark_rtos_sensors_20260814_02/vivado/pynq_z2-50mhz/
+├── bram_map.tsv
+└── project/socrv.runs/impl_1/fpga_top.bit
+```
+
+旧工程如果是在接入 post-hook 之前创建的，不会自动获得这项设置。应使用当前路线一
+Tcl 重新创建工程并重新生成一次 bitstream；或者在旧工程中手动为 `impl_1` 设置
+`STEPS.WRITE_BITSTREAM.TCL.POST` 后再生成一次。只有 bitstream 成功生成且 hook
+确认导出了 48 个 ICCM/DCCM BRAM，`bram_map.tsv` 才会保留。
 
 ## 路线二：复用已有布局布线结果，直接生成新 bitstream
 
-当硬件完全不变、只有软件变化，并且已经存在匹配的黄金目录时，使用这条路线。
+当硬件完全不变、只有软件变化，并且已经存在匹配的 base Vivado 构建目录时，使用这条路线。
 
 这条路线使用两个目录：
 
-- 新 run 目录：提供新软件的 `code.mem` 和 `data.mem`；
-- 旧 run 的黄金目录：提供原布局布线对应的 `golden.bit` 和 `golden.mmi`。
+- `base_dir`：路线一已有的板卡 Vivado 构建目录，提供原布局布线生成的
+  `project/socrv.runs/impl_1/fpga_top.bit` 和 `bram_map.tsv`；
+- `out_dir`：新软件 run 的根目录，软件构建先在其中生成 `images/code.mem` 和
+  `images/data.mem`，补丁结果也直接写入这个目录。
+
+`out_dir` 可以包含软件构建的其他文件，但在执行补丁前不能已有
+`competition.bit` 或 `patch_result.json`，脚本会拒绝覆盖这两个结果。
 
 ### 1. 在 PowerShell 中准备并构建新软件
 
 ```powershell
-python scripts/prepare_competition_run.py --source software/coremark/upstream/core_main.c --run-id coremark_rtos_sensors_patch_20260814_01
-python scripts/build_software.py --profile contest-rtthread-coremark --run-dir competition_runs/coremark_rtos_sensors_patch_20260814_01
+python scripts/prepare_competition_run.py --source software/coremark/upstream/core_main.c --run-id target
+python scripts/build_software.py --profile contest-rtthread-coremark --run-dir competition_runs/target
 ```
 
-### 2. PYNQ-Z2 50 MHz：使用旧黄金目录生成新 bitstream
-
-```powershell
-python scripts/patch_bitstream.py --golden-dir competition_runs/sensor_fix_bh1750_oled_20260814_01/golden/pynq_z2-rtthread-coremark-50mhz --code-mem competition_runs/coremark_rtos_sensors_patch_20260814_01/images/code.mem --data-mem competition_runs/coremark_rtos_sensors_patch_20260814_01/images/data.mem --output-dir competition_runs/coremark_rtos_sensors_patch_20260814_01/patched/pynq_z2-50mhz
-```
-
-输出：
+确认下面两个文件存在后再执行补丁：
 
 ```text
-competition_runs/coremark_rtos_sensors_patch_20260814_01/patched/pynq_z2-50mhz/competition.bit
+competition_runs/target/images/code.mem
+competition_runs/target/images/data.mem
 ```
 
-### 3. Kintex-7 150 MHz：使用旧黄金目录生成新 bitstream
+### 2. PYNQ-Z2 50 MHz：使用已有 base 生成新 bitstream
 
 ```powershell
-python scripts/patch_bitstream.py --golden-dir competition_runs/sensor_fix_bh1750_oled_20260814_01/golden/kintex7-rtthread-coremark-150mhz --code-mem competition_runs/coremark_rtos_sensors_patch_20260814_01/images/code.mem --data-mem competition_runs/coremark_rtos_sensors_patch_20260814_01/images/data.mem --output-dir competition_runs/coremark_rtos_sensors_patch_20260814_01/patched/kintex7-150mhz
+python scripts/patch_bitstream.py --base-dir competition_runs/sensor_fix_bh1750_oled_20260814_01/vivado/pynq_z2-50mhz --out-dir competition_runs/target
 ```
 
-输出：
-
-```text
-competition_runs/coremark_rtos_sensors_patch_20260814_01/patched/kintex7-150mhz/competition.bit
-```
-
-### 4. AXKU062 100 MHz：使用旧黄金目录生成新 bitstream
+### 3. Kintex-7 150 MHz：使用已有 base 生成新 bitstream
 
 ```powershell
-python scripts/patch_bitstream.py --golden-dir competition_runs/sensor_fix_bh1750_oled_20260814_01/golden/axku062-rtthread-coremark-100mhz --code-mem competition_runs/coremark_rtos_sensors_patch_20260814_01/images/code.mem --data-mem competition_runs/coremark_rtos_sensors_patch_20260814_01/images/data.mem --output-dir competition_runs/coremark_rtos_sensors_patch_20260814_01/patched/axku062-100mhz
+python scripts/patch_bitstream.py --base-dir competition_runs/sensor_fix_bh1750_oled_20260814_01/vivado/kintex7-150mhz --out-dir competition_runs/target
 ```
 
-输出：
+### 4. AXKU062 100 MHz：使用已有 base 生成新 bitstream
+
+```powershell
+python scripts/patch_bitstream.py --base-dir competition_runs/sensor_fix_bh1750_oled_20260814_01/vivado/axku062-100mhz --out-dir competition_runs/target
+```
+
+以上三条板卡命令按目标板卡三选一，不要对同一个 `out_dir` 连续执行。三者的统一输出为：
 
 ```text
-competition_runs/coremark_rtos_sensors_patch_20260814_01/patched/axku062-100mhz/competition.bit
+competition_runs/target/competition.bit
+competition_runs/target/patch_result.json
 ```
 
-使用其他 AXKU062 频率时，黄金目录和输出目录中的频率必须同步替换，并且黄金包
-必须来自同一板卡、同一频率和同一套 RTL/XDC/内存结构。
+`patch_result.json` 记录 base bit、BRAM map、软件镜像、每一步更新和最终 bitstream
+的 SHA-256，便于确认产物来自哪一个 base 和哪一份软件。
 
-路线二不会修改 DCP，也不会启动 Vivado。它只根据 `golden.mmi`，把新软件镜像写入已有布局布线对应的 `golden.bit`。
+使用其他 Kintex-7 或 AXKU062 频率时，只替换 `base_dir` 中对应的频率目录。
+base 必须来自同一板卡、同一频率和同一套 RTL/XDC/内存结构。
 
-> 当前工作区尚未发现完整的 `golden.bit` 和 `golden.mmi` 黄金目录。上面的 `sensor_fix_bh1750_oled_20260814_01/golden/...` 是建议归档位置；必须先用路线一生成并整理匹配的黄金包，路线二才能执行。
+路线二不会修改 base 工程或 DCP，也不会启动 Vivado。它根据 `base_dir/bram_map.tsv`
+在临时目录生成 MMI，再用 `updatemem` 把 `out_dir` 的新软件镜像写入 base bitstream；
+临时 MMI 和中间 bitstream 会在成功或失败后清理。
+
+> 如果 `base_dir/bram_map.tsv` 不存在，说明该工程尚未成功执行当前 post-hook，
+> 不能只凭一个旧 bitstream 执行路线二。
 
 ## 选择路线
 
@@ -203,8 +221,8 @@ competition_runs/coremark_rtos_sensors_patch_20260814_01/patched/axku062-100mhz/
 硬件、RTL、XDC、板卡、频率或内存结构变化
     → 路线一
 
-只有软件变化，并且已有完全匹配的黄金目录
+只有软件变化，并且已有完全匹配的 base Vivado 构建目录
     → 路线二
 ```
 
-PYNQ-Z2、Kintex-7 与 AXKU062 的黄金 bit、MMI、DCP 不能混用，不同频率也不能混用。
+PYNQ-Z2、Kintex-7 与 AXKU062 的 base bitstream 和 BRAM map 不能混用，不同频率也不能混用。

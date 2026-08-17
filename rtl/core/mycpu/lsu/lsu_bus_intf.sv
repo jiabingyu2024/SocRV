@@ -113,6 +113,7 @@ module lsu_bus_intf
    logic [3:0]  store_mask_dc5;
    logic [31:0] store_shifted_dc5;
    logic        external_in_pipe;
+   logic        load_request_dc2;
 
    assign store_mask_dc5 = ({4{lsu_pkt_dc5.by}}   & 4'b0001) |
                             ({4{lsu_pkt_dc5.half}} & 4'b0011) |
@@ -128,6 +129,8 @@ module lsu_bus_intf
 
    assign lsu_busreq_dc5 = lsu_pkt_dc5.valid && addr_external_dc5 &&
                            (lsu_pkt_dc5.load || lsu_pkt_dc5.store);
+   assign load_request_dc2 = lsu_busreq_dc2 && lsu_pkt_dc2.load &&
+                             !flush_dc2_up;
 
    always_ff @(posedge clk or negedge rst_l) begin
       if (!rst_l) begin
@@ -142,7 +145,7 @@ module lsu_bus_intf
             if ((lsu_mmio_ready && lsu_mmio_valid) || dec_tlu_cancel_e4 ||
                 flush_dc3 || flush_dc4 || flush_dc5)
                load_pending <= 1'b0;
-         end else if (lsu_busreq_dc2 && lsu_pkt_dc2.load && !flush_dc2_up) begin
+         end else if (load_request_dc2) begin
             load_pending <= 1'b1;
             load_addr_q  <= lsu_addr_dc2;
          end
@@ -165,7 +168,8 @@ module lsu_bus_intf
    assign lsu_mmio_wdata = store_pending ? store_wdata_q : 32'b0;
    assign lsu_mmio_wstrb = store_pending ? store_wstrb_q : 4'b0;
 
-   assign lsu_freeze_dc3 = load_pending && !lsu_mmio_ready;
+   assign lsu_freeze_dc3 = (load_request_dc2 || load_pending) &&
+                           !(load_pending && lsu_mmio_ready);
    assign bus_read_data_dc3 = lsu_mmio_rdata >> {load_addr_q[1:0], 3'b000};
    assign ld_bus_error_dc3 = load_pending && lsu_mmio_ready && lsu_mmio_error;
    assign ld_bus_error_addr_dc3 = load_addr_q;
