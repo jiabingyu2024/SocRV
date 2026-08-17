@@ -10,7 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-ICCM_RE = re.compile(r"/iccm/lane([0-3])_reg_(?:bram_)?([0-7])$")
+ICCM_RE = re.compile(
+    r"/iccm/(?:lane([0-3])_reg_(?:bram_)?([0-7])|lane_q_reg\[([0-3])\]_([0-7]))$"
+)
 DCCM_RE = re.compile(r"/dccm_bank_gen\[([0-7])\]\.bank_mem_reg_(?:bram_)?([01])$")
 
 
@@ -113,7 +115,9 @@ def classify(brams: list[Bram]) -> tuple[dict[int, dict[int, Bram]], dict[int, d
 
         match = ICCM_RE.search(bram.cell)
         if match:
-            lane, slice_index = map(int, match.groups())
+            legacy_lane, legacy_slice, inferred_lane, inferred_slice = match.groups()
+            lane = int(legacy_lane if legacy_lane is not None else inferred_lane)
+            slice_index = int(legacy_slice if legacy_slice is not None else inferred_slice)
             iccm[lane][slice_index] = bram
             continue
         match = DCCM_RE.search(bram.cell)

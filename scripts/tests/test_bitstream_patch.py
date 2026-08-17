@@ -92,6 +92,33 @@ class BitstreamPatchTest(unittest.TestCase):
             self.assertEqual(len(ET.parse(mmi).getroot().findall(".//BRAM")), 48)
             self.assertTrue(validation.is_file())
 
+    def test_manual_mmi_accepts_inferred_kintex_iccm_names(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            bram_map = root / "bram_map.tsv"
+            self.write_bram_map(bram_map)
+            text = bram_map.read_text(encoding="utf-8")
+            for lane in range(4):
+                for index in range(8):
+                    text = text.replace(
+                        f"u_soc/core/mem/iccm/lane{lane}_reg_{index}",
+                        f"u_soc/core/u_memory/iccm/lane_q_reg[{lane}]_{index}",
+                    )
+            text = text.replace(
+                "u_soc/core/mem/Gen_dccm_enable.dccm/",
+                "u_soc/core/u_memory/Gen_dccm_enable.dccm/",
+            )
+            bram_map.write_text(text, encoding="utf-8")
+
+            mmi = root / "base.mmi"
+            validation = root / "mmi_validation.json"
+            generate(bram_map, mmi, validation)
+
+            part, arrays = validate_mmi(mmi)
+            self.assertEqual(part, "xc7z020clg400-1")
+            self.assertEqual(len(arrays), 12)
+            self.assertEqual(len(ET.parse(mmi).getroot().findall(".//BRAM")), 48)
+
     def test_patch_uses_base_and_output_run_layout(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             base_dir, out_dir, executable = self.make_patch_tree(Path(temporary))
