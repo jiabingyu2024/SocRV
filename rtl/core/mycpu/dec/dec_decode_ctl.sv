@@ -279,7 +279,7 @@ module dec_decode_ctl
    logic i0_cmx, i1_cmx;
    logic i0_cmx_mul, i1_cmx_mul;
    logic i0_cmx_isdigit, i1_cmx_isdigit;
-   logic [1:0] i0_cmx_op, i1_cmx_op;
+   logic [2:0] i0_cmx_op, i1_cmx_op;
    logic i0_fp_encoding_legal;
    logic i0_rm_legal;
    logic i0_fp_writes_gpr;
@@ -682,16 +682,23 @@ module dec_decode_ctl
                       ((i1[6:0] == 7'b0000111) && (i1[14:12] == 3'b010)) ||
                       ((i1[6:0] == 7'b0100111) && (i1[14:12] == 3'b010));
 
+   // custom-0 funct3 map: 000 bfmul16, 001 crc8step, 010 isdigit8,
+   // 011 crc16x2.  The funct7=0 guard keeps the encoding in our reserved
+   // custom space and prevents accidental collisions with future opcodes.
    assign i0_cmx = (i0[6:0] == 7'b0001011) && (i0[31:25] == 7'b0000000) &&
-                   (i0[14:12] <= 3'b010);
+                   (i0[14:12] <= 3'b011);
    assign i1_cmx = (i1[6:0] == 7'b0001011) && (i1[31:25] == 7'b0000000) &&
-                   (i1[14:12] <= 3'b010);
-   assign i0_cmx_mul = i0_cmx && (i0[14:12] <= 3'b001);
-   assign i1_cmx_mul = i1_cmx && (i1[14:12] <= 3'b001);
+                   (i1[14:12] <= 3'b011);
+   assign i0_cmx_mul = i0_cmx && ((i0[14:12] <= 3'b001) || (i0[14:12] == 3'b011));
+   assign i1_cmx_mul = i1_cmx && ((i1[14:12] <= 3'b001) || (i1[14:12] == 3'b011));
    assign i0_cmx_isdigit = i0_cmx && (i0[14:12] == 3'b010);
    assign i1_cmx_isdigit = i1_cmx && (i1[14:12] == 3'b010);
-   assign i0_cmx_op = i0_cmx_mul ? ((i0[14:12] == 3'b000) ? 2'd1 : 2'd2) : 2'd0;
-   assign i1_cmx_op = i1_cmx_mul ? ((i1[14:12] == 3'b000) ? 2'd1 : 2'd2) : 2'd0;
+   assign i0_cmx_op = i0_cmx_mul ?
+                      ((i0[14:12] == 3'b000) ? 3'd1 :
+                       (i0[14:12] == 3'b001) ? 3'd2 : 3'd3) : 3'd0;
+   assign i1_cmx_op = i1_cmx_mul ?
+                      ((i1[14:12] == 3'b000) ? 3'd1 :
+                       (i1[14:12] == 3'b001) ? 3'd2 : 3'd3) : 3'd0;
    assign i0_rm_legal = (i0[14:12] <= 3'b100) ||
                         ((i0[14:12] == 3'b111) && (dec_tlu_frm <= 3'b100));
 

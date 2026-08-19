@@ -23,7 +23,9 @@ set selected_count 0
 set all_brams [lsort [get_cells -hier -filter {REF_NAME =~ RAMB*}]]
 foreach cell $all_brams {
     if {![string match "*u_soc/core/mem/iccm/*" $cell] &&
-        ![string match "*u_soc/core/mem/Gen_dccm_enable.dccm/*" $cell]} {
+        ![string match "*u_soc/core/mem/Gen_dccm_enable.dccm/*" $cell] &&
+        ![string match "*u_soc/core/u_memory/iccm/*" $cell] &&
+        ![string match "*u_soc/core/u_memory/Gen_dccm_enable.dccm/*" $cell]} {
         continue
     }
 

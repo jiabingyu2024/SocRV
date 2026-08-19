@@ -272,7 +272,8 @@ typedef struct packed {
                        logic rs1_sign;
                        logic rs2_sign;
                        logic low;
-                       logic [1:0] cm_op;
+                       // CoreMark custom operation selector.
+                       logic [2:0] cm_op;
                        logic load_mul_rs1_bypass_e1;
                        logic load_mul_rs2_bypass_e1;
                        } mul_pkt_t;

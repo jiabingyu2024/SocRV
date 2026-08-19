@@ -106,7 +106,7 @@ def replace_function(lines: list[str], name: str, body: list[str]) -> bool:
     return True
 
 
-def replace_crc_helpers(lines: list[str]) -> int:
+def replace_crc_helpers(lines: list[str], crc16x2: bool = False) -> int:
     replacements = 0
     replacements += replace_function(
         lines,
@@ -116,17 +116,20 @@ def replace_crc_helpers(lines: list[str]) -> int:
             "\tret\n",
         ],
     )
-    replacements += replace_function(
-        lines,
-        "crcu16",
-        [
+    if crc16x2:
+        crcu16_body = [
+            "\t.insn r 0x0b, 3, 0, a0, a1, a0 # crc16x2 two bytes\n",
+            "\tret\n",
+        ]
+    else:
+        crcu16_body = [
             "\tsrli t0, a0, 8\n",
             "\tandi a0, a0, 255\n",
             "\t.insn r 0x0b, 1, 0, a1, a1, a0 # crc8step byte 0\n",
             "\t.insn r 0x0b, 1, 0, a0, a1, t0 # crc8step byte 1\n",
             "\tret\n",
-        ],
-    )
+        ]
+    replacements += replace_function(lines, "crcu16", crcu16_body)
     replacements += replace_function(
         lines,
         "crc16",
@@ -136,10 +139,16 @@ def replace_crc_helpers(lines: list[str]) -> int:
             "\ttail crcu16\n",
         ],
     )
-    replacements += replace_function(
-        lines,
-        "crcu32",
-        [
+    if crc16x2:
+        crcu32_body = [
+            "\tmv t0, a0\n",
+            "\t.insn r 0x0b, 3, 0, a1, a1, t0 # crc16x2 low half\n",
+            "\tsrli t0, t0, 16\n",
+            "\t.insn r 0x0b, 3, 0, a0, a1, t0 # crc16x2 high half\n",
+            "\tret\n",
+        ]
+    else:
+        crcu32_body = [
             "\tmv t0, a0\n",
             "\tandi t1, t0, 255\n",
             "\t.insn r 0x0b, 1, 0, a1, a1, t1 # crc8step byte 0\n",
@@ -150,8 +159,8 @@ def replace_crc_helpers(lines: list[str]) -> int:
             "\tsrli t1, t0, 24\n",
             "\t.insn r 0x0b, 1, 0, a0, a1, t1 # crc8step byte 3\n",
             "\tret\n",
-        ],
-    )
+        ]
+    replacements += replace_function(lines, "crcu32", crcu32_body)
     return replacements
 
 
@@ -247,13 +256,18 @@ def main() -> int:
     parser.add_argument("--kind", choices=("matrix", "crc", "state"), required=True)
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--crc16x2",
+        action="store_true",
+        help="use the level-2 two-byte CRC custom instruction",
+    )
     args = parser.parse_args()
 
     lines = args.input.read_text(encoding="utf-8").splitlines(keepends=True)
     if args.kind == "matrix":
         count = fuse_bfmul16(lines)
     elif args.kind == "crc":
-        count = replace_crc_helpers(lines)
+        count = replace_crc_helpers(lines, crc16x2=args.crc16x2)
     else:
         count = fuse_isdigit8(lines)
     if count == 0:

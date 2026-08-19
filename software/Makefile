@@ -1,6 +1,8 @@
 include toolchain/riscv_gcc.mk
 
 PYTHON ?= python3
+COREMARK_CUSTOM_LEVEL ?= 2
+COREMARK_CRC_FUSE_FLAGS := $(if $(filter 2,$(COREMARK_CUSTOM_LEVEL)),--crc16x2,)
 
 PROFILE ?= smoke
 OUT ?= ../build/software/$(PROFILE)
@@ -66,7 +68,7 @@ $(OUT)/objects/coremark/upstream/core_matrix.c.o: coremark/upstream/core_matrix.
 $(OUT)/objects/coremark/upstream/core_util.c.o: coremark/upstream/core_util.c ../scripts/fuse_coremark_asm.py
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDES) -fno-inline -g0 -MMD -MP -MF $(@:.o=.d) -MT $@ -S $< -o $@.orig.s
-	$(PYTHON) ../scripts/fuse_coremark_asm.py --kind crc --input $@.orig.s --output $@.fused.s
+	$(PYTHON) ../scripts/fuse_coremark_asm.py --kind crc $(COREMARK_CRC_FUSE_FLAGS) --input $@.orig.s --output $@.fused.s
 	$(CC) $(ASFLAGS) $(INCLUDES) -c $@.fused.s -o $@
 
 $(OUT)/objects/coremark/upstream/core_state.c.o: coremark/upstream/core_state.c ../scripts/fuse_coremark_asm.py

@@ -87,16 +87,21 @@ for {set bank 0} {$bank < 8} {incr bank} {
 }
 set_property generic $generics [current_fileset]
 set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY rebuilt [get_runs synth_1]
-# The TCMs are explicit BRAM macros, so implementation effort should be spent
-# on the remaining high-fanout front-end/LSU control paths.  These directives
-# are part of every frequency sign-off build, rather than relying on a lucky
-# default-place seed.
-set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
-set_property STEPS.OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
-set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
-set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
-set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE AggressiveExplore [get_runs impl_1]
-set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
+# The packaged contest build can request the faster Vivado default strategy
+# without changing the release sign-off default.  Set
+# SOCRV_IMPL_STRATEGY="Vivado Implementation Defaults" for that path.
+set impl_strategy "Performance_ExplorePostRoutePhysOpt"
+if {[info exists ::env(SOCRV_IMPL_STRATEGY)]} {
+    set impl_strategy $::env(SOCRV_IMPL_STRATEGY)
+}
+set_property strategy $impl_strategy [get_runs impl_1]
+if {$impl_strategy ne "Vivado Implementation Defaults"} {
+    set_property STEPS.OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
+    set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
+    set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
+    set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE AggressiveExplore [get_runs impl_1]
+    set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
+}
 set patch_base_hook [file normalize [file join $repo_dir fpga tools export_patch_base_post.tcl]]
 set_property STEPS.WRITE_BITSTREAM.TCL.POST $patch_base_hook [get_runs impl_1]
 update_compile_order -fileset sources_1

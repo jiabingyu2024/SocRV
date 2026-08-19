@@ -1,8 +1,19 @@
 set project_dir [file normalize [get_property DIRECTORY [current_project]]]
+# Vivado can evaluate a write_bitstream post hook with the run directory as
+# the reported project directory.  Recover the actual project root in that
+# case and take the bitstream path directly from the implementation run.
+if {[file tail $project_dir] eq "impl_1" &&
+    [file tail [file dirname $project_dir]] eq "socrv.runs"} {
+    set project_dir [file dirname [file dirname $project_dir]]
+}
 set base_dir [file dirname $project_dir]
 set out_path [file join $base_dir bram_map.tsv]
 set temporary_path "${out_path}.tmp"
-set source_bit [file join $project_dir socrv.runs impl_1 fpga_top.bit]
+set run_dir [get_property DIRECTORY [current_run]]
+if {$run_dir eq ""} {
+    set run_dir [file join $project_dir socrv.runs impl_1]
+}
+set source_bit [file normalize [file join $run_dir fpga_top.bit]]
 
 file delete -force $temporary_path
 file delete -force $out_path
@@ -24,7 +35,9 @@ set selected_count 0
 set all_brams [lsort [get_cells -hier -filter {REF_NAME =~ RAMB*}]]
 foreach cell $all_brams {
     if {![string match "*u_soc/core/mem/iccm/*" $cell] &&
-        ![string match "*u_soc/core/mem/Gen_dccm_enable.dccm/*" $cell]} {
+        ![string match "*u_soc/core/mem/Gen_dccm_enable.dccm/*" $cell] &&
+        ![string match "*u_soc/core/u_memory/iccm/*" $cell] &&
+        ![string match "*u_soc/core/u_memory/Gen_dccm_enable.dccm/*" $cell]} {
         continue
     }
 
